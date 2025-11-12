@@ -1,29 +1,46 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
+from app.ai_service import AIService
 from app.utils import verify_token
-from app.database import db
-from app.ai_service import generate_caption
-from datetime import datetime
-from app.models import PostCreate  # <-- IMPORT THE NEW MODEL
+from pydantic import BaseModel
 
-router = APIRouter()
+router = APIRouter(prefix="/posts", tags=["posts"])
 
-posts_col = db["posts"]
+class PostCreate(BaseModel):
+    title: str
+    content: str
+    topic: str
+    language: str = "english"
 
 @router.post("/create")
-# --- UPDATE THIS FUNCTION SIGNATURE ---
-def create_post(post: PostCreate, email: str = Depends(verify_token)):
-    # Now, 'post.topic' holds the value from the JSON body
-    ai_result = generate_caption(post.topic)
-    
-    if "error" in ai_result:
-        raise HTTPException(status_code=500, detail=ai_result["error"])
+async def create_post(post: PostCreate, email: str = Depends(verify_token)):
+    """Create a new social media post with AI-generated content"""
+    try:
+        # Generate content using AIService
+        caption = AIService.generate_caption(post.topic, post.language)
+        hashtags = AIService.generate_hashtags(post.topic)
+        image = AIService.generate_image(post.topic)
+        
+        return {
+            "status": "success",
+            "post": {
+                "title": post.title,
+                "caption": caption,
+                "hashtags": hashtags,
+                "image": image,
+                "created_by": email
+            }
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
-    post_data = {
-        "email": email,
-        "prompt": post.topic,
-        "caption": ai_result["caption"],
-        "created_at": datetime.utcnow()
+@router.get("/user-posts")
+async def get_user_posts(email: str = Depends(verify_token)):
+    """Get all posts created by the user"""
+    return {
+        "status": "success",
+        "posts": [],
+        "message": "Database integration coming soon"
     }
-
-    posts_col.insert_one(post_data)
-    return {"message": "Post created successfully", "data": post_data}

@@ -1,92 +1,68 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.ai_service import generate_all_content, generate_caption, generate_hashtags, generate_image_url
+from app.ai_service import AIService
 
-router = APIRouter()
+router = APIRouter(prefix="/content", tags=["content"])
 
-class ContentGenerationRequest(BaseModel):
+class ContentRequest(BaseModel):
     topic: str
     language: str = "english"
 
-class ContentGenerationResponse(BaseModel):
+class CaptionRequest(BaseModel):
     topic: str
-    language: str
-    caption: str
-    hashtags: list
-    image_url: str
-    success: bool
+    language: str = "english"
 
-@router.post("/generate", response_model=ContentGenerationResponse)
-async def generate_content(request: ContentGenerationRequest):
-    """
-    Generate AI-powered content (caption, hashtags, and image) for a given topic.
-    
-    Args:
-        topic: The subject/topic for content generation
-        language: Language for caption (english, urdu, etc.) - default: english
-    
-    Returns:
-        ContentGenerationResponse with caption, hashtags, image URL and success status
-    """
-    
-    if not request.topic or not request.topic.strip():
-        raise HTTPException(status_code=400, detail="Topic cannot be empty")
-    
-    result = generate_all_content(request.topic, request.language)
-    
-    if not result.get("success"):
-        raise HTTPException(
-            status_code=500, 
-            detail="Failed to generate content. Please try again."
-        )
-    
-    return ContentGenerationResponse(
-        topic=result["topic"],
-        language=result["language"],
-        caption=result["caption"],
-        hashtags=result["hashtags"],
-        image_url=result["image_url"],
-        success=result["success"]
-    )
+class HashtagRequest(BaseModel):
+    topic: str
+    count: int = 6
+
+class ImageRequest(BaseModel):
+    topic: str
+
+@router.post("/generate")
+async def generate_content(request: ContentRequest):
+    """Generate complete social media content (caption + hashtags + image)"""
+    try:
+        content = AIService.generate_full_content(request.topic, request.language)
+        return {
+            "status": "success",
+            "data": content
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/caption")
-async def generate_caption_only(request: ContentGenerationRequest):
-    """Generate only a caption for a topic"""
-    
-    if not request.topic or not request.topic.strip():
-        raise HTTPException(status_code=400, detail="Topic cannot be empty")
-    
-    result = generate_caption(request.topic, request.language)
-    
-    if not result.get("success"):
-        raise HTTPException(status_code=500, detail=result.get("error"))
-    
-    return {"caption": result.get("caption"), "success": True}
+async def generate_caption(request: CaptionRequest):
+    """Generate only caption"""
+    try:
+        caption = AIService.generate_caption(request.topic, request.language)
+        return {
+            "status": "success",
+            "caption": caption
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/hashtags")
-async def generate_hashtags_only(request: ContentGenerationRequest):
-    """Generate only hashtags for a topic"""
-    
-    if not request.topic or not request.topic.strip():
-        raise HTTPException(status_code=400, detail="Topic cannot be empty")
-    
-    result = generate_hashtags(request.topic)
-    
-    if not result.get("success"):
-        raise HTTPException(status_code=500, detail=result.get("error"))
-    
-    return {"hashtags": result.get("hashtags", []), "success": True}
+async def generate_hashtags(request: HashtagRequest):
+    """Generate only hashtags"""
+    try:
+        hashtags = AIService.generate_hashtags(request.topic, request.count)
+        return {
+            "status": "success",
+            "hashtags": hashtags
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/image")
-async def generate_image_only(request: ContentGenerationRequest):
-    """Generate only an image for a topic"""
-    
-    if not request.topic or not request.topic.strip():
-        raise HTTPException(status_code=400, detail="Topic cannot be empty")
-    
-    result = generate_image_url(request.topic)
-    
-    if not result.get("success"):
-        raise HTTPException(status_code=500, detail=result.get("error"))
-    
-    return {"image_url": result.get("image_url"), "success": True}
+async def generate_image(request: ImageRequest):
+    """Generate or fetch only image"""
+    try:
+        image = AIService.generate_image(request.topic)
+        return {
+            "status": "success",
+            "image": image
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

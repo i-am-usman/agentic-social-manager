@@ -67,46 +67,42 @@ const AgenticSocialManager = () => {
 
   const generateContent = async () => {
     if (!topic.trim()) return;
-    
+
     setIsGenerating(true);
     setGeneratedCaption('');
     setGeneratedHashtags([]);
     setGeneratedImage(null);
 
     try {
-      // Call backend API to generate content
-      const response = await fetch('http://localhost:8000/content/generate', {
+      const res = await fetch('http://localhost:8000/content/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          topic: topic.trim(),
-          language: selectedLanguage
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, language: selectedLanguage })
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
+      if (!res.ok) {
+        // fallback to local templates if backend fails
+        throw new Error(`Server responded with ${res.status}`);
       }
 
-      const data = await response.json();
+      const payload = await res.json();
+      // backend returns { status: "success", data: { caption, hashtags, image } }
+      const data = payload?.data ?? payload;
 
-      // Update state with API response
-      setGeneratedCaption(data.caption);
-      setGeneratedHashtags(data.hashtags);
-      setGeneratedImage(data.image_url);
-      
-      setIsGenerating(false);
-    } catch (error) {
-      console.error('Error generating content:', error);
-      
-      // Fallback to mock data if API fails
-      console.log('Falling back to mock data...');
-      setGeneratedCaption(`📱 Exploring ${topic}... Amazing content coming soon! ✨`);
-      setGeneratedHashtags([`#${topic.replace(/\s+/g, '')}`, '#trending', '#viral', '#socialmedia']);
+      setGeneratedCaption(data?.caption ?? `🌟 Discover the amazing world of ${topic}!`);
+      setGeneratedHashtags(Array.isArray(data?.hashtags) ? data.hashtags : (data?.hashtags?.split?.(',') ?? []));
+      setGeneratedImage(data?.image ?? `https://source.unsplash.com/800x600/?${encodeURIComponent(topic)}`);
+    } catch (err) {
+      console.error('Content generation error:', err);
+      // graceful fallback
+      setGeneratedCaption(
+        selectedLanguage === 'urdu'
+          ? `${topic} کی حیرت انگیز دنیا دریافت کریں! ہمارے ساتھ شامل ہوں۔`
+          : `🌟 Discover the amazing world of ${topic}! Join us on this journey. ✨`
+      );
+      setGeneratedHashtags([`#${topic.replace(/\s+/g, '')}`, '#trending', '#viral']);
       setGeneratedImage(`https://source.unsplash.com/800x600/?${encodeURIComponent(topic)}`);
-      
+    } finally {
       setIsGenerating(false);
     }
   };
