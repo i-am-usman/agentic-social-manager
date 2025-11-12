@@ -67,7 +67,6 @@ const AgenticSocialManager = () => {
 
   const generateContent = async () => {
     if (!topic.trim()) return;
-
     setIsGenerating(true);
     setGeneratedCaption('');
     setGeneratedHashtags([]);
@@ -79,28 +78,87 @@ const AgenticSocialManager = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, language: selectedLanguage })
       });
-
-      if (!res.ok) {
-        // fallback to local templates if backend fails
-        throw new Error(`Server responded with ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const payload = await res.json();
-      // backend returns { status: "success", data: { caption, hashtags, image } }
       const data = payload?.data ?? payload;
-
       setGeneratedCaption(data?.caption ?? `🌟 Discover the amazing world of ${topic}!`);
-      setGeneratedHashtags(Array.isArray(data?.hashtags) ? data.hashtags : (data?.hashtags?.split?.(',') ?? []));
+      setGeneratedHashtags(Array.isArray(data?.hashtags) ? data.hashtags : (typeof data?.hashtags === 'string' ? data.hashtags.split(',') : []));
       setGeneratedImage(data?.image ?? `https://source.unsplash.com/800x600/?${encodeURIComponent(topic)}`);
     } catch (err) {
       console.error('Content generation error:', err);
-      // graceful fallback
+      setGeneratedCaption(selectedLanguage === 'urdu' ? `${topic} کی حیرت انگیز دنیا دریافت کریں!` : `🌟 Discover the amazing world of ${topic}!`);
+      setGeneratedHashtags([`#${topic.replace(/\s+/g, '')}`, '#trending', '#viral']);
+      setGeneratedImage(`https://source.unsplash.com/800x600/?${encodeURIComponent(topic)}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // --- Individual generation helpers ---
+  const generateCaptionOnly = async () => {
+    if (!topic.trim()) return;
+    setIsGenerating(true);
+    setGeneratedCaption('');
+    try {
+      const res = await fetch('http://localhost:8000/content/caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, language: selectedLanguage })
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const payload = await res.json();
+      const caption = payload?.caption ?? payload?.data?.caption ?? `🌟 Discover the amazing world of ${topic}!`;
+      setGeneratedCaption(caption);
+    } catch (err) {
+      console.error('Caption generation error:', err);
       setGeneratedCaption(
         selectedLanguage === 'urdu'
-          ? `${topic} کی حیرت انگیز دنیا دریافت کریں! ہمارے ساتھ شامل ہوں۔`
-          : `🌟 Discover the amazing world of ${topic}! Join us on this journey. ✨`
+          ? `${topic} کی حیرت انگیز دنیا دریافت کریں!`
+          : `🌟 Discover the amazing world of ${topic}!`
       );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const generateHashtagsOnly = async () => {
+    if (!topic.trim()) return;
+    setIsGenerating(true);
+    setGeneratedHashtags([]);
+    try {
+      const res = await fetch('http://localhost:8000/content/hashtags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, count: 6 })
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const payload = await res.json();
+      const hashtags = payload?.hashtags ?? payload?.data?.hashtags ?? [];
+      setGeneratedHashtags(Array.isArray(hashtags) ? hashtags : []);
+    } catch (err) {
+      console.error('Hashtag generation error:', err);
       setGeneratedHashtags([`#${topic.replace(/\s+/g, '')}`, '#trending', '#viral']);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const generateImageOnly = async () => {
+    if (!topic.trim()) return;
+    setIsGenerating(true);
+    setGeneratedImage(null);
+    try {
+      const res = await fetch('http://localhost:8000/content/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic })
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const payload = await res.json();
+      const image = payload?.image ?? payload?.data?.image ?? `https://source.unsplash.com/800x600/?${encodeURIComponent(topic)}`;
+      setGeneratedImage(image);
+    } catch (err) {
+      console.error('Image generation error:', err);
       setGeneratedImage(`https://source.unsplash.com/800x600/?${encodeURIComponent(topic)}`);
     } finally {
       setIsGenerating(false);
@@ -420,20 +478,37 @@ const AgenticSocialManager = () => {
             <button
               onClick={generateContent}
               disabled={!topic.trim() || isGenerating}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="animate-spin" size={20} />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles size={20} />
-                  Generate Content
-                </>
-              )}
+              {isGenerating ? 'Generating...' : 'Generate All Content'}
             </button>
+
+            {/* Individual generation buttons */}
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <button
+                onClick={generateCaptionOnly}
+                disabled={!topic.trim() || isGenerating}
+                className="py-2 px-3 bg-blue-500 text-white rounded-lg disabled:opacity-50"
+              >
+                Caption
+              </button>
+
+              <button
+                onClick={generateHashtagsOnly}
+                disabled={!topic.trim() || isGenerating}
+                className="py-2 px-3 bg-purple-500 text-white rounded-lg disabled:opacity-50"
+              >
+                Tags
+              </button>
+
+              <button
+                onClick={generateImageOnly}
+                disabled={!topic.trim() || isGenerating}
+                className="py-2 px-3 bg-green-500 text-white rounded-lg disabled:opacity-50"
+              >
+                Image
+              </button>
+            </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">
