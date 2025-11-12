@@ -1,202 +1,84 @@
-# 🚀 Agentic Social Manager - Setup Guide
+# 🚀 Agentic Social Manager — Setup Guide
 
-## Overview
+This guide walks through installing and running the project locally (Windows / PowerShell examples). The project has two parts:
+- Frontend: React + Tailwind (dev server on port 3000)
+- Backend: FastAPI (dev server on port 8000)
 
-This application uses:
-- **Frontend**: React with Tailwind CSS
-- **Backend**: FastAPI with Claude AI API
-- **Image Generation**: Unsplash API
-- **AI Content**: Anthropic Claude API
+Prerequisites
+- Python 3.10+ and pip
+- Node.js 18+ and npm
+- Git (to clone repository)
 
----
+1) Install backend dependencies
 
-## ⚙️ Backend Setup
-
-### 1. Install Dependencies
-
-```bash
-cd backend
+```powershell
+cd C:\FYP-ASM\backend
 pip install -r requirements.txt
 ```
 
-### 2. Get API Keys
+2) Configure environment (do NOT commit `.env`)
 
-#### **Anthropic Claude API** (For AI Content Generation)
-- Visit: https://console.anthropic.com/
-- Sign up and create an API key
-- Copy the key to your `.env` file
+Copy the example file and edit values locally:
 
-#### **Unsplash API** (For Image Generation)
-- Visit: https://unsplash.com/developers
-- Create an app and get your Access Key
-- Copy the key to your `.env` file
-
-### 3. Create Environment File
-
-```bash
-# Copy the example file
-cp .env.example .env
-
-# Edit .env with your API keys
-# ANTHROPIC_API_KEY=sk-ant-...
-# UNSPLASH_API_KEY=your-unsplash-key
+```powershell
+cd C:\FYP-ASM\backend
+copy .env.example .env
+# Open backend\.env and set real API keys (Anthropic or RapidAPI + Unsplash)
+code .env  # if using VS Code
 ```
 
-### 4. Start Backend Server
+Supported env variables (examples):
 
-```bash
+```env
+# Option A: Anthropic (Claude)
+ANTHROPIC_API_KEY=sk-ant-REPLACE_ME
+
+# Option B: RapidAPI (ChatGPT wrapper)
+RAPIDAPI_KEY=your_rapidapi_key
+RAPIDAPI_HOST=chatgpt-42.p.rapidapi.com
+
+# Unsplash (image search)
+UNSPLASH_API_KEY=REPLACE_WITH_UNSPLASH_KEY
+
+# Other
+JWT_SECRET=your_jwt_secret
+```
+
+3) (Optional) Ensure `.env` is ignored by git
+
+If `.gitignore` does not already include `.env`, add it to avoid committing secrets.
+
+4) Start backend server
+
+```powershell
+cd C:\FYP-ASM\backend
 python -m uvicorn app.main:app --reload
 ```
 
-Backend will be available at: **http://localhost:8000**
+You should see `Uvicorn running on http://127.0.0.1:8000` and `Application startup complete.`
 
-Check health: **http://localhost:8000/health**
+5) Start frontend dev server
 
----
-
-## 🎨 Frontend Setup
-
-### 1. Install Dependencies
-
-```bash
-cd frontend
-npm install
-```
-
-### 2. Start Development Server
-
-```bash
+```powershell
+cd C:\FYP-ASM\frontend
+npm install    # (first time only)
 npm start
 ```
 
-Frontend will open at: **http://localhost:3000** or **http://localhost:3001**
+Open `http://localhost:3000` in your browser.
 
----
+Testing endpoints (PowerShell)
 
-## 🔄 How It Works
-
-### Content Generation Flow
-
-1. **User enters topic** (e.g., "Technology")
-2. **Frontend sends request** to `POST /content/generate`
-3. **Backend processes**:
-   - Claude AI generates caption in selected language
-   - Claude AI generates relevant hashtags
-   - Unsplash API fetches related image
-4. **Frontend displays** all generated content
-5. **User can copy** the complete content
-
-### API Endpoint
-
-```bash
-POST http://localhost:8000/content/generate
-
-Request:
-{
-  "topic": "Technology",
-  "language": "english"
-}
-
-Response:
-{
-  "topic": "Technology",
-  "language": "english",
-  "caption": "🌟 Exploring cutting-edge technology innovations...",
-  "hashtags": ["#technology", "#innovation", "#trending"],
-  "image_url": "https://images.unsplash.com/...",
-  "success": true
-}
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8000/content/generate" -Method POST -ContentType "application/json" -Body (ConvertTo-Json @{ topic = "travel"; language = "english" })
 ```
 
----
+Troubleshooting
+- If you see `ModuleNotFoundError: No module named 'app'` make sure you run the uvicorn command from the `backend` folder.
+- If the frontend can't reach the backend, confirm the backend is running and CORS is enabled in `backend/app/main.py`.
+- If API calls return 401/403, double-check the keys in `backend/.env` and rotate keys if previously exposed.
 
-## 🛠️ Troubleshooting
+Security reminder
+- Never commit `.env` to git. Use `.env.example` only for placeholders.
 
-### Backend Won't Start
-```bash
-# Clear Python cache
-find . -type d -name __pycache__ -exec rm -rf {} +
-
-# Reinstall dependencies
-pip install --upgrade -r requirements.txt
-
-# Check if port 8000 is in use
-lsof -i :8000  # Mac/Linux
-netstat -ano | findstr :8000  # Windows
-```
-
-### API Key Errors
-- ✅ Ensure `.env` file exists in backend folder
-- ✅ Keys are correctly copied (no spaces, quotes)
-- ✅ Keys are valid and not expired
-
-### CORS Errors
-- ✅ Backend CORS is configured for `localhost:3000-3002`
-- ✅ Frontend API calls go to `http://localhost:8000`
-
-### Image Not Loading
-- Fallback to Unsplash random images
-- Check Unsplash API quota (50/hour free tier)
-
----
-
-## 📚 Features
-
-✨ **AI-Powered Captions** - Claude AI generates engaging Instagram captions
-🏷️ **Smart Hashtags** - Contextual hashtags generated by Claude
-🖼️ **Image Selection** - Relevant images from Unsplash
-🌍 **Multi-Language** - English and Urdu support
-📋 **Copy to Clipboard** - Easy content sharing
-🎨 **Beautiful UI** - Tailwind CSS responsive design
-
----
-
-## 🚀 Deployment
-
-### Backend (Heroku / Railway)
-```bash
-pip freeze > requirements.txt  # Already done
-git push heroku main
-```
-
-### Frontend (Vercel / Netlify)
-```bash
-npm run build
-# Deploy the build folder
-```
-
----
-
-## 📝 Environment Variables Reference
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | ✅ | Claude API key from console.anthropic.com |
-| `UNSPLASH_API_KEY` | ✅ | Unsplash API key from unsplash.com/developers |
-| `FASTAPI_HOST` | ❌ | Backend host (default: 127.0.0.1) |
-| `FASTAPI_PORT` | ❌ | Backend port (default: 8000) |
-| `MONGODB_URI` | ❌ | MongoDB connection string |
-
----
-
-## 🔐 Security Notes
-
-⚠️ **Never commit `.env` file to git**  
-⚠️ **Keep API keys private**  
-⚠️ **Use environment variables in production**  
-⚠️ **Regenerate keys if accidentally exposed**
-
----
-
-## 📞 Support
-
-For issues:
-1. Check the Troubleshooting section
-2. Review API documentation:
-   - Anthropic: https://docs.anthropic.com/
-   - Unsplash: https://unsplash.com/developers
-3. Check console logs for detailed errors
-
----
-
-**Happy Content Creating! 🚀**
+That's it — backend and frontend should now be running locally.

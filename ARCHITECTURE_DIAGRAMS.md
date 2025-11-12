@@ -102,100 +102,52 @@
 START
   ▼
 ┌──────────────────────────────────┐
-│ User enters topic & language     │
-│ • Topic: "Machine Learning"      │
-│ • Language: "English"            │
-└──────────────────────────────────┘
-  ▼
-┌──────────────────────────────────┐
-│ Frontend: generateContent()      │
-│ • Sets isGenerating = true       │
-│ • Clears previous content        │
-│ • Sends POST to backend          │
-└──────────────────────────────────┘
-  ▼
-┌──────────────────────────────────┐
-│ Backend: /content/generate       │
-│ • Validates input                │
-│ • Calls ai_service               │
-└──────────────────────────────────┘
-  ▼
-┌──────────────────────────────────┐
-│ generate_all_content()           │
-└──────────────────┬───────────────┘
-                   │
-        ┌──────────┼──────────┐
-        ▼          ▼          ▼
-   ┌─────────┐ ┌──────────┐ ┌──────────┐
-   │ Caption │ │ Hashtags │ │ Image    │
-   │ Gen     │ │ Gen      │ │ Gen      │
-   └─────────┘ └──────────┘ └──────────┘
-        │          │            │
-        ▼          ▼            ▼
-   ┌─────────┐ ┌──────────┐ ┌──────────┐
-   │ Claude  │ │ Claude   │ │ Unsplash │
-   │ API     │ │ API      │ │ API      │
-   └────┬────┘ └─────┬────┘ └────┬─────┘
-        ▼            ▼            ▼
-   ┌─────────┐ ┌──────────┐ ┌──────────┐
-   │ "🤖     │ │ ["#AI",  │ │ "https://│
-   │ Explore │ │  "#tech",│ │ images.  │
-   │ AI..."  │ │  ...]    │ │ unsplash │
-   └────┬────┘ └─────┬────┘ │ .com/... │
-        │            │       └────┬─────┘
-        └──────────┬─┴────────────┘
-                   ▼
-        ┌──────────────────────┐
-        │ Combine Results      │
-        │ {caption, hashtags,  │
-        │  image_url, success}│
-        └──────────┬───────────┘
-                   ▼
-        ┌──────────────────────┐
-        │ JSON Response        │
-        │ 200 OK               │
-        └──────────┬───────────┘
-                   ▼
-        ┌──────────────────────┐
-        │ Frontend receives    │
-        │ • Updates state      │
-        │ • Displays caption   │
-        │ • Shows hashtags     │
-        │ • Loads image        │
-        │ • Sets isGenerating  │
-        │   = false            │
-        └──────────┬───────────┘
-                   ▼
-        ┌──────────────────────┐
-        │ User sees result!    │
-        │ • Caption            │
-        │ • Hashtags           │
-        │ • Image              │
-        │ • Copy button        │
-        └──────────┬───────────┘
-                   ▼
-                SUCCESS
+## System Architecture
+
+This document contains an ASCII-style architecture overview and the content generation data flow used during development. The runtime components are:
+
+- Frontend: React app running at `http://localhost:3000` (development)
+- Backend: FastAPI app running at `http://localhost:8000`
+- AI provider: Anthropic Claude OR a RapidAPI ChatGPT wrapper (configured in `.env`)
+- Image provider: Unsplash API (configured in `.env`)
+
+High-level flow
+
+1. User enters a topic and optional language in the frontend UI.
+2. Frontend calls one of the backend endpoints under `/content`:
+   - `/content/generate` — caption + hashtags + image
+   - `/content/caption` — caption only
+   - `/content/hashtags` — hashtags only
+   - `/content/image` — image only
+3. Backend validates the request, calls the AI image/text providers, and returns a JSON response.
+4. Frontend displays results and provides copy / share actions.
+
+Notes
+- The backend supports calling Anthropic directly (use `ANTHROPIC_API_KEY`) or calling a RapidAPI-hosted ChatGPT endpoint (use `RAPIDAPI_KEY` and `RAPIDAPI_HOST`).
+- Make sure `backend/.env` contains the correct provider keys and is not committed.
+
+Diagram (simplified):
+
+```text
+Frontend (React) http://localhost:3000
+  └─ POST /content/generate { topic, language }
+      └─ Backend (FastAPI) http://localhost:8000
+          ├─ content.router -> validate request
+          ├─ ai_service -> call text generation provider (Anthropic or RapidAPI)
+          └─ ai_service -> call Unsplash for image
+              └─ Return { caption, hashtags, image }
 ```
 
-## API Request/Response Cycle
+Recommended local testing commands (PowerShell):
 
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8000/content/generate" -Method POST -ContentType "application/json" -Body (ConvertTo-Json @{ topic = "travel"; language = "english" })
 ```
-FRONTEND                          BACKEND
-   │                               │
-   │  POST /content/generate       │
-   │  {                            │
-   │    "topic": "Tech",           │
-   │    "language": "english"      │
-   │  }                            │
-   ├──────────────────────────────►│
-   │                               │
-   │                        ┌──────┴──────┐
-   │                        │ Validate    │
-   │                        │ Input       │
-   │                        └──────┬──────┘
-   │                               │
-   │                        ┌──────┴──────┐
-   │                        │ Call AI     │
+
+Security
+- Do not commit `.env` with real keys. Use `.env.example` as a template with placeholders.
+
+-- End of architecture notes
    │                        │ Services    │
    │                        └──────┬──────┘
    │                               │
