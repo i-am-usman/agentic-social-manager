@@ -441,7 +441,17 @@ const AgenticSocialManager = () => {
 
   const ContentGenerationPage = () => (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">AI Content Generator</h1>
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={() => setCurrentPage('dashboard')}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Back to Dashboard"
+        >
+          <Home size={20} />
+          <span className="font-medium">Back</span>
+        </button>
+        <h1 className="text-3xl font-bold text-gray-800">AI Content Generator</h1>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
