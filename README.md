@@ -1,7 +1,3 @@
-Below is a **clean, professional `README.md`** for your GitHub repository, fully matching your project:
-
----
-
  🚀 Agentic Social Manager
 
 AI-Powered Social Media Content Generator (Gemini + Bytez)
