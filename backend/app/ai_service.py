@@ -8,10 +8,6 @@ from google import genai
 # ----------------------------------------
 # CONFIGURE YOUR API KEYS HERE
 # ----------------------------------------
-# GEMINI_API_KEY = "AIzaSyBgD9Tz9TWlxQSkrqnliUbylYFqMegq3uQ"
-# BYTEZ_API_KEY = "c0ca57158d19b7982331287fd282f9f1"
-# BYTEZ_MODEL = "stabilityai/stable-diffusion-xl-base-1.0"
-
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 BYTEZ_API_KEY = os.getenv("BYTEZ_API_KEY")
 BYTEZ_MODEL = os.getenv("BYTEZ_MODEL", "stabilityai/stable-diffusion-xl-base-1.0")
