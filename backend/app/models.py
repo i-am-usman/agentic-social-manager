@@ -22,3 +22,32 @@ class UserResponse(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
 
+
+
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+
+# class GeneratedContent(BaseModel):
+#     topic: str
+#     language: str
+#     caption: Optional[str] = None
+#     hashtags: Optional[str] = None
+#     image: Optional[str] = None
+#     status: Optional[str] = "draft"
+#     scheduled_at: Optional[datetime] = None
+#     created_at: Optional[datetime] = None
+
+class GeneratedContent(BaseModel):
+    user_id: str
+    topic: str
+    language: str = "english"
+    caption: Optional[str] = None
+    hashtags: Optional[List[str]] = None
+    image: Optional[str] = None
+    status: Optional[str] = "draft"
+    approval_status: Optional[str] = "pending"
+    scheduled_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

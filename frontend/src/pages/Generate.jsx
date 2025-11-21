@@ -12,6 +12,10 @@ export default function Generate() {
   const [loadingHashtags, setLoadingHashtags] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState("pending");
+  const [scheduledAt, setScheduledAt] = useState("");
+
+  
 
   // -------------------------------
   // 📌 1 — Generate Caption
@@ -24,7 +28,7 @@ export default function Generate() {
       const res = await fetch("http://127.0.0.1:8000/content/caption", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, language }), // 👈 use selected language
+        body: JSON.stringify({ topic, language }),
       });
       const data = await res.json();
       setCaption(data.caption);
@@ -90,7 +94,7 @@ export default function Generate() {
       const res = await fetch("http://127.0.0.1:8000/content/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, language }), // 👈 use selected language
+        body: JSON.stringify({ topic, language }),
       });
       const data = await res.json();
 
@@ -103,6 +107,53 @@ export default function Generate() {
 
     setLoadingAll(false);
   };
+    {/* IMAGE PROMPT INPUT */}
+        <input
+        type="text"
+        placeholder="Enter an image prompt, e.g., 'Loyalty of a Dog'"
+        className="w-full p-3 border rounded-lg mb-4"
+        value={imagePrompt}
+        onChange={(e) => setImagePrompt(e.target.value)}
+        />
+
+  // -------------------------------
+  // 📌 5 — Save Content to MongoDB
+  // -------------------------------
+  const handleSaveContent = async () => {
+    if (!caption && !hashtags && !generatedImage) {
+      alert("No content to save. Please generate something first.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/content/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: "674b0c2f8b1234567890abcd", // Replace with actual user ID later
+          topic,
+          language,
+          caption,
+          hashtags: Array.isArray(hashtags) ? hashtags : hashtags.split(" "), // Convert string to array
+          image: generatedImage,
+          status: "draft",
+          approval_status: "pending",
+        }),
+      });
+
+      const data = await res.json();
+      if (data.status === "success") {
+        alert("Content saved successfully! ID: " + data.id);
+      } else {
+        alert("Failed to save content.");
+      }
+    } catch (err) {
+      alert("Error saving content: " + err.message);
+    }
+  };
+
+
+
 
   return (
     <div className="max-w-5xl mx-auto p-6">
@@ -120,9 +171,18 @@ export default function Generate() {
         onChange={(e) => setTopic(e.target.value)}
       />
 
+        {/* IMAGE PROMPT INPUT */}
+        <input
+        type="text"
+        placeholder="Enter an image prompt, e.g., 'Loyalty of a Dog'"
+        className="w-full p-3 border rounded-lg mb-4"
+        value={imagePrompt}
+        onChange={(e) => setImagePrompt(e.target.value)}
+        />
       {/* LANGUAGE SELECTION */}
       <div className="flex gap-6 mb-6">
-        <label className="flex items-center gap-2"> Select the Language :  
+        <label className="flex items-center gap-2">
+          Select the Language :
           <input
             type="radio"
             value="english"
@@ -142,6 +202,33 @@ export default function Generate() {
         </label>
       </div>
 
+      {/* APPROVAL STATUS */}
+        <div className="mt-6">
+        <p className="font-semibold text-gray-800 mb-2">Approval Status:</p>
+        <select
+            value={approvalStatus}
+            onChange={(e) => setApprovalStatus(e.target.value)}
+            className="p-2 border rounded-lg"
+        >
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+        </select>
+        </div>
+
+        {/* SCHEDULED TIME */}
+        <div className="mt-6">
+        <p className="font-semibold text-gray-800 mb-2">Schedule Post At:</p>
+        <input
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            className="p-2 border rounded-lg"
+        />
+        <br /> <br />
+        </div>
+
+     
       {/* BUTTONS */}
       <div className="flex flex-wrap gap-4 mb-8">
         <button
@@ -182,7 +269,6 @@ export default function Generate() {
       </div>
 
       {/* OUTPUTS */}
-      
       {caption && (
         <div className="mt-6 bg-gray-100 p-4 rounded-lg">
           <p className="font-semibold text-gray-800">Caption ({language}):</p>
@@ -203,16 +289,27 @@ export default function Generate() {
         </div>
       )}
 
-      {generatedImage && (
+      {generatedImage ? (
         <div className="mt-6">
-          <p className="font-semibold text-gray-800 mb-2">Generated Image:</p>
-          <img
+            <p className="font-semibold text-gray-800 mb-2">Generated Image:</p>
+            <img
             src={generatedImage}
             alt="Generated"
             className="rounded-lg shadow-md border"
-          />
+            />
         </div>
-      )}
+        ) : (
+        <div className="mt-6 text-gray-500 italic">No image generated yet.</div>
+        )}
+
+      {/* SAVE BUTTON */}
+      <button
+        onClick={handleSaveContent}
+        className="bg-blue-600 text-white px-5 py-2 rounded-lg mt-6"
+      >
+        Save Content
+      </button>
+
     </div>
   );
 }

@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.ai_service import AIService
+from datetime import datetime
+from app.database import posts_collection
+from app.models import GeneratedContent
 
 router = APIRouter(prefix="/content", tags=["content"])
 
@@ -18,6 +21,18 @@ class HashtagRequest(BaseModel):
 
 class ImageRequest(BaseModel):
     topic: str
+
+
+@router.post("/save")
+async def save_generated_content(content: GeneratedContent):
+    try:
+        content_dict = content.dict()
+        content_dict["created_at"] = datetime.utcnow()
+        result = posts_collection.insert_one(content_dict)
+        return {"status": "success", "id": str(result.inserted_id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/generate")
 async def generate_content(request: ContentRequest):
