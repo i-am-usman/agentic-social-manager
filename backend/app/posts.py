@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.ai_service import AIService
-from app.utils import verify_token
+from app.dependencies import get_current_user
+from app.database import posts_collection
 from pydantic import BaseModel
+from datetime import datetime
+from bson import ObjectId
 
-router = APIRouter(prefix="/posts", tags=["posts"])
+router = APIRouter(prefix="/posts", tags=["Posts"])
 
 class PostCreate(BaseModel):
     title: str
@@ -12,35 +15,53 @@ class PostCreate(BaseModel):
     language: str = "english"
 
 @router.post("/create")
-async def create_post(post: PostCreate, email: str = Depends(verify_token)):
+async def create_post(post: PostCreate, user: dict = Depends(get_current_user)):
     """Create a new social media post with AI-generated content"""
     try:
-        # Generate content using AIService
         caption = AIService.generate_caption(post.topic, post.language)
         hashtags = AIService.generate_hashtags(post.topic)
         image = AIService.generate_image(post.topic)
-        
-        return {
-            "status": "success",
-            "post": {
-                "title": post.title,
-                "caption": caption,
-                "hashtags": hashtags,
-                "image": image,
-                "created_by": email
-            }
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
+
+        post_data = {
+            "title": post.title,
+            "content": post.content,
+            "caption": caption,
+            "hashtags": hashtags,
+            "image": image,
+            "created_by": user["_id"],
+            "status": "draft",
+            "created_at": datetime.utcnow()
         }
 
+        posts_collection.insert_one(post_data)
+
+        return {"status": "success", "post": post_data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/user-posts")
-async def get_user_posts(email: str = Depends(verify_token)):
+async def get_user_posts(user: dict = Depends(get_current_user)):
     """Get all posts created by the user"""
+    posts = list(posts_collection.find({"created_by": user["_id"]}))
+    for p in posts:
+        p["_id"] = str(p["_id"])
+    return {"status": "success", "posts": posts}
+
+@router.get("/stats")
+async def get_post_stats(user: dict = Depends(get_current_user)):
+    """Get post statistics for the dashboard"""
+    user_id = user["_id"]
+    total = posts_collection.count_documents({"created_by": user_id})
+    drafts = posts_collection.count_documents({"created_by": user_id, "status": "draft"})
+    scheduled = posts_collection.count_documents({"created_by": user_id, "status": "scheduled"})
+    published = posts_collection.count_documents({"created_by": user_id, "status": "published"})
+
     return {
         "status": "success",
-        "posts": [],
-        "message": "Database integration coming soon"
+        "stats": {
+            "total_posts": total,
+            "drafts": drafts,
+            "scheduled": scheduled,
+            "published": published
+        }
     }
