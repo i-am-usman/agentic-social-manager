@@ -5,7 +5,8 @@ from app.posts import router as posts_router
 from app.content import router as content_router
 from app.profiles import router as profiles_router
 
-app = FastAPI()
+
+app = FastAPI(title="Agentic Social Manager")
 
 # CORS Middleware
 app.add_middleware(

@@ -1,23 +1,107 @@
+// import React, { useState } from "react";
+// import { Sparkles, Loader2 } from "lucide-react";
+// import { Link } from "react-router-dom";
+
+// export default function Login({ setIsAuthenticated }) {
+//   const [loading, setLoading] = useState(false);
+//   const [form, setForm] = useState({ email: "", password: "" });
+
+//   const handleLogin = () => {
+//     setLoading(true);
+//     setTimeout(() => {
+//       setIsAuthenticated(true); // Replace with backend API login later
+//       setLoading(false);
+//     }, 1000);
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center p-6">
+//       <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-8">
+        
+//         <div className="text-center mb-8">
+//           <div className="bg-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+//             <Sparkles className="text-white" size={32} />
+//           </div>
+//           <h1 className="text-3xl font-bold mt-4">Agentic Social Manager</h1>
+//           <p className="text-gray-600 mt-1">Login to continue</p>
+//         </div>
+
+//         <div className="space-y-4">
+//           <input
+//             type="email"
+//             placeholder="Email"
+//             className="w-full p-3 border rounded-lg focus:ring focus:ring-indigo-300"
+//             onChange={(e) => setForm({ ...form, email: e.target.value })}
+//           />
+//           <input
+//             type="password"
+//             placeholder="Password"
+//             className="w-full p-3 border rounded-lg focus:ring focus:ring-indigo-300"
+//             onChange={(e) => setForm({ ...form, password: e.target.value })}
+//           />
+
+//           <button
+//             onClick={handleLogin}
+//             className="bg-indigo-600 w-full py-3 rounded-lg text-white font-semibold flex justify-center items-center"
+//           >
+//             {loading ? <Loader2 className="animate-spin" /> : "Login"}
+//           </button>
+//         </div>
+
+//         <p className="text-center text-gray-600 mt-4">
+//           Don’t have an account?
+//           <Link to="/register" className="text-indigo-600 font-semibold ml-1">
+//             Register
+//           </Link>
+//         </p>
+//       </div>
+//     </div>
+//   );
+// } // old code above
+
+
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Sparkles, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 export default function Login({ setIsAuthenticated }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "" });
+  const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setIsAuthenticated(true); // Replace with backend API login later
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem("token", data.access_token); // ✅ store JWT
+        setIsAuthenticated(true); // ✅ update auth state
+        alert("Login successful!");
+        navigate("/dashboard"); // ✅ redirect
+      } else {
+        alert(data.detail || "Login failed");
+      }
+    } catch (err) {
+      alert("Error logging in: " + err.message);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center p-6">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-8">
         
+        {/* Logo + Title */}
         <div className="text-center mb-8">
           <div className="bg-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
             <Sparkles className="text-white" size={32} />
@@ -26,28 +110,34 @@ export default function Login({ setIsAuthenticated }) {
           <p className="text-gray-600 mt-1">Login to continue</p>
         </div>
 
-        <div className="space-y-4">
+        {/* Form */}
+        <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
             placeholder="Email"
             className="w-full p-3 border rounded-lg focus:ring focus:ring-indigo-300"
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
           />
           <input
             type="password"
             placeholder="Password"
             className="w-full p-3 border rounded-lg focus:ring focus:ring-indigo-300"
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
           />
 
           <button
-            onClick={handleLogin}
+            type="submit"
             className="bg-indigo-600 w-full py-3 rounded-lg text-white font-semibold flex justify-center items-center"
           >
             {loading ? <Loader2 className="animate-spin" /> : "Login"}
           </button>
-        </div>
+        </form>
 
+        {/* Register Link */}
         <p className="text-center text-gray-600 mt-4">
           Don’t have an account?
           <Link to="/register" className="text-indigo-600 font-semibold ml-1">
