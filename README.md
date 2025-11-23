@@ -1,8 +1,3 @@
-
-
-## ✅ Updated `README.md`
-
-```markdown
 # 🚀 Agentic Social Manager
 
 AI-Powered Social Media Management Platform (FastAPI + React + MongoDB)
