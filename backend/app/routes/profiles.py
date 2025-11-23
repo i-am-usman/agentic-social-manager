@@ -1,8 +1,8 @@
 from bson import ObjectId
 from fastapi import APIRouter, Depends
-from app.dependencies import get_current_user
+from app.services.dependencies import get_current_user
 from app.models import UserProfileData
-from app.database import users_collection
+from app.services.database import users_collection
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 

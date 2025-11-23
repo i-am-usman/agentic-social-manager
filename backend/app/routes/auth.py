@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from app.models import UserRegister, UserLogin
-from app.database import users_collection
-from app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.schemas.users import UserRegister, UserLogin   #  schemas
+from app.services.database import users_collection      #  database connection
+from app.config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import datetime, timedelta
 import bcrypt
 from jose import jwt
@@ -40,6 +40,6 @@ def login_user(user: UserLogin):
     if not bcrypt.checkpw(user.password.encode("utf-8"), existing["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # ✅ Use MongoDB _id in token
+    #  Use MongoDB _id in token
     token = create_jwt_token(str(existing["_id"]))
     return {"access_token": token, "token_type": "bearer"}

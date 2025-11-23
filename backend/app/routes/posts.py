@@ -1,18 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.ai_service import AIService
-from app.dependencies import get_current_user
-from app.database import posts_collection
-from pydantic import BaseModel
+from app.services.ai_service import AIService
+from app.services.dependencies import get_current_user
+from app.services.database import posts_collection
+from app.schemas.post_schema import PostCreate, PostPublic
 from datetime import datetime
 from bson import ObjectId
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
-
-class PostCreate(BaseModel):
-    title: str
-    content: str
-    topic: str
-    language: str = "english"
 
 @router.post("/create")
 async def create_post(post: PostCreate, user: dict = Depends(get_current_user)):
@@ -28,29 +22,32 @@ async def create_post(post: PostCreate, user: dict = Depends(get_current_user)):
             "caption": caption,
             "hashtags": hashtags,
             "image": image,
-            "created_by": user["_id"],
+            "created_by": str(user["_id"]),   #  store as string
             "status": "draft",
             "created_at": datetime.utcnow()
         }
 
-        posts_collection.insert_one(post_data)
+        result = posts_collection.insert_one(post_data)
+        post_data["_id"] = str(result.inserted_id)
 
         return {"status": "success", "post": post_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/user-posts")
 async def get_user_posts(user: dict = Depends(get_current_user)):
     """Get all posts created by the user"""
-    posts = list(posts_collection.find({"created_by": user["_id"]}))
+    posts = list(posts_collection.find({"created_by": str(user["_id"])}))
     for p in posts:
         p["_id"] = str(p["_id"])
     return {"status": "success", "posts": posts}
 
+
 @router.get("/stats")
 async def get_post_stats(user: dict = Depends(get_current_user)):
     """Get post statistics for the dashboard"""
-    user_id = user["_id"]
+    user_id = str(user["_id"])   #  ensure string match
     total = posts_collection.count_documents({"created_by": user_id})
     drafts = posts_collection.count_documents({"created_by": user_id, "status": "draft"})
     scheduled = posts_collection.count_documents({"created_by": user_id, "status": "scheduled"})

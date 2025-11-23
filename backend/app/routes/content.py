@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from app.ai_service import AIService
+from app.services.ai_service import AIService
 from datetime import datetime
-from app.database import posts_collection
+from app.services.database import posts_collection
 from app.models import GeneratedContent
-from app.dependencies import get_current_user   # ✅ fixed import
+from app.services.dependencies import get_current_user   
 
 router = APIRouter(prefix="/content", tags=["Content"])
 
@@ -36,18 +36,6 @@ def save_content(content: GeneratedContent, user: dict = Depends(get_current_use
         "id": str(result.inserted_id),
         "message": "Content saved successfully"
     }
-
-# @router.post("/save")
-# def save_content(content: GeneratedContent, user: dict = Depends(get_current_user)):
-#     """Save generated content to MongoDB"""
-#     try:
-#         content_data = content.dict()
-#         content_data["user_id"] = user["_id"]
-#         content_data["created_at"] = datetime.utcnow()
-#         posts_collection.insert_one(content_data)
-#         return {"message": "Content saved successfully"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/generate")

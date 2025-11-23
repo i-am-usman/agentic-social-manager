@@ -274,10 +274,10 @@ export default function Generate() {
         </div>
       )}
 
-      {hashtags && (
+      {hashtags.length > 0 && (
         <div className="mt-4 bg-gray-100 p-4 rounded-lg">
           <p className="font-semibold text-gray-800">Hashtags:</p>
-          <p className="text-indigo-600 mt-1">{hashtags}</p>
+          <p className="text-indigo-600 mt-1">{hashtags.join(" ")}</p>
         </div>
       )}
 

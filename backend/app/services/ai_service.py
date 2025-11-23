@@ -1,29 +1,23 @@
-# ai_service.py
 import base64
 import os
 from bytez import Bytez
 from google import genai
 
 
-# ----------------------------------------
-# CONFIGURE YOUR API KEYS HERE
-# ----------------------------------------
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 BYTEZ_API_KEY = os.getenv("BYTEZ_API_KEY")
 BYTEZ_MODEL = os.getenv("BYTEZ_MODEL", "stabilityai/stable-diffusion-xl-base-1.0")
 
-# ----------------------------------------
-# Initialize Gemini Client
-# ----------------------------------------
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 class AIService:
     """AI generation using Gemini (text) + Bytez (images)"""
 
-    # ----------------------------
+    
     # Generate Caption (Gemini)
-    # ----------------------------
+    
     @staticmethod
     def generate_caption(topic: str, language: str = "english") -> str:
         prompt = (
@@ -38,9 +32,9 @@ class AIService:
 
         return response.text.strip()
 
-    # ----------------------------
+  
     # Generate Hashtags (Gemini)
-    # ----------------------------
+   
     @staticmethod
     def generate_hashtags(topic: str, count: int = 6) -> list:
         prompt = (
@@ -65,9 +59,9 @@ class AIService:
 
         return clean_tags[:count]
 
-    # ----------------------------
+    
     # Generate Image (Bytez)
-    # ----------------------------
+    
     @staticmethod
     def generate_image(topic: str) -> str:
         sdk = Bytez(BYTEZ_API_KEY)
@@ -105,9 +99,9 @@ class AIService:
             "%3C/svg%3E"
         )
 
-    # ----------------------------
+    
     # Generate All Content
-    # ----------------------------
+    
     @staticmethod
     def generate_full_content(topic: str, language: str = "english"):
         return {
