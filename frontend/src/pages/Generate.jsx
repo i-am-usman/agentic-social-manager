@@ -15,6 +15,16 @@ export default function Generate() {
   const [approvalStatus, setApprovalStatus] = useState("pending");
   const [scheduledAt, setScheduledAt] = useState("");
 
+  // Helper: remove appended translation block (e.g. "Translation: ...") for non-English display
+  const extractOriginalCaption = (text, lang) => {
+    if (!text) return text;
+    const marker = "Translation:";
+    if (lang === "urdu" && text.includes(marker)) {
+      return text.split(marker)[0].trim();
+    }
+    return text;
+  };
+
   const token = localStorage.getItem("token"); // ✅ get JWT
 
   // -------------------------------
@@ -31,7 +41,8 @@ export default function Generate() {
         body: JSON.stringify({ topic, language }),
       });
       const data = await res.json();
-      setCaption(data.caption);
+      // strip translation if the backend appended it
+      setCaption(extractOriginalCaption(data.caption, language));
     } catch (err) {
       alert("Error generating caption!");
     }
@@ -98,7 +109,7 @@ export default function Generate() {
       });
       const data = await res.json();
 
-      setCaption(data.data.caption);
+      setCaption(extractOriginalCaption(data.data.caption, language));
       setHashtags(data.data.hashtags);
       setGeneratedImage(data.data.image);
     } catch (err) {
@@ -153,155 +164,151 @@ export default function Generate() {
         AI Content Generator ✨
       </h1>
 
-      {/* TOPIC INPUT */}
-      <input
-        type="text"
-        placeholder="Enter a topic, e.g., 'Sunset photography'"
-        className="w-full p-3 border rounded-lg mb-4"
-        value={topic}
-        onChange={(e) => setTopic(e.target.value)}
-      />
-
-      {/* IMAGE PROMPT INPUT */}
-      <input
-        type="text"
-        placeholder="Enter an image prompt, e.g., 'Loyalty of a Dog'"
-        className="w-full p-3 border rounded-lg mb-4"
-        value={imagePrompt}
-        onChange={(e) => setImagePrompt(e.target.value)}
-      />
-
-      {/* LANGUAGE SELECTION */}
-      <div className="flex gap-6 mb-6">
-        <label className="flex items-center gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        {/* LEFT: Inputs & Actions */}
+        <div>
+          {/* TOPIC INPUT */}
           <input
-            type="radio"
-            value="english"
-            checked={language === "english"}
-            onChange={(e) => setLanguage(e.target.value)}
+            type="text"
+            placeholder="Enter a topic, e.g., 'Sunset photography'"
+            className="w-full p-3 border rounded-lg mb-4"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
           />
-          English
-        </label>
-        <label className="flex items-center gap-2">
+
+          {/* LANGUAGE SELECTION */}
+          <div className="flex gap-6 mb-4 font-semibold text-gray-800 items-center">
+            <span>Select Language:</span>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                value="english"
+                checked={language === "english"}
+                onChange={(e) => setLanguage(e.target.value)}
+              />
+              English
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                value="urdu"
+                checked={language === "urdu"}
+                onChange={(e) => setLanguage(e.target.value)}
+              />
+              Urdu
+            </label>
+          </div>
+
+          {/* IMAGE PROMPT INPUT */}
           <input
-            type="radio"
-            value="urdu"
-            checked={language === "urdu"}
-            onChange={(e) => setLanguage(e.target.value)}
+            type="text"
+            placeholder="Enter an image prompt, e.g., 'Loyalty of a Dog'"
+            className="w-full p-3 border rounded-lg mb-4"
+            value={imagePrompt}
+            onChange={(e) => setImagePrompt(e.target.value)}
           />
-          Urdu
-        </label>
-      </div>
 
-      {/* APPROVAL STATUS */}
-      <div className="mt-6">
-        <p className="font-semibold text-gray-800 mb-2">Approval Status:</p>
-        <select
-          value={approvalStatus}
-          onChange={(e) => setApprovalStatus(e.target.value)}
-          className="p-2 border rounded-lg"
-        >
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
+          {/* APPROVAL STATUS */}
+          <div className="mt-2 mb-4">
+            <p className="font-semibold text-gray-800 mb-2">Approval Status:</p>
+            <select
+              value={approvalStatus}
+              onChange={(e) => setApprovalStatus(e.target.value)}
+              className="p-2 border rounded-lg w-full"
+            >
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
 
-      {/* SCHEDULED TIME */}
-      <div className="mt-6">
-        <p className="font-semibold text-gray-800 mb-2">Schedule Post At:</p>
-        <input
-          type="datetime-local"
-          value={scheduledAt}
-          onChange={(e) => setScheduledAt(e.target.value)}
-          className="p-2 border rounded-lg"
-        />
-      </div>
-
-      {/* BUTTONS */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        {/* Caption */}
-        <button
-          onClick={handleGenerateCaption}
-          className="bg-indigo-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
-          disabled={loadingCaption}
-        >
-          {loadingCaption ? <Loader2 className="animate-spin" /> : <Wand2 size={18} />}
-          {loadingCaption ? "Generating..." : "Generate Caption"}
-        </button>
-
-        {/* Hashtags */}
-        <button
-          onClick={handleGenerateHashtags}
-          className="bg-purple-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
-          disabled={loadingHashtags}
-        >
-          {loadingHashtags ? <Loader2 className="animate-spin" /> : <Wand2 size={18} />}
-          {loadingHashtags ? "Generating..." : "Generate Hashtags"}
-        </button>
-
-        {/* Image */}
-        <button
-          onClick={handleGenerateImage}
-          className="bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
-          disabled={loadingImage}
-        >
-          {loadingImage ? <Loader2 className="animate-spin" /> : <ImageIcon size={18} />}
-          {loadingImage ? "Generating..." : "Generate Image"}
-        </button>
-
-        <button
-          onClick={handleGenerateAll}
-          className="bg-orange-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
-          disabled={loadingAll}
-        >
-          {loadingAll ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
-          {loadingAll ? "Generating..." : "Generate All Content"}
-        </button>
-      </div>
-
-      {/* OUTPUTS */}
-      {caption && (
-        <div className="mt-6 bg-gray-100 p-4 rounded-lg">
-          <p className="font-semibold text-gray-800">Caption ({language}):</p>
-          <p
-            className={`mt-1 ${
-              language === "urdu" ? "text-right font-noto text-lg" : "text-left"
-            } text-gray-700`}
-          >
-            {caption}
-          </p>
-        </div>
-      )}
-
-      {hashtags.length > 0 && (
-        <div className="mt-4 bg-gray-100 p-4 rounded-lg">
-          <p className="font-semibold text-gray-800">Hashtags:</p>
-          <p className="text-indigo-600 mt-1">{hashtags.join(" ")}</p>
-        </div>
-      )}
-
-      {generatedImage ? (
-        <div className="mt-6">
-            <p className="font-semibold text-gray-800 mb-2">Generated Image:</p>
-            <img
-            src={generatedImage}
-            alt="Generated"
-            className="rounded-lg shadow-md border"
+          {/* SCHEDULED TIME */}
+          <div className="mt-2 mb-6">
+            <p className="font-semibold text-gray-800 mb-2">Schedule Post At:</p>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="p-2 border rounded-lg w-full"
             />
+          </div>
+
+          {/* BUTTONS */}
+          <div className="flex flex-wrap gap-3 mb-6">
+            <button
+              onClick={handleGenerateCaption}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+              disabled={loadingCaption}
+            >
+              {loadingCaption ? <Loader2 className="animate-spin" /> : <Wand2 size={18} />}
+              {loadingCaption ? "Generating..." : "Caption"}
+            </button>
+
+            <button
+              onClick={handleGenerateHashtags}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+              disabled={loadingHashtags}
+            >
+              {loadingHashtags ? <Loader2 className="animate-spin" /> : <Wand2 size={18} />}
+              {loadingHashtags ? "Generating..." : "Hashtags"}
+            </button>
+
+            <button
+              onClick={handleGenerateImage}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+              disabled={loadingImage}
+            >
+              {loadingImage ? <Loader2 className="animate-spin" /> : <ImageIcon size={18} />}
+              {loadingImage ? "Generating..." : "Image"}
+            </button>
+
+            <button
+              onClick={handleGenerateAll}
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+              disabled={loadingAll}
+            >
+              {loadingAll ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
+              {loadingAll ? "Generating..." : "Generate All"}
+            </button>
+          </div>
+
+          {/* SAVE BUTTON */}
+          <button
+            onClick={handleSaveContent}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
+          >
+            Save Content
+          </button>
         </div>
-        ) : (
-        <div className="mt-6 text-gray-500 italic">No image generated yet.</div>
-        )}
 
-      {/* SAVE BUTTON */}
-      <button
-        onClick={handleSaveContent}
-        className="bg-blue-600 text-white px-5 py-2 rounded-lg mt-6"
-      >
-        Save Content
-      </button>
+        {/* RIGHT: Generated outputs */}
+        <div className="space-y-6">
+          {/* Caption */}
+          <div className="bg-gray-100 p-4 rounded-lg min-h-[120px]">
+            <p className="font-semibold text-gray-800">Caption ({language}):</p>
+            <p
+              className={`mt-2 ${language === "urdu" ? "text-right font-noto text-lg" : "text-left"} text-gray-700`}
+            >
+              {caption || <span className="text-gray-400 italic">No caption yet.</span>}
+            </p>
+          </div>
 
+          {/* Hashtags */}
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <p className="font-semibold text-gray-800">Hashtags:</p>
+            <p className="text-indigo-600 mt-2">{hashtags.length ? hashtags.join(" ") : <span className="text-gray-400 italic">No hashtags yet.</span>}</p>
+          </div>
+
+          {/* Generated Image */}
+          <div className="bg-white p-4 rounded-lg border flex items-center justify-center">
+            {generatedImage ? (
+              <img src={generatedImage} alt="Generated" className="rounded-lg shadow-md max-h-96 object-contain" />
+            ) : (
+              <div className="text-gray-400 italic">No image generated yet.</div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
