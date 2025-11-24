@@ -7,6 +7,7 @@ class PostCreate(BaseModel):
     content: str
     topic: str
     language: str = "english"
+    user_id: Optional[str] = None  # added so incoming payloads can carry user
 
 class PostPublic(BaseModel):
     id: str
@@ -17,3 +18,4 @@ class PostPublic(BaseModel):
     image: str
     status: str
     created_at: datetime
+    user_id: Optional[str] = None
