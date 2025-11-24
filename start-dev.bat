@@ -24,7 +24,7 @@ if not exist "backend\.env" (
     exit /b 1
 )
 
-echo [1/3] Installing backend dependencies...
+echo [1/4] Installing backend dependencies...
 cd backend
 pip install -r requirements.txt
 cd ..
@@ -35,7 +35,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [2/3] Installing frontend dependencies...
+echo [2/4] Installing frontend dependencies...
 cd frontend
 call npm install
 cd ..
@@ -60,6 +60,72 @@ start cmd /k "cd backend && python -m uvicorn app.main:app --reload"
 REM Wait a moment for backend to start
 timeout /t 3 /nobreak
 
+REM Offer optional DB migration (created_by -> user_id)
+echo.
+echo ====================================================
+echo  Optional: Migrate existing documents (created_by -> user_id)
+echo ====================================================
+echo This will run backend\scripts\migrate_created_by_to_user_id.py
+echo It supports --dry-run and --collection flags.
+echo.
+
+set /p MIGRATE="Run migration? [d=dry-run / a=apply / s=skip] (d/a/s): "
+if /I "%MIGRATE%"=="d" goto DRY
+if /I "%MIGRATE%"=="a" goto APPLY
+if /I "%MIGRATE%"=="s" goto SKIP
+echo Input not recognized, skipping migration.
+goto SKIP
+
+:LOAD_ENV
+REM try to load MONGO_URI from backend\.env (if present)
+set "MONGO_URI="
+for /f "usebackq tokens=1* delims==" %%A in (`type backend\.env ^| findstr /R "^MONGO_URI="`) do (
+    set "MONGO_URI=%%B"
+)
+if defined MONGO_URI (
+    REM trim possible surrounding spaces and quotes
+    set "MONGO_URI=%MONGO_URI:"=%"
+    for /f "tokens=* delims= " %%x in ("%MONGO_URI%") do set "MONGO_URI=%%x"
+    echo Found MONGO_URI in backend\.env
+) else (
+    echo No MONGO_URI found in backend\.env — script will use defaults or your environment.
+)
+goto :eof
+
+:DRY
+call :LOAD_ENV
+echo Running migration in DRY-RUN mode (shows sample docs only)...
+if defined MONGO_URI (
+    set "MONGO_URI=%MONGO_URI%"
+)
+python backend\scripts\migrate_created_by_to_user_id.py --collection posts --dry-run --limit 5
+echo Dry-run finished.
+goto SKIP_AFTER_MIGRATE
+
+:APPLY
+call :LOAD_ENV
+echo Running migration in APPLY mode (will modify documents)...
+set /p COL="Which collection to migrate? [posts/content/both] (default: both): "
+if /I "%COL%"=="posts" (
+    set "COL_ARG=--collection posts"
+) else if /I "%COL%"=="content" (
+    set "COL_ARG=--collection content"
+) else (
+    set "COL_ARG="
+)
+if defined MONGO_URI (
+    set "MONGO_URI=%MONGO_URI%"
+)
+python backend\scripts\migrate_created_by_to_user_id.py %COL_ARG%
+echo Migration finished.
+goto SKIP_AFTER_MIGRATE
+
+:SKIP_AFTER_MIGRATE
+echo.
+echo Press Enter to continue starting the frontend...
+pause >nul
+
+:SKIP
 echo.
 echo ====================================================
 echo  Starting Frontend Server (React)...
