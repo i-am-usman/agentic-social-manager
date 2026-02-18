@@ -19,3 +19,11 @@ class PostPublic(BaseModel):
     status: str
     created_at: datetime
     user_id: Optional[str] = None
+
+
+class PublishRequest(BaseModel):
+    post_id: Optional[str] = None
+    caption: Optional[str] = None
+    hashtags: Optional[List[str]] = None
+    image: Optional[str] = None
+    platforms: List[str]

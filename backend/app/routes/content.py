@@ -28,7 +28,7 @@ class ImageRequest(BaseModel):
 @router.post("/save")
 def save_content(content: GeneratedContent, user: dict = Depends(get_current_user)):
     content_data = content.dict()
-    content_data["user_id"] = user["_id"]
+    content_data["user_id"] = str(user["_id"])
     content_data["created_at"] = datetime.utcnow()
     result = posts_collection.insert_one(content_data)
     return {
