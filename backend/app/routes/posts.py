@@ -2,14 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.services.ai_service import AIService
 from app.services.dependencies import get_current_user
 from app.services.database import posts_collection
-from app.schemas.post_schema import PostCreate, PostPublic, PublishRequest, RescheduleRequest
+from app.services.image_service import ImageService
+from app.schemas.post_schema import PostCreate, PostPublic, PublishRequest, RescheduleRequest, EditPostRequest
 from app.services.fb_service import FacebookService
 from app.services.insta_service import InstaService
 from datetime import datetime, timezone
 import pytz
 from bson import ObjectId
 from typing import List
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 # Pakistani Standard Time (UTC+5)
@@ -146,7 +149,22 @@ async def publish_post(payload: PublishRequest, user: dict = Depends(get_current
 
     if "instagram" in platforms:
         insta_service = InstaService()
-        results["instagram"] = insta_service.publish_photo(image, caption_text)
+        
+        # If image is base64, upload to imgbb first to get public URL
+        final_image = image
+        if final_image and ImageService.is_base64(final_image):
+            logger.info(f"Converting base64 image to imgbb URL for Instagram")
+            upload_result = ImageService.upload_base64_to_imgbb(final_image)
+            if upload_result["status"] == "success":
+                final_image = upload_result["url"]
+                logger.info(f"Image uploaded to imgbb: {final_image}")
+            else:
+                logger.error(f"Failed to upload image to imgbb: {upload_result['detail']}")
+                raise HTTPException(status_code=500, detail=f"Failed to upload image: {upload_result['detail']}")
+        
+        logger.info(f"Publishing to Instagram with image: {final_image[:50] if final_image else 'None'}...")
+        results["instagram"] = insta_service.publish_photo(final_image, caption_text)
+        logger.info(f"Instagram publish result: {results['instagram']}")
 
     if post_doc:
         update = {
@@ -214,3 +232,103 @@ async def reschedule_post(
     posts_collection.update_one({"_id": ObjectId(post_id)}, {"$set": update})
     
     return {"status": "success", "message": message}
+
+
+@router.patch("/{post_id}/edit")
+async def edit_post(
+    post_id: str,
+    payload: EditPostRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Edit a post's caption, hashtags, or image"""
+    try:
+        # Find the post
+        post = posts_collection.find_one({"_id": ObjectId(post_id)})
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+        
+        # Verify ownership
+        user_id = current_user.get("user_id") or current_user.get("_id")
+        post_owner = post.get("created_by") or post.get("user_id")
+        
+        if str(user_id) != str(post_owner):
+            raise HTTPException(status_code=403, detail="Not authorized to edit this post")
+        
+        # Build update dictionary with only provided fields
+        update = {}
+        if payload.caption is not None:
+            update["caption"] = payload.caption
+        if payload.hashtags is not None:
+            update["hashtags"] = payload.hashtags
+        if payload.image is not None:
+            update["image"] = payload.image
+        
+        if not update:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Update the post
+        posts_collection.update_one({"_id": ObjectId(post_id)}, {"$set": update})
+        
+        return {"status": "success", "message": "Post updated successfully"}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{post_id}")
+async def delete_post(
+    post_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a post"""
+    try:
+        # Find the post
+        post = posts_collection.find_one({"_id": ObjectId(post_id)})
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+        
+        # Verify ownership
+        user_id = current_user.get("user_id") or current_user.get("_id")
+        post_owner = post.get("created_by") or post.get("user_id")
+        
+        if str(user_id) != str(post_owner):
+            raise HTTPException(status_code=403, detail="Not authorized to delete this post")
+        
+        # Delete the post
+        result = posts_collection.delete_one({"_id": ObjectId(post_id)})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Post not found")
+        
+        return {"status": "success", "message": "Post deleted successfully"}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload-image")
+async def upload_image(
+    image_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Upload an image (base64 or URL)
+    Expected format: {"image": "base64_string" or "url"}
+    """
+    try:
+        image = image_data.get("image")
+        if not image:
+            raise HTTPException(status_code=400, detail="No image provided")
+        
+        # Return the image data
+        # The image will be stored as is (base64 or URL)
+        return {"status": "success", "image": image}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

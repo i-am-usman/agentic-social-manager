@@ -12,3 +12,6 @@ FB_PAGE_ID = os.getenv("FB_PAGE_ID")
 FB_PAGE_ACCESS_TOKEN = os.getenv("FB_PAGE_ACCESS_TOKEN")
 IG_USER_ID = os.getenv("IG_USER_ID")
 IG_ACCESS_TOKEN = os.getenv("IG_ACCESS_TOKEN")
+
+# Image hosting for Instagram (requires public URLs)
+IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")

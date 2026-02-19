@@ -34,3 +34,9 @@ class PublishRequest(BaseModel):
 class RescheduleRequest(BaseModel):
     scheduled_at: Optional[datetime] = None
     platforms: Optional[List[str]] = None
+
+
+class EditPostRequest(BaseModel):
+    caption: Optional[str] = None
+    hashtags: Optional[List[str]] = None
+    image: Optional[str] = None

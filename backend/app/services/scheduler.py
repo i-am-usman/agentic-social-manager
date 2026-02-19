@@ -4,6 +4,7 @@ import pytz
 from app.services.database import posts_collection
 from app.services.fb_service import FacebookService
 from app.services.insta_service import InstaService
+from app.services.image_service import ImageService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -82,10 +83,32 @@ def process_scheduled_posts():
             if "instagram" in platforms:
                 try:
                     insta_service = InstaService()
-                    results["instagram"] = insta_service.publish_photo(image, caption_text)
+                    
+                    # If image is base64, upload to imgbb first to get public URL
+                    final_image = image
+                    if not final_image:
+                        logger.error(f"Post {post_id} scheduled for Instagram but image is missing")
+                        results["instagram"] = {"status": "error", "detail": "Image required for Instagram"}
+                        continue
+                    
+                    if ImageService.is_base64(final_image):
+                        logger.info(f"Converting base64 image to public URL for Instagram post {post_id}")
+                        upload_result = ImageService.upload_base64_to_imgbb(final_image)
+                        if upload_result["status"] == "success":
+                            final_image = upload_result["url"]
+                            logger.info(f"Base64 image converted to: {final_image}")
+                        else:
+                            logger.error(f"Failed to upload image for Instagram: {upload_result['detail']}")
+                            results["instagram"] = {"status": "error", "detail": f"Image upload failed: {upload_result['detail']}"}
+                            continue
+                    else:
+                        logger.info(f"Using existing image URL for Instagram: {final_image}")
+                    
+                    logger.info(f"Posting to Instagram with image: {final_image}")
+                    results["instagram"] = insta_service.publish_photo(final_image, caption_text)
                     logger.info(f"Published post {post_id} to Instagram: {results['instagram']}")
                 except Exception as e:
-                    logger.error(f"Failed to publish post {post_id} to Instagram: {e}")
+                    logger.error(f"Failed to publish post {post_id} to Instagram: {e}", exc_info=True)
                     results["instagram"] = {"status": "error", "detail": str(e)}
             
             # Update post status

@@ -12,6 +12,9 @@ class InstaService:
         if not self.ig_user_id or not self.token:
             return {"status": "error", "detail": "Instagram credentials not configured"}
 
+        if not image_url:
+            return {"status": "error", "detail": "Image URL is required"}
+
         if image_url.startswith("data:image"):
             return {"status": "error", "detail": "Instagram requires a public image URL"}
 
