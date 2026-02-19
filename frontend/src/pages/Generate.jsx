@@ -15,6 +15,7 @@ export default function Generate() {
   const [approvalStatus, setApprovalStatus] = useState("pending");
   const [scheduledAt, setScheduledAt] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
+  const [customImage, setCustomImage] = useState("");
 
   const token = localStorage.getItem("token"); // ✅ get JWT
 
@@ -130,7 +131,10 @@ export default function Generate() {
       if (data.status === "success" && data.data) {
         setCaption(extractOriginalCaption(data.data.caption, language));
         setHashtags(data.data.hashtags || []);
-        setGeneratedImage(data.data.image);
+        // Only set generated image if no custom image is uploaded
+        if (!customImage) {
+          setGeneratedImage(data.data.image);
+        }
       } else {
         alert(data.detail || "Failed to generate content");
       }
@@ -145,7 +149,7 @@ export default function Generate() {
   // 📌 5 — Save Content to MongoDB
   // -------------------------------
   const handleSaveContent = async () => {
-    if (!caption && (!hashtags || hashtags.length === 0) && !generatedImage) {
+    if (!caption && (!hashtags || hashtags.length === 0) && !generatedImage && !customImage) {
       alert("No content to save. Please generate something first.");
       return;
     }
@@ -153,6 +157,15 @@ export default function Generate() {
     // Validate platforms if scheduling
     if (scheduledAt && selectedPlatforms.length === 0) {
       alert("Please select at least one platform for scheduled posts.");
+      return;
+    }
+
+    // Use customImage if available, otherwise use generatedImage
+    const finalImage = customImage || generatedImage;
+
+    // Validate Instagram requires an image
+    if (selectedPlatforms.includes("instagram") && !finalImage) {
+      alert("Instagram requires an image. Please generate or upload an image.");
       return;
     }
 
@@ -168,7 +181,7 @@ export default function Generate() {
           language,
           caption,
           hashtags, // ✅ already array
-          image: generatedImage,
+          image: finalImage,
           status: "draft",
           approval_status: approvalStatus,
           scheduled_at: toPakistaniTime(scheduledAt),
@@ -184,6 +197,7 @@ export default function Generate() {
         setCaption("");
         setHashtags([]);
         setGeneratedImage("");
+        setCustomImage("");
         setImagePrompt("");
         setScheduledAt("");
         setSelectedPlatforms([]);
@@ -201,6 +215,28 @@ export default function Generate() {
         ? prev.filter((p) => p !== platform)
         : [...prev, platform]
     );
+  };
+
+  // -------------------------------
+  // 📌 6 — Handle Custom Image Upload
+  // -------------------------------
+  const handleCustomImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCustomImage(reader.result);
+      setGeneratedImage(""); // Clear generated image if custom image is uploaded
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCustomImageURL = (url) => {
+    if (url.trim()) {
+      setCustomImage(url);
+      setGeneratedImage(""); // Clear generated image if custom URL is provided
+    }
   };
 
   return (
@@ -252,6 +288,42 @@ export default function Generate() {
             value={imagePrompt}
             onChange={(e) => setImagePrompt(e.target.value)}
           />
+
+          {/* CUSTOM IMAGE UPLOAD */}
+          <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <p className="font-semibold text-gray-800 mb-2">Or Upload Your Own Image:</p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCustomImageUpload}
+              className="w-full p-2 border rounded-lg mb-2 text-sm bg-white"
+            />
+            <p className="text-xs text-gray-600 mb-2">File uploads will be converted to public URLs for Instagram</p>
+            <p className="text-xs text-gray-600 mb-2 text-center">OR</p>
+            <input
+              type="text"
+              placeholder="Paste image URL here (works with both platforms)"
+              className="w-full p-2 border rounded-lg text-sm"
+              value={customImage.startsWith('data:') ? '' : customImage}
+              onChange={(e) => handleCustomImageURL(e.target.value)}
+            />
+            {customImage && (
+              <div className="mt-2">
+                <img src={customImage} alt="Custom" className="w-full h-32 object-cover rounded-lg" />
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-xs text-gray-600">
+                    {customImage.startsWith('data:') ? '📁 Uploaded file (auto-converted)' : '🔗 URL (direct)'}
+                  </span>
+                  <button
+                    onClick={() => setCustomImage("")}
+                    className="text-xs text-red-600 hover:text-red-800"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* APPROVAL STATUS */}
           <div className="mt-2 mb-4">
@@ -371,8 +443,13 @@ export default function Generate() {
 
           {/* Generated Image */}
           <div className="bg-white p-4 rounded-lg border flex items-center justify-center">
-            {generatedImage ? (
-              <img src={generatedImage} alt="Generated" className="rounded-lg shadow-md max-h-96 object-contain" />
+            {(customImage || generatedImage) ? (
+              <div className="w-full">
+                <img src={customImage || generatedImage} alt="Generated" className="rounded-lg shadow-md max-h-96 object-contain w-full" />
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  {customImage ? "Custom uploaded image" : "AI-generated image"}
+                </p>
+              </div>
             ) : (
               <div className="text-gray-400 italic">No image generated yet.</div>
             )}

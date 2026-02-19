@@ -11,6 +11,9 @@ export default function Profile() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [scheduleModal, setScheduleModal] = useState({ open: false, postId: null, scheduledAt: "", platforms: [] });
   const [scheduleStatus, setScheduleStatus] = useState({});
+  const [editModal, setEditModal] = useState({ open: false, postId: null, caption: "", hashtags: "", image: "", platforms: [] });
+  const [editStatus, setEditStatus] = useState({});
+  const [deleteStatus, setDeleteStatus] = useState({});
 
   // ✅ Fetch profile on mount
   useEffect(() => {
@@ -221,6 +224,113 @@ export default function Profile() {
         [postId]: { loading: false, message: "Failed to schedule." },
       }));
     }
+  };
+
+  const openEditModal = (post) => {
+    setEditModal({
+      open: true,
+      postId: post._id,
+      caption: post.caption || "",
+      hashtags: post.hashtags ? post.hashtags.join(" ") : "",
+      image: post.image || "",
+      platforms: post.platforms || [],
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditModal({ open: false, postId: null, caption: "", hashtags: "", image: "", platforms: [] });
+    setEditStatus({});
+  };
+
+  const handleEditSubmit = async () => {
+    const { postId, caption, hashtags, image, platforms } = editModal;
+    
+    if (!caption.trim()) {
+      alert("Please provide a caption.");
+      return;
+    }
+
+    // Validate Instagram requires an image
+    if (platforms.includes("instagram") && !image) {
+      alert("Instagram requires an image. Please add an image.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    setEditStatus({ loading: true, message: "Updating post..." });
+
+    try {
+      // Build request body with only changed fields
+      const requestBody = {
+        caption,
+        hashtags: hashtags.trim() ? hashtags.split(/\s+/).filter(tag => tag) : [],
+      };
+      
+      if (image) {
+        requestBody.image = image;
+      }
+
+      const res = await fetch(`http://127.0.0.1:8000/posts/${postId}/edit`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === "success") {
+        setEditStatus({ loading: false, message: "Post updated successfully!" });
+        setTimeout(() => {
+          closeEditModal();
+          fetchPosts();
+        }, 1000);
+      } else {
+        setEditStatus({ loading: false, message: data.detail || "Failed to update post." });
+      }
+    } catch (err) {
+      setEditStatus({ loading: false, message: "Failed to update post." });
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    setDeleteStatus((prev) => ({ ...prev, [postId]: { loading: true } }));
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/posts/${postId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === "success") {
+        setDeleteStatus((prev) => ({ ...prev, [postId]: { loading: false, message: "Deleted successfully!" } }));
+        fetchPosts();
+      } else {
+        setDeleteStatus((prev) => ({ ...prev, [postId]: { loading: false, message: data.detail || "Failed to delete." } }));
+      }
+    } catch (err) {
+      setDeleteStatus((prev) => ({ ...prev, [postId]: { loading: false, message: "Failed to delete." } }));
+    }
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEditModal(prev => ({ ...prev, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const filteredPosts = posts.filter((p) => {
@@ -481,6 +591,25 @@ export default function Profile() {
                   </div>
                 )}
 
+                {/* Edit and Delete Buttons - For all posts except published */}
+                {p.status !== "published" && (
+                  <div className="border-t pt-3 mt-3 flex gap-2">
+                    <button
+                      onClick={() => openEditModal(p)}
+                      className="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 flex-1"
+                    >
+                      Edit Post
+                    </button>
+                    <button
+                      onClick={() => handleDeletePost(p._id)}
+                      className="bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600 disabled:opacity-60"
+                      disabled={deleteStatus[p._id]?.loading}
+                    >
+                      {deleteStatus[p._id]?.loading ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-sm text-gray-500 mt-3">
                   <span className="font-semibold capitalize">{p.status || 'draft'}</span>
                   <span>{p.created_at ? formatPakistaniTime(p.created_at) : ''}</span>
@@ -554,6 +683,88 @@ export default function Profile() {
             </div>
             {scheduleStatus[scheduleModal.postId]?.message && (
               <p className="text-xs text-gray-600 mt-2 text-center">{scheduleStatus[scheduleModal.postId].message}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editModal.open && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4">Edit Post</h3>
+            
+            <label className="block text-sm font-semibold mb-2">
+              Caption:
+            </label>
+            <textarea
+              value={editModal.caption}
+              onChange={(e) => setEditModal(prev => ({ ...prev, caption: e.target.value }))}
+              className="border p-2 w-full mb-4 rounded h-32 resize-none"
+              placeholder="Enter post caption..."
+            />
+
+            <label className="block text-sm font-semibold mb-2">
+              Hashtags (space separated):
+            </label>
+            <input
+              type="text"
+              value={editModal.hashtags}
+              onChange={(e) => setEditModal(prev => ({ ...prev, hashtags: e.target.value }))}
+              className="border p-2 w-full mb-4 rounded"
+              placeholder="#hashtag1 #hashtag2"
+            />
+
+            <label className="block text-sm font-semibold mb-2">
+              Image:
+            </label>
+            {editModal.platforms.includes("instagram") && editModal.image && (
+              <div className="bg-blue-50 border border-blue-300 rounded p-2 mb-2 text-xs text-blue-800">
+                ℹ️ File uploads will be automatically converted to public URLs for Instagram
+              </div>
+            )}
+            {editModal.image && (
+              <div className="mb-2">
+                <img src={editModal.image} alt="preview" className="w-full h-40 object-cover rounded mb-1" />
+                <p className="text-xs text-gray-600">
+                  {editModal.image.startsWith('data:') ? '📁 Uploaded file (auto-converted)' : '🔗 URL (direct)'}
+                </p>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="border p-2 w-full mb-2 rounded text-sm"
+            />
+            <p className="text-xs text-gray-500 mb-2">File uploads will be converted to public URLs for Instagram</p>
+            <input
+              type="text"
+              value={editModal.image.startsWith('data:') ? '' : editModal.image}
+              onChange={(e) => setEditModal(prev => ({ ...prev, image: e.target.value }))}
+              className="border p-2 w-full mb-4 rounded text-sm"
+              placeholder="Or paste image URL (works with both platforms)"
+            />
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleEditSubmit}
+                className="bg-indigo-600 text-white px-4 py-2 rounded flex-1 disabled:opacity-60"
+                disabled={editStatus.loading}
+              >
+                {editStatus.loading ? "Updating..." : "Update Post"}
+              </button>
+              <button
+                onClick={closeEditModal}
+                className="bg-gray-500 text-white px-4 py-2 rounded flex-1"
+              >
+                Cancel
+              </button>
+            </div>
+            {editStatus.message && (
+              <p className={`text-xs mt-2 text-center ${editStatus.message.includes("success") ? "text-green-600" : "text-red-600"}`}>
+                {editStatus.message}
+              </p>
             )}
           </div>
         </div>
