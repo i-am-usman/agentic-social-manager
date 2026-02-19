@@ -14,6 +14,17 @@ export default function Generate() {
   const [loadingAll, setLoadingAll] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState("pending");
   const [scheduledAt, setScheduledAt] = useState("");
+  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
+
+  const token = localStorage.getItem("token"); // ✅ get JWT
+
+  // Helper: Convert datetime-local string to ISO format
+  const toPakistaniTime = (localDateTimeString) => {
+    if (!localDateTimeString) return null;
+    // Datetime-local gives us "2026-02-19T23:57" (timezone-naive)
+    // Backend will treat this as Pakistani time, so just append seconds
+    return localDateTimeString + ":00";
+  };
 
   // Helper: remove appended translation block (e.g. "Translation: ...") for non-English display
   const extractOriginalCaption = (text, lang) => {
@@ -24,8 +35,6 @@ export default function Generate() {
     }
     return text;
   };
-
-  const token = localStorage.getItem("token"); // ✅ get JWT
 
   // -------------------------------
   // 📌 1 — Generate Caption
@@ -41,10 +50,13 @@ export default function Generate() {
         body: JSON.stringify({ topic, language }),
       });
       const data = await res.json();
-      // strip translation if the backend appended it
-      setCaption(extractOriginalCaption(data.caption, language));
+      if (data.status === "success" && data.caption) {
+        setCaption(extractOriginalCaption(data.caption, language));
+      } else {
+        alert(data.detail || "Failed to generate caption");
+      }
     } catch (err) {
-      alert("Error generating caption!");
+      alert("Error generating caption: " + err.message);
     }
 
     setLoadingCaption(false);
@@ -64,9 +76,15 @@ export default function Generate() {
         body: JSON.stringify({ topic, count: 6 }),
       });
       const data = await res.json();
-      setHashtags(data.hashtags); // ✅ always store as array
+      if (data.status === "success" && Array.isArray(data.hashtags)) {
+        setHashtags(data.hashtags);
+      } else {
+        alert(data.detail || "Failed to generate hashtags");
+        setHashtags([]);
+      }
     } catch (err) {
-      alert("Error generating hashtags!");
+      alert("Error generating hashtags: " + err.message);
+      setHashtags([]);
     }
 
     setLoadingHashtags(false);
@@ -109,11 +127,15 @@ export default function Generate() {
       });
       const data = await res.json();
 
-      setCaption(extractOriginalCaption(data.data.caption, language));
-      setHashtags(data.data.hashtags);
-      setGeneratedImage(data.data.image);
+      if (data.status === "success" && data.data) {
+        setCaption(extractOriginalCaption(data.data.caption, language));
+        setHashtags(data.data.hashtags || []);
+        setGeneratedImage(data.data.image);
+      } else {
+        alert(data.detail || "Failed to generate content");
+      }
     } catch (err) {
-      alert("Error generating full content!");
+      alert("Error generating full content: " + err.message);
     }
 
     setLoadingAll(false);
@@ -123,8 +145,14 @@ export default function Generate() {
   // 📌 5 — Save Content to MongoDB
   // -------------------------------
   const handleSaveContent = async () => {
-    if (!caption && !hashtags.length && !generatedImage) {
+    if (!caption && (!hashtags || hashtags.length === 0) && !generatedImage) {
       alert("No content to save. Please generate something first.");
+      return;
+    }
+
+    // Validate platforms if scheduling
+    if (scheduledAt && selectedPlatforms.length === 0) {
+      alert("Please select at least one platform for scheduled posts.");
       return;
     }
 
@@ -143,19 +171,36 @@ export default function Generate() {
           image: generatedImage,
           status: "draft",
           approval_status: approvalStatus,
-          scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+          scheduled_at: toPakistaniTime(scheduledAt),
+          platforms: selectedPlatforms.length > 0 ? selectedPlatforms : null,
         }),
       });
 
       const data = await res.json();
       if (data.status === "success") {
         alert("Content saved successfully! ID: " + data.id);
+        // Reset form
+        setTopic("");
+        setCaption("");
+        setHashtags([]);
+        setGeneratedImage("");
+        setImagePrompt("");
+        setScheduledAt("");
+        setSelectedPlatforms([]);
       } else {
         alert("Failed to save content.");
       }
     } catch (err) {
       alert("Error saving content: " + err.message);
     }
+  };
+
+  const togglePlatform = (platform) => {
+    setSelectedPlatforms((prev) =>
+      prev.includes(platform)
+        ? prev.filter((p) => p !== platform)
+        : [...prev, platform]
+    );
   };
 
   return (
@@ -223,7 +268,7 @@ export default function Generate() {
           </div>
 
           {/* SCHEDULED TIME */}
-          <div className="mt-2 mb-6">
+          <div className="mt-2 mb-4">
             <p className="font-semibold text-gray-800 mb-2">Schedule Post At:</p>
             <input
               type="datetime-local"
@@ -232,6 +277,31 @@ export default function Generate() {
               className="p-2 border rounded-lg w-full"
             />
           </div>
+
+          {/* PLATFORM SELECTION */}
+          {scheduledAt && (
+            <div className="mt-2 mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="font-semibold text-gray-800 mb-2">Select Platforms for Scheduled Post:</p>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={selectedPlatforms.includes("facebook")}
+                    onChange={() => togglePlatform("facebook")}
+                  />
+                  Facebook Page
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={selectedPlatforms.includes("instagram")}
+                    onChange={() => togglePlatform("instagram")}
+                  />
+                  Instagram
+                </label>
+              </div>
+            </div>
+          )}
 
           {/* BUTTONS */}
           <div className="flex flex-wrap gap-3 mb-6">
