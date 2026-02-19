@@ -2,14 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.services.ai_service import AIService
 from app.services.dependencies import get_current_user
 from app.services.database import posts_collection
-from app.schemas.post_schema import PostCreate, PostPublic, PublishRequest
+from app.schemas.post_schema import PostCreate, PostPublic, PublishRequest, RescheduleRequest
 from app.services.fb_service import FacebookService
 from app.services.insta_service import InstaService
-from datetime import datetime
+from datetime import datetime, timezone
+import pytz
 from bson import ObjectId
 from typing import List
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
+
+# Pakistani Standard Time (UTC+5)
+PAKISTAN_TZ = pytz.timezone('Asia/Karachi')
 
 
 def _normalize_hashtags(hashtags: List[str]) -> List[str]:
@@ -46,7 +50,7 @@ async def create_post(post: PostCreate, user: dict = Depends(get_current_user)):
             "created_by": user_id,
             "user_id": user_id,
             "status": "draft",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(PAKISTAN_TZ)
         }
 
         result = posts_collection.insert_one(post_data)
@@ -73,6 +77,10 @@ async def get_user_posts(user: dict = Depends(get_current_user)):
         p["_id"] = str(p["_id"])
         if "created_at" in p and hasattr(p["created_at"], "isoformat"):
             p["created_at"] = p["created_at"].isoformat()
+        if "scheduled_at" in p and hasattr(p["scheduled_at"], "isoformat"):
+            p["scheduled_at"] = p["scheduled_at"].isoformat()
+        if "published_at" in p and hasattr(p["published_at"], "isoformat"):
+            p["published_at"] = p["published_at"].isoformat()
             
     return {"status": "success", "posts": posts}
 
@@ -120,15 +128,21 @@ async def publish_post(payload: PublishRequest, user: dict = Depends(get_current
         hashtags = post_doc.get("hashtags") or []
         image = post_doc.get("image")
 
-    if not image:
-        raise HTTPException(status_code=400, detail="Image is required for publishing")
+    # Instagram requires an image, but Facebook allows text-only posts
+    if "instagram" in platforms and not image:
+        raise HTTPException(status_code=400, detail="Image is required for publishing to Instagram")
 
     caption_text = _build_caption(caption or "", hashtags)
 
     results = {}
     if "facebook" in platforms:
         fb_service = FacebookService()
-        results["facebook"] = fb_service.publish_photo(image, caption_text)
+        if image:
+            # Publish with image
+            results["facebook"] = fb_service.publish_photo(image, caption_text)
+        else:
+            # Publish text-only
+            results["facebook"] = fb_service.publish_text(caption_text)
 
     if "instagram" in platforms:
         insta_service = InstaService()
@@ -137,9 +151,66 @@ async def publish_post(payload: PublishRequest, user: dict = Depends(get_current
     if post_doc:
         update = {
             "status": "published",
-            "published_at": datetime.utcnow(),
+            "published_at": datetime.now(PAKISTAN_TZ),
             "platform_results": results,
         }
         posts_collection.update_one({"_id": post_doc["_id"]}, {"$set": update})
 
     return {"status": "success", "results": results}
+
+
+@router.patch("/{post_id}/schedule")
+async def reschedule_post(
+    post_id: str,
+    payload: RescheduleRequest,
+    user: dict = Depends(get_current_user)
+):
+    """Reschedule or cancel a scheduled post"""
+    try:
+        post_doc = posts_collection.find_one({"_id": ObjectId(post_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid post_id")
+
+    if not post_doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    user_id = str(user["_id"])
+    owner_id = str(post_doc.get("created_by") or post_doc.get("user_id"))
+    if owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Not allowed to modify this post")
+
+    update = {}
+    
+    # If scheduled_at is provided and naive, localize to Pakistani timezone
+    scheduled_at_aware = None
+    if payload.scheduled_at:
+        if payload.scheduled_at.tzinfo is None:
+            # Naive datetime - localize to Pakistani timezone
+            scheduled_at_aware = PAKISTAN_TZ.localize(payload.scheduled_at)
+        else:
+            # Already timezone-aware
+            scheduled_at_aware = payload.scheduled_at
+    
+    # Cancel schedule if scheduled_at is None
+    if payload.scheduled_at is None:
+        update["status"] = "draft"
+        update["scheduled_at"] = None
+        message = "Schedule cancelled"
+    # Reschedule if future datetime provided
+    elif scheduled_at_aware > datetime.now(PAKISTAN_TZ):
+        update["status"] = "scheduled"
+        update["scheduled_at"] = scheduled_at_aware
+        message = "Post rescheduled"
+    # If past datetime, keep as draft
+    else:
+        update["status"] = "draft"
+        update["scheduled_at"] = scheduled_at_aware
+        message = "Schedule time is in the past, post saved as draft"
+    
+    # Update platforms if provided
+    if payload.platforms is not None:
+        update["platforms"] = payload.platforms
+    
+    posts_collection.update_one({"_id": ObjectId(post_id)}, {"$set": update})
+    
+    return {"status": "success", "message": message}

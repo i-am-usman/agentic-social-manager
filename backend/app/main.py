@@ -1,12 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from app.routes.auth import router as auth_router
 from app.routes.posts import router as posts_router
 from app.routes.content import router as content_router
 from app.routes.profiles import router as profiles_router
+from app.services.scheduler import start_scheduler, shutdown_scheduler
 
-app = FastAPI(title="Agentic Social Manager")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Start the scheduler
+    start_scheduler()
+    yield
+    # Shutdown: Stop the scheduler
+    shutdown_scheduler()
+
+
+app = FastAPI(title="Agentic Social Manager", lifespan=lifespan)
 
 # CORS Middleware
 app.add_middleware(

@@ -26,4 +26,5 @@ class GeneratedContent(BaseModel):
     status: Optional[str] = "draft"
     approval_status: Optional[str] = "pending"
     scheduled_at: Optional[datetime] = None
+    platforms: Optional[List[str]] = None
     created_at: Optional[datetime] = None

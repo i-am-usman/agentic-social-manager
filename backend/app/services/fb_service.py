@@ -29,6 +29,23 @@ class FacebookService:
 		}
 		return requests.post(url, files=files, data=data, timeout=30).json()
 
+	def publish_text(self, message: str):
+		"""Publish text-only post to Facebook feed"""
+		if not self.page_id or not self.token:
+			return {"status": "error", "detail": "Facebook credentials not configured"}
+		
+		url = f"https://graph.facebook.com/{self.api_version}/{self.page_id}/feed"
+		payload = {
+			"message": message,
+			"access_token": self.token,
+		}
+		response = requests.post(url, data=payload, timeout=30).json()
+		
+		if "id" not in response:
+			return {"status": "error", "detail": response}
+		
+		return {"status": "success", "data": response}
+
 	def publish_photo(self, image: str, caption: str):
 		if not self.page_id or not self.token:
 			return {"status": "error", "detail": "Facebook credentials not configured"}

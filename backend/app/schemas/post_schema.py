@@ -19,6 +19,8 @@ class PostPublic(BaseModel):
     status: str
     created_at: datetime
     user_id: Optional[str] = None
+    scheduled_at: Optional[datetime] = None
+    platforms: Optional[List[str]] = None
 
 
 class PublishRequest(BaseModel):
@@ -27,3 +29,8 @@ class PublishRequest(BaseModel):
     hashtags: Optional[List[str]] = None
     image: Optional[str] = None
     platforms: List[str]
+
+
+class RescheduleRequest(BaseModel):
+    scheduled_at: Optional[datetime] = None
+    platforms: Optional[List[str]] = None
