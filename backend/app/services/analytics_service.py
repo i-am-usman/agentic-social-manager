@@ -171,7 +171,8 @@ class AnalyticsService:
                     "author": comment.get("from", {}).get("name", "Unknown"),
                     "message": comment.get("message", ""),
                     "created_time": comment.get("created_time"),
-                    "likes": comment.get("like_count", 0)
+                    "likes": comment.get("like_count", 0),
+                    "replies": self._get_facebook_comment_replies(comment.get("id"))
                 })
             
             return {"status": "success", "comments": comments}
@@ -204,11 +205,124 @@ class AnalyticsService:
                     "author": comment.get("username", "Unknown"),
                     "message": comment.get("text", ""),
                     "created_time": comment.get("timestamp"),
-                    "likes": comment.get("like_count", 0)
+                    "likes": comment.get("like_count", 0),
+                    "replies": self._get_instagram_comment_replies(comment.get("id"))
                 })
             
             return {"status": "success", "comments": comments}
             
         except Exception as e:
             logger.error(f"Error fetching Instagram comments: {e}", exc_info=True)
+            return {"status": "error", "detail": str(e)}
+
+    def _get_facebook_comment_replies(self, comment_id):
+        """Fetch replies for a Facebook comment"""
+        if not comment_id or not self.fb_token:
+            return []
+
+        try:
+            url = f"https://graph.facebook.com/{self.api_version}/{comment_id}/comments"
+            params = {
+                "fields": "id,from,message,created_time,like_count",
+                "access_token": self.fb_token,
+            }
+            response = requests.get(url, params=params, timeout=30).json()
+
+            if "error" in response:
+                logger.warning(f"Facebook replies fetch error for {comment_id}: {response['error']}")
+                return []
+
+            replies = []
+            for reply in response.get("data", []):
+                replies.append({
+                    "id": reply.get("id"),
+                    "author": reply.get("from", {}).get("name", "Unknown"),
+                    "message": reply.get("message", ""),
+                    "created_time": reply.get("created_time"),
+                    "likes": reply.get("like_count", 0),
+                })
+
+            return replies
+        except Exception as e:
+            logger.warning(f"Error fetching Facebook comment replies for {comment_id}: {e}")
+            return []
+
+    def _get_instagram_comment_replies(self, comment_id):
+        """Fetch replies for an Instagram comment"""
+        if not comment_id or not self.ig_token:
+            return []
+
+        try:
+            url = f"https://graph.facebook.com/{self.api_version}/{comment_id}/replies"
+            params = {
+                "fields": "id,username,text,timestamp,like_count",
+                "access_token": self.ig_token,
+            }
+            response = requests.get(url, params=params, timeout=30).json()
+
+            if "error" in response:
+                logger.warning(f"Instagram replies fetch error for {comment_id}: {response['error']}")
+                return []
+
+            replies = []
+            for reply in response.get("data", []):
+                replies.append({
+                    "id": reply.get("id"),
+                    "author": reply.get("username", "Unknown"),
+                    "message": reply.get("text", ""),
+                    "created_time": reply.get("timestamp"),
+                    "likes": reply.get("like_count", 0),
+                })
+
+            return replies
+        except Exception as e:
+            logger.warning(f"Error fetching Instagram comment replies for {comment_id}: {e}")
+            return []
+
+    def reply_to_comment(self, comment_id, message, platform="facebook"):
+        """Reply to a Facebook or Instagram comment"""
+        if platform == "facebook":
+            return self._reply_facebook_comment(comment_id, message)
+        elif platform == "instagram":
+            return self._reply_instagram_comment(comment_id, message)
+        return {"status": "error", "detail": "Invalid platform"}
+
+    def _reply_facebook_comment(self, comment_id, message):
+        if not self.fb_token:
+            return {"status": "error", "detail": "Facebook credentials not configured"}
+
+        try:
+            url = f"https://graph.facebook.com/{self.api_version}/{comment_id}/comments"
+            payload = {
+                "message": message,
+                "access_token": self.fb_token,
+            }
+            response = requests.post(url, data=payload, timeout=30).json()
+
+            if "error" in response:
+                return {"status": "error", "detail": response["error"].get("message", "Failed to reply")}
+
+            return {"status": "success", "reply_id": response.get("id"), "message": "Reply posted"}
+        except Exception as e:
+            logger.error(f"Error replying to Facebook comment: {e}", exc_info=True)
+            return {"status": "error", "detail": str(e)}
+
+    def _reply_instagram_comment(self, comment_id, message):
+        if not self.ig_token:
+            return {"status": "error", "detail": "Instagram credentials not configured"}
+
+        try:
+            url = f"https://graph.facebook.com/{self.api_version}/{comment_id}/replies"
+            payload = {
+                "message": message,
+                "access_token": self.ig_token,
+            }
+            response = requests.post(url, data=payload, timeout=30).json()
+
+            if "error" in response:
+                return {"status": "error", "detail": response["error"].get("message", "Failed to reply")}
+
+            return {"status": "success", "reply_id": response.get("id"), "message": "Reply posted"}
+        except Exception as e:
+            logger.error(f"Error replying to Instagram comment: {e}", exc_info=True)
             return {"status": "error", "detail": str(e)}

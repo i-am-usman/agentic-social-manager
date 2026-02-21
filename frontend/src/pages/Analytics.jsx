@@ -9,6 +9,9 @@ export default function Analytics() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [replyDrafts, setReplyDrafts] = useState({});
+  const [replyState, setReplyState] = useState({});
+  const [expandedReplies, setExpandedReplies] = useState({});
 
   const token = localStorage.getItem("token");
 
@@ -80,6 +83,62 @@ export default function Analytics() {
   const closeCommentsModal = () => {
     setSelectedPost(null);
     setComments([]);
+    setReplyDrafts({});
+    setReplyState({});
+    setExpandedReplies({});
+  };
+
+  const toggleReplies = (commentId) => {
+    setExpandedReplies((prev) => ({
+      ...prev,
+      [commentId]: !prev[commentId],
+    }));
+  };
+
+  const handleReply = async (commentId) => {
+    if (!selectedPost) return;
+    const message = (replyDrafts[commentId] || "").trim();
+    if (!message) return;
+
+    setReplyState((prev) => ({
+      ...prev,
+      [commentId]: { loading: true, message: "Replying...", isError: false },
+    }));
+
+    try {
+      const params = new URLSearchParams({
+        platform: selectedPost.platform,
+        message,
+      });
+
+      const res = await fetch(
+        `http://127.0.0.1:8000/analytics/comments/${commentId}/reply?${params.toString()}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+
+      if (data.status === "success") {
+        setReplyDrafts((prev) => ({ ...prev, [commentId]: "" }));
+        setReplyState((prev) => ({
+          ...prev,
+          [commentId]: { loading: false, message: "Reply sent", isError: false },
+        }));
+        fetchComments(selectedPost.id, selectedPost.platform);
+      } else {
+        setReplyState((prev) => ({
+          ...prev,
+          [commentId]: { loading: false, message: data.detail || "Reply failed", isError: true },
+        }));
+      }
+    } catch (err) {
+      setReplyState((prev) => ({
+        ...prev,
+        [commentId]: { loading: false, message: "Reply failed", isError: true },
+      }));
+    }
   };
 
   const formatDate = (dateString) => {
@@ -288,6 +347,64 @@ export default function Analytics() {
                       <div className="flex items-center gap-1 text-xs text-gray-500">
                         <ThumbsUp size={12} />
                         <span>{comment.likes || 0}</span>
+                      </div>
+                      {Array.isArray(comment.replies) && comment.replies.length > 0 && (
+                        <div className="mt-3 ml-4 border-l-2 border-gray-100 pl-3">
+                          <button
+                            onClick={() => toggleReplies(comment.id)}
+                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                          >
+                            {expandedReplies[comment.id]
+                              ? `Hide Replies (${comment.replies.length})`
+                              : `Show Replies (${comment.replies.length})`}
+                          </button>
+                          {expandedReplies[comment.id] && (
+                            <div className="mt-2 space-y-2">
+                              {comment.replies.map((reply) => (
+                                <div key={reply.id} className="bg-gray-50 border rounded-md p-2">
+                                  <div className="flex items-start justify-between mb-1">
+                                    <p className="font-semibold text-xs text-gray-800">{reply.author}</p>
+                                    <p className="text-[11px] text-gray-500">{formatDate(reply.created_time)}</p>
+                                  </div>
+                                  <p className="text-xs text-gray-700 mb-1">{reply.message}</p>
+                                  <div className="flex items-center gap-1 text-[11px] text-gray-500">
+                                    <ThumbsUp size={10} />
+                                    <span>{reply.likes || 0}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="mt-3">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={replyDrafts[comment.id] || ""}
+                            onChange={(e) =>
+                              setReplyDrafts((prev) => ({ ...prev, [comment.id]: e.target.value }))
+                            }
+                            placeholder="Write a reply..."
+                            className="border rounded px-2 py-1 text-sm flex-1"
+                          />
+                          <button
+                            onClick={() => handleReply(comment.id)}
+                            disabled={replyState[comment.id]?.loading}
+                            className="bg-indigo-600 text-white px-3 py-1 rounded text-sm disabled:opacity-60"
+                          >
+                            {replyState[comment.id]?.loading ? "Sending..." : "Reply"}
+                          </button>
+                        </div>
+                        {replyState[comment.id]?.message && (
+                          <p
+                            className={`text-xs mt-1 ${
+                              replyState[comment.id]?.isError ? "text-red-600" : "text-green-600"
+                            }`}
+                          >
+                            {replyState[comment.id].message}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}

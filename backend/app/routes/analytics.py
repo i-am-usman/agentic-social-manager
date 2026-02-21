@@ -7,6 +7,22 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
+@router.post("/comments/{comment_id}/reply")
+async def reply_to_comment(
+    comment_id: str,
+    message: str = Query(..., min_length=1, max_length=1000),
+    platform: str = Query("facebook", pattern="^(facebook|instagram)$"),
+    user: dict = Depends(get_current_user)
+):
+    """Reply to a comment on Facebook or Instagram"""
+    try:
+        analytics_service = AnalyticsService()
+        return analytics_service.reply_to_comment(comment_id, message, platform)
+    except Exception as e:
+        logger.error(f"Error in reply_to_comment: {e}", exc_info=True)
+        return {"status": "error", "detail": str(e)}
+
+
 @router.get("/facebook")
 async def get_facebook_analytics(
     limit: int = Query(25, ge=1, le=100),
