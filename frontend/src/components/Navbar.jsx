@@ -34,6 +34,9 @@ export default function Navbar({ setIsAuthenticated }) {
           <Link to="/generate" className="text-gray-700 hover:text-indigo-600">
             Create Content
           </Link>
+          <Link to="/analytics" className="text-gray-700 hover:text-indigo-600">
+            Analytics
+          </Link>
           <Link to="/profile" className="text-gray-700 hover:text-indigo-600">
             Profile
           </Link>
