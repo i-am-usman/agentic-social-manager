@@ -14,6 +14,12 @@ router = APIRouter(prefix="/content", tags=["Content"])
 # Pakistani Standard Time (UTC+5)
 PAKISTAN_TZ = pytz.timezone('Asia/Karachi')
 
+
+def _to_pakistan_time(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return PAKISTAN_TZ.localize(dt)
+    return dt.astimezone(PAKISTAN_TZ)
+
 class ContentRequest(BaseModel):
     topic: str
     language: str = "english"
@@ -45,15 +51,10 @@ def save_content(content: GeneratedContent, user: dict = Depends(get_current_use
         content_data["user_id"] = str(user["_id"])
         content_data["created_at"] = datetime.now(PAKISTAN_TZ)
         
-        # If scheduled_at is provided, ensure it's timezone-aware (treat as Pakistani time)
+        # If scheduled_at is provided, normalize it to Pakistani timezone
         if content.scheduled_at:
-            if content.scheduled_at.tzinfo is None:
-                # Naive datetime - localize to Pakistani timezone
-                content_data["scheduled_at"] = PAKISTAN_TZ.localize(content.scheduled_at)
-                print(f"Localized naive datetime to PKT: {content_data['scheduled_at']}")
-            else:
-                # Already timezone-aware
-                content_data["scheduled_at"] = content.scheduled_at
+            content_data["scheduled_at"] = _to_pakistan_time(content.scheduled_at)
+            print(f"Normalized scheduled_at to PKT: {content_data['scheduled_at']}")
         
         # Auto-set status based on scheduled_at (use timezone-aware comparison)
         now_pkt = datetime.now(PAKISTAN_TZ)
