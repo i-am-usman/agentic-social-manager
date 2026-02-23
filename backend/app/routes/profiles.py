@@ -23,4 +23,11 @@ def create_profile(profile: UserProfileData, user: dict = Depends(get_current_us
 def get_profile(user: dict = Depends(get_current_user)):
     updated_user = users_collection.find_one({"_id": ObjectId(user["_id"])})
     updated_user["_id"] = str(updated_user["_id"])
+    if "password" in updated_user:
+        updated_user.pop("password")
+    social_accounts = updated_user.get("social_accounts") or {}
+    for account in social_accounts.values():
+        if isinstance(account, dict) and "access_token" in account:
+            account["access_token"] = None
+    updated_user["social_accounts"] = social_accounts
     return updated_user

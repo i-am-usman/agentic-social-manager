@@ -7,6 +7,7 @@ from app.routes.posts import router as posts_router
 from app.routes.content import router as content_router
 from app.routes.profiles import router as profiles_router
 from app.routes.analytics import router as analytics_router
+from app.routes.accounts import router as accounts_router
 from app.services.scheduler import start_scheduler, shutdown_scheduler
 
 
@@ -40,6 +41,7 @@ app.include_router(posts_router)
 app.include_router(content_router)
 app.include_router(profiles_router)
 app.include_router(analytics_router)
+app.include_router(accounts_router)
 
 if __name__ == "__main__":
     import uvicorn

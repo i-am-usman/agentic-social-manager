@@ -8,11 +8,17 @@ logger = logging.getLogger(__name__)
 class AnalyticsService:
     """Fetch media and engagement metrics from Facebook and Instagram"""
     
-    def __init__(self):
-        self.fb_page_id = config.FB_PAGE_ID
-        self.fb_token = config.FB_PAGE_ACCESS_TOKEN
-        self.ig_user_id = config.IG_USER_ID
-        self.ig_token = config.IG_ACCESS_TOKEN
+    def __init__(
+        self,
+        fb_page_id: str | None,
+        fb_token: str | None,
+        ig_user_id: str | None,
+        ig_token: str | None,
+    ):
+        self.fb_page_id = fb_page_id
+        self.fb_token = fb_token
+        self.ig_user_id = ig_user_id
+        self.ig_token = ig_token
         self.api_version = config.GRAPH_API_VERSION
 
     def get_facebook_posts(self, limit=25):

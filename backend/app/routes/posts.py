@@ -6,6 +6,7 @@ from app.services.image_service import ImageService
 from app.schemas.post_schema import PostCreate, PostPublic, PublishRequest, RescheduleRequest, EditPostRequest
 from app.services.fb_service import FacebookService
 from app.services.insta_service import InstaService
+from app.services.social_accounts import get_platform_credentials
 from datetime import datetime, timezone
 import pytz
 from bson import ObjectId
@@ -119,6 +120,15 @@ async def publish_post(payload: PublishRequest, user: dict = Depends(get_current
     if invalid:
         raise HTTPException(status_code=400, detail=f"Unsupported platforms: {', '.join(invalid)}")
 
+    user_id = str(user["_id"])
+    fb_creds = get_platform_credentials(user_id, "facebook")
+    ig_creds = get_platform_credentials(user_id, "instagram")
+
+    if "facebook" in platforms and not fb_creds:
+        raise HTTPException(status_code=400, detail="Facebook account not connected")
+    if "instagram" in platforms and not ig_creds:
+        raise HTTPException(status_code=400, detail="Instagram account not connected")
+
     post_doc = None
     if payload.post_id:
         try:
@@ -129,7 +139,6 @@ async def publish_post(payload: PublishRequest, user: dict = Depends(get_current
         if not post_doc:
             raise HTTPException(status_code=404, detail="Post not found")
 
-        user_id = str(user["_id"])
         owner_id = str(post_doc.get("created_by") or post_doc.get("user_id"))
         if owner_id != user_id:
             raise HTTPException(status_code=403, detail="Not allowed to publish this post")
@@ -151,7 +160,10 @@ async def publish_post(payload: PublishRequest, user: dict = Depends(get_current
 
     results = {}
     if "facebook" in platforms:
-        fb_service = FacebookService()
+        fb_service = FacebookService(
+            page_id=fb_creds.get("page_id"),
+            access_token=fb_creds.get("access_token"),
+        )
         if image:
             # Publish with image
             results["facebook"] = fb_service.publish_photo(image, caption_text)
@@ -160,7 +172,10 @@ async def publish_post(payload: PublishRequest, user: dict = Depends(get_current
             results["facebook"] = fb_service.publish_text(caption_text)
 
     if "instagram" in platforms:
-        insta_service = InstaService()
+        insta_service = InstaService(
+            ig_user_id=ig_creds.get("ig_user_id"),
+            access_token=ig_creds.get("access_token"),
+        )
         
         # If image is base64, upload to imgbb first to get public URL
         final_image = image

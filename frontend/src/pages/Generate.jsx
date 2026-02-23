@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Loader2, Image as ImageIcon, Wand2, Sparkles } from "lucide-react";
 
 export default function Generate() {
@@ -16,8 +16,32 @@ export default function Generate() {
   const [scheduledAt, setScheduledAt] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   const [customImage, setCustomImage] = useState("");
+  const [connectedAccounts, setConnectedAccounts] = useState({
+    facebook: { connected: false },
+    instagram: { connected: false },
+  });
 
   const token = localStorage.getItem("token"); // ✅ get JWT
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/accounts/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setConnectedAccounts(data.accounts || connectedAccounts);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch connected accounts");
+      }
+    };
+
+    if (token) {
+      fetchAccounts();
+    }
+  }, [token]);
 
   // Helper: Convert datetime-local string to ISO format
   const toPakistaniTime = (localDateTimeString) => {
@@ -157,6 +181,12 @@ export default function Generate() {
     // Validate platforms if scheduling
     if (scheduledAt && selectedPlatforms.length === 0) {
       alert("Please select at least one platform for scheduled posts.");
+      return;
+    }
+
+    const missing = selectedPlatforms.filter((platform) => !connectedAccounts[platform]?.connected);
+    if (missing.length > 0) {
+      alert("Please connect your social accounts before scheduling.");
       return;
     }
 
@@ -359,17 +389,25 @@ export default function Generate() {
                   <input
                     type="checkbox"
                     checked={selectedPlatforms.includes("facebook")}
+                    disabled={!connectedAccounts.facebook?.connected}
                     onChange={() => togglePlatform("facebook")}
                   />
                   Facebook Page
+                  {!connectedAccounts.facebook?.connected && (
+                    <span className="text-xs text-gray-400">(connect)</span>
+                  )}
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
                     checked={selectedPlatforms.includes("instagram")}
+                    disabled={!connectedAccounts.instagram?.connected}
                     onChange={() => togglePlatform("instagram")}
                   />
                   Instagram
+                  {!connectedAccounts.instagram?.connected && (
+                    <span className="text-xs text-gray-400">(connect)</span>
+                  )}
                 </label>
               </div>
             </div>

@@ -14,6 +14,10 @@ export default function Profile() {
   const [editModal, setEditModal] = useState({ open: false, postId: null, caption: "", hashtags: "", image: "", platforms: [] });
   const [editStatus, setEditStatus] = useState({});
   const [deleteStatus, setDeleteStatus] = useState({});
+  const [connectedAccounts, setConnectedAccounts] = useState({
+    facebook: { connected: false },
+    instagram: { connected: false },
+  });
 
   // ✅ Fetch profile on mount
   useEffect(() => {
@@ -38,6 +42,25 @@ export default function Profile() {
     };
 
     fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch("http://127.0.0.1:8000/accounts/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setConnectedAccounts(data.accounts || connectedAccounts);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch connected accounts");
+      }
+    };
+
+    fetchAccounts();
   }, []);
 
   // Fetch user's saved posts
@@ -80,6 +103,12 @@ export default function Profile() {
     const platforms = selectedPlatforms[postId] || [];
     if (platforms.length === 0) {
       alert("Please select at least one platform.");
+      return;
+    }
+
+    const missing = platforms.filter((platform) => !connectedAccounts[platform]?.connected);
+    if (missing.length > 0) {
+      alert("Please connect your social accounts before publishing.");
       return;
     }
 
@@ -539,17 +568,25 @@ export default function Profile() {
                         <input
                           type="checkbox"
                           checked={(selectedPlatforms[p._id] || []).includes("facebook")}
+                          disabled={!connectedAccounts.facebook?.connected}
                           onChange={() => togglePlatform(p._id, "facebook")}
                         />
                         Facebook Page
+                        {!connectedAccounts.facebook?.connected && (
+                          <span className="text-xs text-gray-400">(connect)</span>
+                        )}
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input
                           type="checkbox"
                           checked={(selectedPlatforms[p._id] || []).includes("instagram")}
+                          disabled={!connectedAccounts.instagram?.connected}
                           onChange={() => togglePlatform(p._id, "instagram")}
                         />
                         Instagram
+                        {!connectedAccounts.instagram?.connected && (
+                          <span className="text-xs text-gray-400">(connect)</span>
+                        )}
                       </label>
                     </div>
                     <div className="flex gap-2">
@@ -642,6 +679,7 @@ export default function Profile() {
                 <input
                   type="checkbox"
                   checked={scheduleModal.platforms.includes("facebook")}
+                  disabled={!connectedAccounts.facebook?.connected}
                   onChange={() => {
                     const updated = scheduleModal.platforms.includes("facebook")
                       ? scheduleModal.platforms.filter(p => p !== "facebook")
@@ -650,11 +688,15 @@ export default function Profile() {
                   }}
                 />
                 Facebook Page
+                {!connectedAccounts.facebook?.connected && (
+                  <span className="text-xs text-gray-400">(connect)</span>
+                )}
               </label>
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={scheduleModal.platforms.includes("instagram")}
+                  disabled={!connectedAccounts.instagram?.connected}
                   onChange={() => {
                     const updated = scheduleModal.platforms.includes("instagram")
                       ? scheduleModal.platforms.filter(p => p !== "instagram")
@@ -663,6 +705,9 @@ export default function Profile() {
                   }}
                 />
                 Instagram
+                {!connectedAccounts.instagram?.connected && (
+                  <span className="text-xs text-gray-400">(connect)</span>
+                )}
               </label>
             </div>
 

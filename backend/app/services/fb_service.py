@@ -4,9 +4,9 @@ from app.config import config
 
 
 class FacebookService:
-	def __init__(self):
-		self.page_id = config.FB_PAGE_ID
-		self.token = config.FB_PAGE_ACCESS_TOKEN
+	def __init__(self, page_id: str | None, access_token: str | None):
+		self.page_id = page_id
+		self.token = access_token
 		self.api_version = config.GRAPH_API_VERSION
 
 	def _publish_photo_url(self, image_url: str, caption: str):
