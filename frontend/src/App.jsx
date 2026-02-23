@@ -5,7 +5,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Generate from "./pages/Generate";
-import Profile from "./pages/Profile";   // ✅ import Profile
+import Profile from "./pages/Profile";
+import Analytics from "./pages/Analytics";
 import Navbar from "./components/Navbar";
 
 export default function App() {
@@ -47,7 +48,8 @@ export default function App() {
           <>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/generate" element={<Generate />} />
-            <Route path="/profile" element={<Profile />} />   {/* ✅ new route */}
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </>
         )}

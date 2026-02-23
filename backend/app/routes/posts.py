@@ -19,6 +19,18 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 PAKISTAN_TZ = pytz.timezone('Asia/Karachi')
 
 
+def _to_pakistan_time(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return PAKISTAN_TZ.localize(dt)
+    return dt.astimezone(PAKISTAN_TZ)
+
+
+def _serialize_to_pakistan_time(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = pytz.UTC.localize(dt)
+    return dt.astimezone(PAKISTAN_TZ).isoformat()
+
+
 def _normalize_hashtags(hashtags: List[str]) -> List[str]:
     normalized = []
     for tag in hashtags:
@@ -79,11 +91,11 @@ async def get_user_posts(user: dict = Depends(get_current_user)):
     for p in posts:
         p["_id"] = str(p["_id"])
         if "created_at" in p and hasattr(p["created_at"], "isoformat"):
-            p["created_at"] = p["created_at"].isoformat()
+            p["created_at"] = _serialize_to_pakistan_time(p["created_at"])
         if "scheduled_at" in p and hasattr(p["scheduled_at"], "isoformat"):
-            p["scheduled_at"] = p["scheduled_at"].isoformat()
+            p["scheduled_at"] = _serialize_to_pakistan_time(p["scheduled_at"])
         if "published_at" in p and hasattr(p["published_at"], "isoformat"):
-            p["published_at"] = p["published_at"].isoformat()
+            p["published_at"] = _serialize_to_pakistan_time(p["published_at"])
             
     return {"status": "success", "posts": posts}
 
@@ -199,15 +211,10 @@ async def reschedule_post(
 
     update = {}
     
-    # If scheduled_at is provided and naive, localize to Pakistani timezone
+    # Normalize scheduled_at to Pakistani timezone
     scheduled_at_aware = None
     if payload.scheduled_at:
-        if payload.scheduled_at.tzinfo is None:
-            # Naive datetime - localize to Pakistani timezone
-            scheduled_at_aware = PAKISTAN_TZ.localize(payload.scheduled_at)
-        else:
-            # Already timezone-aware
-            scheduled_at_aware = payload.scheduled_at
+        scheduled_at_aware = _to_pakistan_time(payload.scheduled_at)
     
     # Cancel schedule if scheduled_at is None
     if payload.scheduled_at is None:
