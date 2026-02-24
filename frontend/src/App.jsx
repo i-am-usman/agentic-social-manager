@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Generate from "./pages/Generate";
 import Profile from "./pages/Profile";
 import Analytics from "./pages/Analytics";
+import ConnectAccounts from "./pages/ConnectAccounts";
 import Navbar from "./components/Navbar";
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="/generate" element={<Generate />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/accounts" element={<ConnectAccounts />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </>
         )}

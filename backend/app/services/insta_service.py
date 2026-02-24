@@ -3,9 +3,9 @@ from app.config import config
 
 
 class InstaService:
-    def __init__(self):
-        self.ig_user_id = config.IG_USER_ID
-        self.token = config.IG_ACCESS_TOKEN
+    def __init__(self, ig_user_id: str | None, access_token: str | None):
+        self.ig_user_id = ig_user_id
+        self.token = access_token
         self.api_version = config.GRAPH_API_VERSION
 
     def publish_photo(self, image_url: str, caption: str):
