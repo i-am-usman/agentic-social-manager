@@ -53,7 +53,10 @@ export default function Profile() {
         });
         if (res.ok) {
           const data = await res.json();
-          setConnectedAccounts(data.accounts || connectedAccounts);
+          setConnectedAccounts(data.accounts || {
+            facebook: { connected: false },
+            instagram: { connected: false },
+          });
         }
       } catch (err) {
         console.warn("Failed to fetch connected accounts");
@@ -61,7 +64,7 @@ export default function Profile() {
     };
 
     fetchAccounts();
-  }, []);
+  }, []);  // ✅ Removed connectedAccounts to prevent infinite loop
 
   // Fetch user's saved posts
   const fetchPosts = async () => {
@@ -531,10 +534,14 @@ export default function Profile() {
           <p className="text-gray-500">No {filterStatus === "all" ? "" : filterStatus} posts found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredPosts.map((p) => (
+            {filteredPosts.map((p) => {
+              // Get thumbnail: Check media array first, then fallback to image
+              const thumbnail = p.media && p.media.length > 0 ? p.media[0].url : p.image;
+              
+              return (
               <div key={p._id} className="border rounded-lg p-4 bg-white shadow-sm">
-                {p.image && (
-                  <img src={p.image} alt="post" className="w-full h-40 object-cover rounded mb-3" />
+                {thumbnail && (
+                  <img src={thumbnail} alt="post" className="w-full h-40 object-cover rounded mb-3" />
                 )}
                 <p className="text-gray-700 mb-2">{p.caption}</p>
                 {p.hashtags && Array.isArray(p.hashtags) && (
@@ -652,7 +659,8 @@ export default function Profile() {
                   <span>{p.created_at ? formatPakistaniTime(p.created_at) : ''}</span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
