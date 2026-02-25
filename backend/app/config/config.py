@@ -15,3 +15,8 @@ IG_ACCESS_TOKEN = os.getenv("IG_ACCESS_TOKEN")
 
 # Image hosting for Instagram (requires public URLs)
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
+
+# Cloudinary configuration for image and video hosting
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
