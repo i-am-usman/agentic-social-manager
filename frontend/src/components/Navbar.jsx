@@ -2,14 +2,14 @@ import React from "react";
 import { Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function Navbar({ setIsAuthenticated }) {
+export default function Navbar({ setIsAuthenticated, onLogout }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // ✅ Clear JWT token
-    localStorage.removeItem("token");
-    // ✅ Update auth state
-    setIsAuthenticated(false);
+    // ✅ Call logout handler from App.jsx
+    if (onLogout) {
+      onLogout();
+    }
     // ✅ Redirect to login
     navigate("/login");
   };
@@ -33,6 +33,9 @@ export default function Navbar({ setIsAuthenticated }) {
           </Link>
           <Link to="/generate" className="text-gray-700 hover:text-indigo-600">
             Create Content
+          </Link>
+          <Link to="/custom-post" className="text-gray-700 hover:text-indigo-600">
+            Custom Post
           </Link>
           <Link to="/analytics" className="text-gray-700 hover:text-indigo-600">
             Analytics
