@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Generate from "./pages/Generate";
+import CustomPost from "./pages/CustomPost";
 import Profile from "./pages/Profile";
 import Analytics from "./pages/Analytics";
 import ConnectAccounts from "./pages/ConnectAccounts";
@@ -29,7 +30,7 @@ export default function App() {
 
   return (
     <Router>
-      {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} />}
+      {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} onLogout={handleLogout} />}
 
       <Routes>
         {/* Guest Routes */}
@@ -49,6 +50,7 @@ export default function App() {
           <>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/generate" element={<Generate />} />
+            <Route path="/custom-post" element={<CustomPost />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/accounts" element={<ConnectAccounts />} />
