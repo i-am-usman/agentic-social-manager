@@ -31,20 +31,20 @@ export default function ConnectAccounts() {
     return String(detail);
   };
 
-  const fetchAccounts = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/accounts/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      setAccounts(data.accounts || accounts);
-    } catch (err) {
-      setPageError("Failed to fetch connected accounts. Please refresh.");
-    }
-  };
-
   useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/accounts/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setAccounts(data.accounts || accounts);
+      } catch (err) {
+        setPageError("Failed to fetch connected accounts. Please refresh.");
+      }
+    };
+
     fetchAccounts();
   }, []);
 
