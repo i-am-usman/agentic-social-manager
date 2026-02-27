@@ -13,6 +13,10 @@ FB_PAGE_ACCESS_TOKEN = os.getenv("FB_PAGE_ACCESS_TOKEN")
 IG_USER_ID = os.getenv("IG_USER_ID")
 IG_ACCESS_TOKEN = os.getenv("IG_ACCESS_TOKEN")
 
+# AI Services
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+BYTEZ_API_KEY = os.getenv("BYTEZ_API_KEY")
+
 # Image hosting for Instagram (requires public URLs)
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
 
@@ -20,3 +24,9 @@ IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
+
+# LinkedIn configuration (OAuth - for future use)
+LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
+LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
+LINKEDIN_REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI", "http://localhost:8000/accounts/linkedin/callback")
+LINKEDIN_ORGANIZATION_ID = os.getenv("LINKEDIN_ORGANIZATION_ID")
