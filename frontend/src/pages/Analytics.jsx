@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Loader2, ThumbsUp, MessageCircle, Share2, ExternalLink, Instagram, Facebook } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Loader2, ThumbsUp, MessageCircle, Share2, ExternalLink, Instagram, Facebook, Linkedin } from "lucide-react";
 
 export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
-  const [filter, setFilter] = useState("all"); // all, facebook, instagram
+  const [filter, setFilter] = useState("all"); // all, facebook, instagram, linkedin (shows both personal & company)
   const [error, setError] = useState(null);
   const [selectedPost, setSelectedPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -12,14 +12,16 @@ export default function Analytics() {
   const [replyDrafts, setReplyDrafts] = useState({});
   const [replyState, setReplyState] = useState({});
   const [expandedReplies, setExpandedReplies] = useState({});
+  const [linkedinSettings, setLinkedinSettings] = useState({
+    auto_reply_enabled: false,
+    reply_tone: "professional",
+    reply_delay_minutes: 5
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [filter]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -29,6 +31,8 @@ export default function Analytics() {
         endpoint = "http://127.0.0.1:8000/analytics/facebook";
       } else if (filter === "instagram") {
         endpoint = "http://127.0.0.1:8000/analytics/instagram";
+      } else if (filter === "linkedin") {
+        endpoint = "http://127.0.0.1:8000/analytics/linkedin/posts";
       }
 
       const res = await fetch(endpoint, {
@@ -38,7 +42,25 @@ export default function Analytics() {
       const data = await res.json();
       
       if (data.status === "success") {
-        setPosts(data.posts || []);
+        // Normalize LinkedIn posts to match FB/IG format
+        if (filter === "linkedin" && data.posts) {
+          const normalizedPosts = data.posts.map(post => ({
+            id: post.post_id,
+            platform: "linkedin",
+            message: post.text,
+            created_time: new Date(post.created_at).toISOString(),
+            likes: post.analytics?.likes || 0,
+            comments_count: post.analytics?.comments || 0,
+            shares: post.analytics?.shares || 0,
+            impressions: post.analytics?.impressions || 0,
+            clicks: post.analytics?.clicks || 0,
+            engagement_rate: post.analytics?.engagement_rate || 0,
+          }));
+          setPosts(normalizedPosts);
+        } else {
+          setPosts(data.posts || []);
+        }
+        
         if (data.errors && data.errors.length > 0) {
           setError(`Warning: ${data.errors.join(", ")}`);
         }
@@ -52,6 +74,64 @@ export default function Analytics() {
     }
 
     setLoading(false);
+  }, [filter, token]);
+
+  const fetchLinkedInSettings = useCallback(async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/analytics/linkedin/auto-reply/settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.status === "success" && data.settings) {
+        setLinkedinSettings(data.settings);
+      }
+    } catch (err) {
+      console.error("Failed to fetch LinkedIn settings:", err);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchAnalytics();
+    if (filter === "linkedin") {
+      fetchLinkedInSettings();
+    }
+  }, [filter, fetchAnalytics, fetchLinkedInSettings]);
+
+  const updateLinkedInSettings = async (newSettings) => {
+    setSettingsLoading(true);
+    try {
+      // Update toggle
+      if ("auto_reply_enabled" in newSettings) {
+        await fetch("http://127.0.0.1:8000/analytics/linkedin/auto-reply/toggle", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ enabled: newSettings.auto_reply_enabled })
+        });
+      }
+      
+      // Update settings (tone, delay)
+      if ("reply_tone" in newSettings || "reply_delay_minutes" in newSettings) {
+        await fetch("http://127.0.0.1:8000/analytics/linkedin/auto-reply/settings", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            reply_tone: newSettings.reply_tone || linkedinSettings.reply_tone,
+            reply_delay_minutes: newSettings.reply_delay_minutes || linkedinSettings.reply_delay_minutes
+          })
+        });
+      }
+      
+      setLinkedinSettings((prev) => ({ ...prev, ...newSettings }));
+    } catch (err) {
+      console.error("Failed to update settings:", err);
+    }
+    setSettingsLoading(false);
   };
 
   const fetchComments = async (postId, platform) => {
@@ -163,7 +243,7 @@ export default function Analytics() {
 
       {/* Filter Tabs */}
       <div className="flex gap-2 mb-6 border-b">
-        {["all", "facebook", "instagram"].map((tab) => (
+        {["all", "facebook", "instagram", "linkedin"].map((tab) => (
           <button
             key={tab}
             onClick={() => setFilter(tab)}
@@ -175,10 +255,75 @@ export default function Analytics() {
           >
             {tab === "facebook" && <Facebook size={18} />}
             {tab === "instagram" && <Instagram size={18} />}
+            {tab === "linkedin" && <Linkedin size={18} />}
             {tab}
           </button>
         ))}
       </div>
+
+      {/* LinkedIn Auto-Reply Settings (shows only on LinkedIn tab) */}
+      {filter === "linkedin" && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Auto-Reply Settings</h3>
+          
+          <div className="space-y-4">
+            {/* Enable/Disable Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Enable Auto-Reply</label>
+                <p className="text-xs text-gray-500 mt-1">Automatically reply to comments using AI</p>
+              </div>
+              <button
+                onClick={() => updateLinkedInSettings({ auto_reply_enabled: !linkedinSettings.auto_reply_enabled })}
+                disabled={settingsLoading}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  linkedinSettings.auto_reply_enabled ? "bg-indigo-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    linkedinSettings.auto_reply_enabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Reply Tone Selector */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">Reply Tone</label>
+              <select
+                value={linkedinSettings.reply_tone}
+                onChange={(e) => updateLinkedInSettings({ reply_tone: e.target.value })}
+                disabled={settingsLoading}
+                className="w-full md:w-64 border rounded-lg p-2 text-sm"
+              >
+                <option value="professional">Professional</option>
+                <option value="friendly">Friendly</option>
+                <option value="casual">Casual</option>
+              </select>
+            </div>
+
+            {/* Reply Delay Slider */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Reply Delay: {linkedinSettings.reply_delay_minutes} minutes
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="30"
+                value={linkedinSettings.reply_delay_minutes}
+                onChange={(e) => updateLinkedInSettings({ reply_delay_minutes: parseInt(e.target.value) })}
+                disabled={settingsLoading}
+                className="w-full md:w-96"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                How long to wait before replying to new comments (1-30 minutes)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -216,10 +361,15 @@ export default function Analytics() {
                       <Facebook size={16} className="text-blue-600" />
                       <span className="text-sm font-semibold text-blue-600">Facebook</span>
                     </>
-                  ) : (
+                  ) : post.platform === "instagram" ? (
                     <>
                       <Instagram size={16} className="text-pink-600" />
                       <span className="text-sm font-semibold text-pink-600">Instagram</span>
+                    </>
+                  ) : (
+                    <>
+                      <Linkedin size={16} className="text-blue-700" />
+                      <span className="text-sm font-semibold text-blue-700">LinkedIn</span>
                     </>
                   )}
                 </div>
@@ -265,15 +415,30 @@ export default function Analytics() {
                     className="flex items-center gap-1 text-sm text-gray-600 hover:text-indigo-600"
                   >
                     <MessageCircle size={16} className="text-green-500" />
-                    <span>{post.comments || 0}</span>
+                    <span>{post.comments || post.comments_count || 0}</span>
                   </button>
-                  {post.platform === "facebook" && (
+                  {(post.platform === "facebook" || post.platform === "linkedin") && (
                     <div className="flex items-center gap-1 text-sm text-gray-600">
                       <Share2 size={16} className="text-purple-500" />
                       <span>{post.shares || 0}</span>
                     </div>
                   )}
                 </div>
+
+                {/* LinkedIn-specific metrics */}
+                {post.platform === "linkedin" && (post.impressions || post.clicks) && (
+                  <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
+                    {post.impressions > 0 && (
+                      <div>Impressions: <span className="font-semibold">{post.impressions}</span></div>
+                    )}
+                    {post.clicks > 0 && (
+                      <div>Clicks: <span className="font-semibold">{post.clicks}</span></div>
+                    )}
+                    {post.engagement_rate > 0 && (
+                      <div>Engagement: <span className="font-semibold">{post.engagement_rate.toFixed(2)}%</span></div>
+                    )}
+                  </div>
+                )}
 
                 {/* Total Engagement */}
                 <div className="pt-3 border-t">

@@ -570,7 +570,7 @@ export default function Profile() {
                 {p.status === "draft" && (
                   <div className="border-t pt-3 mt-3">
                     <p className="text-sm font-semibold text-gray-700 mb-2">Publish to:</p>
-                    <div className="flex items-center gap-4 mb-3">
+                    <div className="grid grid-cols-2 gap-3 mb-3">
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input
                           type="checkbox"
@@ -592,6 +592,30 @@ export default function Profile() {
                         />
                         Instagram
                         {!connectedAccounts.instagram?.connected && (
+                          <span className="text-xs text-gray-400">(connect)</span>
+                        )}
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={(selectedPlatforms[p._id] || []).includes("linkedin-personal")}
+                          disabled={!connectedAccounts.linkedin_personal?.connected}
+                          onChange={() => togglePlatform(p._id, "linkedin-personal")}
+                        />
+                        LinkedIn Personal
+                        {!connectedAccounts.linkedin_personal?.connected && (
+                          <span className="text-xs text-gray-400">(connect)</span>
+                        )}
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={(selectedPlatforms[p._id] || []).includes("linkedin-company")}
+                          disabled={!connectedAccounts.linkedin_company?.connected}
+                          onChange={() => togglePlatform(p._id, "linkedin-company")}
+                        />
+                        LinkedIn Company
+                        {!connectedAccounts.linkedin_company?.connected && (
                           <span className="text-xs text-gray-400">(connect)</span>
                         )}
                       </label>
@@ -682,7 +706,7 @@ export default function Profile() {
             />
 
             <label className="block text-sm font-semibold mb-2">Select Platforms:</label>
-            <div className="flex gap-4 mb-4">
+            <div className="grid grid-cols-2 gap-3 mb-4">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -714,6 +738,40 @@ export default function Profile() {
                 />
                 Instagram
                 {!connectedAccounts.instagram?.connected && (
+                  <span className="text-xs text-gray-400">(connect)</span>
+                )}
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={scheduleModal.platforms.includes("linkedin-personal")}
+                  disabled={!connectedAccounts.linkedin_personal?.connected}
+                  onChange={() => {
+                    const updated = scheduleModal.platforms.includes("linkedin-personal")
+                      ? scheduleModal.platforms.filter(p => p !== "linkedin-personal")
+                      : [...scheduleModal.platforms, "linkedin-personal"];
+                    setScheduleModal(prev => ({ ...prev, platforms: updated }));
+                  }}
+                />
+                LinkedIn Personal
+                {!connectedAccounts.linkedin_personal?.connected && (
+                  <span className="text-xs text-gray-400">(connect)</span>
+                )}
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={scheduleModal.platforms.includes("linkedin-company")}
+                  disabled={!connectedAccounts.linkedin_company?.connected}
+                  onChange={() => {
+                    const updated = scheduleModal.platforms.includes("linkedin-company")
+                      ? scheduleModal.platforms.filter(p => p !== "linkedin-company")
+                      : [...scheduleModal.platforms, "linkedin-company"];
+                    setScheduleModal(prev => ({ ...prev, platforms: updated }));
+                  }}
+                />
+                LinkedIn Company
+                {!connectedAccounts.linkedin_company?.connected && (
                   <span className="text-xs text-gray-400">(connect)</span>
                 )}
               </label>

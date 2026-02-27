@@ -18,11 +18,12 @@ export default function Generate() {
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   const [mediaItems, setMediaItems] = useState([]);  // ✅ New: array of {id, type, file, preview, order}
   const [uploadingMedia, setUploadingMedia] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [posting, setPosting] = useState(false);
   const [connectedAccounts, setConnectedAccounts] = useState({
     facebook: { connected: false },
     instagram: { connected: false },
+    linkedin_personal: { connected: false },
+    linkedin_company: { connected: false },
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [editCaption, setEditCaption] = useState("");
@@ -43,6 +44,8 @@ export default function Generate() {
           setConnectedAccounts(data.accounts || {
             facebook: { connected: false },
             instagram: { connected: false },
+            linkedin_personal: { connected: false },
+            linkedin_company: { connected: false },
           });
         }
       } catch (err) {
@@ -315,7 +318,10 @@ export default function Generate() {
       return;
     }
 
-    const missing = selectedPlatforms.filter((platform) => !connectedAccounts[platform]?.connected);
+    const missing = selectedPlatforms.filter((platform) => {
+      const key = getAccountKey(platform);
+      return !connectedAccounts[key]?.connected;
+    });
     if (missing.length > 0) {
       alert("Please connect your social accounts before scheduling.");
       return;
@@ -399,15 +405,18 @@ export default function Generate() {
     );
   };
 
+  const getAccountKey = (platform) => platform.replace(/-/g, "_");
+
   const handlePostNow = async () => {
     if (!selectedPlatforms || selectedPlatforms.length === 0) {
       alert("Please select at least one platform to post");
       return;
     }
 
-    const missing = selectedPlatforms.filter(
-      (platform) => !connectedAccounts[platform]?.connected
-    );
+    const missing = selectedPlatforms.filter((platform) => {
+      const key = getAccountKey(platform);
+      return !connectedAccounts[key]?.connected;
+    });
     if (missing.length > 0) {
       alert(`Please connect your ${missing.join(" and ")} account(s) before posting`);
       return;
@@ -662,6 +671,26 @@ export default function Generate() {
                 </ul>
               </div>
             )}
+
+            {/* LinkedIn Mixed Media Warning */}
+            {selectedPlatforms.includes("linkedin") && mediaItems.length > 0 && (
+              (() => {
+                const hasImages = mediaItems.some(m => m.type === "image");
+                const hasVideos = mediaItems.some(m => m.type === "video");
+                if (hasImages && hasVideos) {
+                  return (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+                      <p className="text-sm font-semibold text-yellow-800 mb-1">⚠️ LinkedIn Media Limitation:</p>
+                      <ul className="text-xs text-yellow-700 space-y-1 list-disc list-inside">
+                        <li>LinkedIn doesn't support mixing images and videos in a single post</li>
+                        <li>Only images will be published (videos will be omitted)</li>
+                      </ul>
+                    </div>
+                  );
+                }
+                return null;
+              })()
+            )}
           </div>
 
           {/* SCHEDULED TIME */}
@@ -700,6 +729,30 @@ export default function Generate() {
                 />
                 Instagram
                 {!connectedAccounts.instagram?.connected && (
+                  <span className="text-xs text-red-600">(not connected)</span>
+                )}
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={selectedPlatforms.includes("linkedin-personal")}
+                  disabled={!connectedAccounts.linkedin_personal?.connected}
+                  onChange={() => togglePlatform("linkedin-personal")}
+                />
+                LinkedIn Personal
+                {!connectedAccounts.linkedin_personal?.connected && (
+                  <span className="text-xs text-red-600">(not connected)</span>
+                )}
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={selectedPlatforms.includes("linkedin-company")}
+                  disabled={!connectedAccounts.linkedin_company?.connected}
+                  onChange={() => togglePlatform("linkedin-company")}
+                />
+                LinkedIn Company
+                {!connectedAccounts.linkedin_company?.connected && (
                   <span className="text-xs text-red-600">(not connected)</span>
                 )}
               </label>
