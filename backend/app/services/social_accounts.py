@@ -3,7 +3,7 @@ from bson import ObjectId
 from app.services.database import users_collection
 
 
-SUPPORTED_PLATFORMS = {"facebook", "instagram"}
+SUPPORTED_PLATFORMS = {"facebook", "instagram", "linkedin", "linkedin-personal", "linkedin-company"}
 
 
 def _ensure_platform(platform: str) -> str:

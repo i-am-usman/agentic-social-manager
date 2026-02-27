@@ -4,6 +4,7 @@ import pytz
 from app.services.database import posts_collection
 from app.services.fb_service import FacebookService
 from app.services.insta_service import InstaService
+from app.services.linkedin_service import LinkedInService
 from app.services.image_service import ImageService
 from app.services.social_accounts import get_platform_credentials
 import logging
@@ -55,7 +56,18 @@ def process_scheduled_posts():
                 logger.warning(f"Post {post_id} has no platforms selected, skipping")
                 continue
             
+            # Extract media - support both old 'image' field and new 'media' array
             image = post.get("image")
+            media = post.get("media") or []
+            
+            # If no direct image, try to extract from media array
+            if not image and media:
+                # Get first image from media array
+                for media_item in media:
+                    if isinstance(media_item, dict) and media_item.get("type") in ["image", "photo"]:
+                        image = media_item.get("url")
+                        break
+            
             # Instagram requires an image, but Facebook allows text-only posts
             if "instagram" in platforms and not image:
                 logger.warning(f"Post {post_id} scheduled for Instagram but has no image, skipping")
@@ -134,6 +146,57 @@ def process_scheduled_posts():
                 except Exception as e:
                     logger.error(f"Failed to publish post {post_id} to Instagram: {e}", exc_info=True)
                     results["instagram"] = {"status": "error", "detail": str(e)}
+            
+            # Publish to LinkedIn Personal
+            if "linkedin-personal" in platforms:
+                try:
+                    li_personal_creds = get_platform_credentials(user_id, "linkedin-personal") if user_id else None
+                    if not li_personal_creds:
+                        results["linkedin-personal"] = {"status": "error", "detail": "LinkedIn Personal account not connected"}
+                        logger.warning(f"Post {post_id} has no LinkedIn Personal credentials, skipping")
+                    else:
+                        linkedin_service = LinkedInService(
+                            user_id=li_personal_creds.get("linkedin_user_id"),
+                            access_token=li_personal_creds.get("access_token"),
+                        )
+                        if image:
+                            # Publish with image
+                            results["linkedin-personal"] = linkedin_service.publish_photo([image], caption_text)
+                        else:
+                            # Publish text-only
+                            results["linkedin-personal"] = linkedin_service.publish_text(caption_text)
+                        logger.info(f"Published post {post_id} to LinkedIn Personal: {results['linkedin-personal']}")
+                        if results["linkedin-personal"].get("status") == "success":
+                            any_success = True
+                except Exception as e:
+                    logger.error(f"Failed to publish post {post_id} to LinkedIn Personal: {e}", exc_info=True)
+                    results["linkedin-personal"] = {"status": "error", "detail": str(e)}
+            
+            # Publish to LinkedIn Company
+            if "linkedin-company" in platforms:
+                try:
+                    li_company_creds = get_platform_credentials(user_id, "linkedin-company") if user_id else None
+                    if not li_company_creds:
+                        results["linkedin-company"] = {"status": "error", "detail": "LinkedIn Company account not connected"}
+                        logger.warning(f"Post {post_id} has no LinkedIn Company credentials, skipping")
+                    else:
+                        linkedin_service = LinkedInService(
+                            user_id=li_company_creds.get("linkedin_user_id"),
+                            access_token=li_company_creds.get("access_token"),
+                            organization_id=li_company_creds.get("linkedin_organization_id"),
+                        )
+                        if image:
+                            # Publish with image
+                            results["linkedin-company"] = linkedin_service.publish_photo([image], caption_text)
+                        else:
+                            # Publish text-only
+                            results["linkedin-company"] = linkedin_service.publish_text(caption_text)
+                        logger.info(f"Published post {post_id} to LinkedIn Company: {results['linkedin-company']}")
+                        if results["linkedin-company"].get("status") == "success":
+                            any_success = True
+                except Exception as e:
+                    logger.error(f"Failed to publish post {post_id} to LinkedIn Company: {e}", exc_info=True)
+                    results["linkedin-company"] = {"status": "error", "detail": str(e)}
             
             # Update post status
             status = "published" if any_success else "draft"
