@@ -6,6 +6,7 @@ from app.services.image_service import ImageService
 from app.schemas.post_schema import PostCreate, PostPublic, PublishRequest, RescheduleRequest, EditPostRequest
 from app.services.fb_service import FacebookService
 from app.services.insta_service import InstaService
+from app.services.linkedin_service import LinkedInService
 from app.services.social_accounts import get_platform_credentials
 from app.services.job_tracker import job_tracker
 from app.services.media_validator import validate_carousel_aspect_ratios, format_aspect_ratio_error
@@ -136,6 +137,10 @@ def _execute_publish_worker(job_id: str, payload_dict: dict, user: dict):
         
         fb_creds = get_platform_credentials(user_id, "facebook")
         ig_creds = get_platform_credentials(user_id, "instagram")
+        li_personal_creds = get_platform_credentials(user_id, "linkedin-personal")
+        li_company_creds = get_platform_credentials(user_id, "linkedin-company")
+        # For backwards compatibility
+        li_creds = get_platform_credentials(user_id, "linkedin")
 
         post_doc = None
         if payload_dict.get("post_id"):
@@ -255,6 +260,117 @@ def _execute_publish_worker(job_id: str, payload_dict: dict, user: dict):
             
             completed += 1
 
+        # Publish to LinkedIn Personal Profile
+        if "linkedin-personal" in platforms:
+            if li_personal_creds:
+                job_tracker.update_job(
+                    job_id, 
+                    status="publishing", 
+                    progress=20 + int(40 * completed / total), 
+                    message="Publishing to LinkedIn Personal...",
+                    platform_status={"linkedin-personal": "publishing"}
+                )
+                try:
+                    linkedin_service = LinkedInService(
+                        user_id=li_personal_creds.get("linkedin_user_id"),
+                        access_token=li_personal_creds.get("access_token"),
+                        job_tracker=job_tracker,
+                        job_id=job_id
+                    )
+                    
+                    if not media_to_publish:
+                        results["linkedin-personal"] = linkedin_service.publish_text(caption_text)
+                    else:
+                        images = [m for m in media_to_publish if m.get("type") == "image"]
+                        videos = [m for m in media_to_publish if m.get("type") == "video"]
+                        
+                        if images and videos:
+                            logger.warning("LinkedIn doesn't support mixing images and videos. Publishing images only.")
+                            image_urls = [m.get("url") for m in images if m.get("url")]
+                            result = linkedin_service.publish_photo(image_urls, caption_text)
+                            if result.get("status") == "success":
+                                result["data"]["warning"] = "Videos were omitted (LinkedIn doesn't support mixing image + video)"
+                            results["linkedin-personal"] = result
+                        elif images:
+                            image_urls = [m.get("url") for m in images if m.get("url")]
+                            results["linkedin-personal"] = linkedin_service.publish_photo(image_urls, caption_text)
+                        elif videos:
+                            video_url = videos[0].get("url")
+                            results["linkedin-personal"] = linkedin_service.publish_video(video_url, caption_text)
+                        else:
+                            results["linkedin-personal"] = linkedin_service.publish_text(caption_text)
+                    
+                    li_result = results.get("linkedin-personal", {})
+                    if li_result.get("status") == "success":
+                        job_tracker.update_job(job_id, platform_status={"linkedin-personal": "completed"})
+                    else:
+                        error_detail = li_result.get("detail", "Unknown error")
+                        logger.error(f"LinkedIn Personal publish failed: {error_detail}")
+                        job_tracker.update_job(job_id, platform_status={"linkedin-personal": "failed"})
+                        
+                except Exception as e:
+                    logger.error(f"LinkedIn Personal publishing exception: {e}", exc_info=True)
+                    results["linkedin-personal"] = {"status": "error", "detail": str(e)}
+                    job_tracker.update_job(job_id, platform_status={"linkedin-personal": "failed"})
+                
+                completed += 1
+
+        # Publish to LinkedIn Company Page
+        if "linkedin-company" in platforms:
+            if li_company_creds:
+                job_tracker.update_job(
+                    job_id, 
+                    status="publishing", 
+                    progress=20 + int(40 * completed / total), 
+                    message="Publishing to LinkedIn Company...",
+                    platform_status={"linkedin-company": "publishing"}
+                )
+                try:
+                    linkedin_service = LinkedInService(
+                        user_id=li_company_creds.get("linkedin_user_id"),
+                        access_token=li_company_creds.get("access_token"),
+                        organization_id=li_company_creds.get("linkedin_organization_id"),
+                        job_tracker=job_tracker,
+                        job_id=job_id
+                    )
+                    
+                    if not media_to_publish:
+                        results["linkedin-company"] = linkedin_service.publish_text(caption_text)
+                    else:
+                        images = [m for m in media_to_publish if m.get("type") == "image"]
+                        videos = [m for m in media_to_publish if m.get("type") == "video"]
+                        
+                        if images and videos:
+                            logger.warning("LinkedIn doesn't support mixing images and videos. Publishing images only.")
+                            image_urls = [m.get("url") for m in images if m.get("url")]
+                            result = linkedin_service.publish_photo(image_urls, caption_text)
+                            if result.get("status") == "success":
+                                result["data"]["warning"] = "Videos were omitted (LinkedIn doesn't support mixing image + video)"
+                            results["linkedin-company"] = result
+                        elif images:
+                            image_urls = [m.get("url") for m in images if m.get("url")]
+                            results["linkedin-company"] = linkedin_service.publish_photo(image_urls, caption_text)
+                        elif videos:
+                            video_url = videos[0].get("url")
+                            results["linkedin-company"] = linkedin_service.publish_video(video_url, caption_text)
+                        else:
+                            results["linkedin-company"] = linkedin_service.publish_text(caption_text)
+                    
+                    li_result = results.get("linkedin-company", {})
+                    if li_result.get("status") == "success":
+                        job_tracker.update_job(job_id, platform_status={"linkedin-company": "completed"})
+                    else:
+                        error_detail = li_result.get("detail", "Unknown error")
+                        logger.error(f"LinkedIn Company publish failed: {error_detail}")
+                        job_tracker.update_job(job_id, platform_status={"linkedin-company": "failed"})
+                        
+                except Exception as e:
+                    logger.error(f"LinkedIn Company publishing exception: {e}", exc_info=True)
+                    results["linkedin-company"] = {"status": "error", "detail": str(e)}
+                    job_tracker.update_job(job_id, platform_status={"linkedin-company": "failed"})
+                
+                completed += 1
+
         # Publish to Instagram
         if "instagram" in platforms:
             job_tracker.update_job(
@@ -346,9 +462,8 @@ def _execute_publish_worker(job_id: str, payload_dict: dict, user: dict):
 
         if post_doc:
             any_success = any(
-                r.get("status") == "success" 
-                for r in (results.get("facebook"), results.get("instagram")) 
-                if r
+                results.get(p, {}).get("status") == "success"
+                for p in platforms
             )
             
             update = {
@@ -364,9 +479,11 @@ def _execute_publish_worker(job_id: str, payload_dict: dict, user: dict):
         ]
         
         if failed_platforms:
+            published_count = len(platforms) - len(failed_platforms)
+            final_status = "failed" if published_count == 0 else "partial"
             final_result = {
-                "status": "partial",
-                "message": f"Published to {len(platforms) - len(failed_platforms)}/{len(platforms)} platforms",
+                "status": final_status,
+                "message": f"Published to {published_count}/{len(platforms)} platforms",
                 "results": results,
                 "failed_platforms": failed_platforms
             }
@@ -384,7 +501,7 @@ def _execute_publish_worker(job_id: str, payload_dict: dict, user: dict):
 async def publish_post(payload: PublishRequest, user: dict = Depends(get_current_user)):
     """Start a publishing job and return job ID immediately"""
     platforms = [p.lower() for p in payload.platforms]
-    allowed = {"facebook", "instagram"}
+    allowed = {"facebook", "instagram", "linkedin-personal", "linkedin-company"}
     invalid = [p for p in platforms if p not in allowed]
     if invalid:
         raise HTTPException(status_code=400, detail=f"Unsupported platforms: {', '.join(invalid)}")
@@ -392,11 +509,17 @@ async def publish_post(payload: PublishRequest, user: dict = Depends(get_current
     user_id = str(user["_id"])
     fb_creds = get_platform_credentials(user_id, "facebook")
     ig_creds = get_platform_credentials(user_id, "instagram")
+    li_personal_creds = get_platform_credentials(user_id, "linkedin-personal")
+    li_company_creds = get_platform_credentials(user_id, "linkedin-company")
 
     if "facebook" in platforms and not fb_creds:
         raise HTTPException(status_code=400, detail="Facebook account not connected")
     if "instagram" in platforms and not ig_creds:
         raise HTTPException(status_code=400, detail="Instagram account not connected")
+    if "linkedin-personal" in platforms and not li_personal_creds:
+        raise HTTPException(status_code=400, detail="Please connect your linkedin-personal account(s) before posting")
+    if "linkedin-company" in platforms and not li_company_creds:
+        raise HTTPException(status_code=400, detail="Please connect your linkedin-company account(s) before posting")
     
     # Instagram requires media
     media_to_check = payload.media or []
