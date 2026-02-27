@@ -1,20 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
 
 const ProgressModal = ({ jobId, onComplete, onClose }) => {
   const [jobStatus, setJobStatus] = useState(null);
   const [error, setError] = useState(null);
+  const timeoutRef = useRef(null);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
     if (!jobId) return;
 
-    const pollInterval = setInterval(async () => {
+    let canceled = false;
+    let attempts = 0;
+    const startTime = Date.now();
+    const maxDurationMs = 2 * 60 * 1000;
+    const baseIntervalMs = 2000;
+    const maxIntervalMs = 10000;
+
+    const pollStatus = async () => {
+      if (canceled || inFlightRef.current) return;
+      inFlightRef.current = true;
+
       try {
+        const controller = new AbortController();
         const token = localStorage.getItem('token');
         const response = await fetch(`http://localhost:8000/posts/status/${jobId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -24,36 +38,65 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
         const data = await response.json();
         setJobStatus(data);
 
-        // If job is completed or failed, stop polling
         if (data.status === 'completed' || data.status === 'failed') {
-          clearInterval(pollInterval);
           if (onComplete) {
             onComplete(data);
           }
+          return;
         }
       } catch (err) {
         console.error('Error polling job status:', err);
         setError(err.message);
-        clearInterval(pollInterval);
+        return;
+      } finally {
+        inFlightRef.current = false;
       }
-    }, 2000); // Poll every 2 seconds
 
-    return () => clearInterval(pollInterval);
-  }, [jobId, onComplete]);
+      attempts += 1;
+      const elapsedMs = Date.now() - startTime;
+      if (elapsedMs >= maxDurationMs) {
+        setError('Polling stopped after 2 minutes. Please check status again.');
+        return;
+      }
+
+      const nextInterval = Math.min(baseIntervalMs + attempts * 1000, maxIntervalMs);
+      timeoutRef.current = setTimeout(pollStatus, nextInterval);
+    };
+
+    pollStatus();
+
+    return () => {
+      canceled = true;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [jobId]);
 
   if (!jobId) return null;
 
+  const getEffectiveStatus = () => {
+    if (jobStatus?.status !== 'completed') return jobStatus?.status;
+    return jobStatus?.result?.status || 'completed';
+  };
+
   const getProgressColor = () => {
-    if (jobStatus?.status === 'failed') return 'bg-red-500';
-    if (jobStatus?.status === 'completed') return 'bg-green-500';
+    const status = getEffectiveStatus();
+    if (status === 'failed') return 'bg-red-500';
+    if (status === 'partial') return 'bg-yellow-500';
+    if (status === 'completed' || status === 'success') return 'bg-green-500';
     return 'bg-blue-500';
   };
 
   const getStatusIcon = () => {
-    if (jobStatus?.status === 'failed') {
+    const status = getEffectiveStatus();
+    if (status === 'failed') {
       return <XCircle className="w-8 h-8 text-red-500" />;
     }
-    if (jobStatus?.status === 'completed') {
+    if (status === 'partial') {
+      return <AlertCircle className="w-8 h-8 text-yellow-500" />;
+    }
+    if (status === 'completed' || status === 'success') {
       return <CheckCircle2 className="w-8 h-8 text-green-500" />;
     }
     return <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />;
@@ -81,8 +124,9 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
         <div className="flex flex-col items-center mb-6">
           {getStatusIcon()}
           <h2 className="text-2xl font-bold mt-4 text-gray-800">
-            {jobStatus?.status === 'completed' ? 'Published Successfully!' :
-             jobStatus?.status === 'failed' ? 'Publishing Failed' :
+            {getEffectiveStatus() === 'failed' ? 'Publishing Failed' :
+             getEffectiveStatus() === 'partial' ? 'Publishing completed with issues' :
+             getEffectiveStatus() === 'completed' || getEffectiveStatus() === 'success' ? 'Published Successfully!' :
              'Publishing...'}
           </h2>
         </div>
