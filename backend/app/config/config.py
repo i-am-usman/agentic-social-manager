@@ -15,6 +15,7 @@ IG_ACCESS_TOKEN = os.getenv("IG_ACCESS_TOKEN")
 
 # AI Services
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 BYTEZ_API_KEY = os.getenv("BYTEZ_API_KEY")
 
 # Image hosting for Instagram (requires public URLs)

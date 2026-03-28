@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Loader2, ThumbsUp, MessageCircle, Share2, ExternalLink, Instagram, Facebook, Linkedin } from "lucide-react";
+import AutoReplySettingsPanel from "../components/AutoReplySettingsPanel";
 
 export default function Analytics() {
   const [loading, setLoading] = useState(true);
@@ -14,8 +15,21 @@ export default function Analytics() {
   const [expandedReplies, setExpandedReplies] = useState({});
   const [linkedinSettings, setLinkedinSettings] = useState({
     auto_reply_enabled: false,
+    reply_mode: "ai",
     reply_tone: "professional",
-    reply_delay_minutes: 5
+    reply_delay_minutes: 0
+  });
+  const [facebookSettings, setFacebookSettings] = useState({
+    auto_reply_enabled: false,
+    reply_mode: "ai",
+    reply_tone: "professional",
+    reply_delay_minutes: 0
+  });
+  const [instagramSettings, setInstagramSettings] = useState({
+    auto_reply_enabled: false,
+    reply_mode: "ai",
+    reply_tone: "professional",
+    reply_delay_minutes: 0
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
 
@@ -90,12 +104,44 @@ export default function Analytics() {
     }
   }, [token]);
 
+  const fetchFacebookSettings = useCallback(async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/analytics/facebook/auto-reply/settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.status === "success" && data.settings) {
+        setFacebookSettings(data.settings);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Facebook settings:", err);
+    }
+  }, [token]);
+
+  const fetchInstagramSettings = useCallback(async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/analytics/instagram/auto-reply/settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.status === "success" && data.settings) {
+        setInstagramSettings(data.settings);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Instagram settings:", err);
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchAnalytics();
     if (filter === "linkedin") {
       fetchLinkedInSettings();
+    } else if (filter === "facebook") {
+      fetchFacebookSettings();
+    } else if (filter === "instagram") {
+      fetchInstagramSettings();
     }
-  }, [filter, fetchAnalytics, fetchLinkedInSettings]);
+  }, [filter, fetchAnalytics, fetchLinkedInSettings, fetchFacebookSettings, fetchInstagramSettings]);
 
   const updateLinkedInSettings = async (newSettings) => {
     setSettingsLoading(true);
@@ -113,7 +159,7 @@ export default function Analytics() {
       }
       
       // Update settings (tone, delay)
-      if ("reply_tone" in newSettings || "reply_delay_minutes" in newSettings) {
+      if ("reply_mode" in newSettings || "reply_tone" in newSettings || "reply_delay_minutes" in newSettings) {
         await fetch("http://127.0.0.1:8000/analytics/linkedin/auto-reply/settings", {
           method: "POST",
           headers: {
@@ -122,14 +168,90 @@ export default function Analytics() {
           },
           body: JSON.stringify({
             reply_tone: newSettings.reply_tone || linkedinSettings.reply_tone,
-            reply_delay_minutes: newSettings.reply_delay_minutes || linkedinSettings.reply_delay_minutes
+            reply_delay_minutes: newSettings.reply_delay_minutes ?? linkedinSettings.reply_delay_minutes
           })
         });
       }
       
       setLinkedinSettings((prev) => ({ ...prev, ...newSettings }));
     } catch (err) {
-      console.error("Failed to update settings:", err);
+      console.error("Failed to update LinkedIn settings:", err);
+    }
+    setSettingsLoading(false);
+  };
+
+  const updateFacebookSettings = async (newSettings) => {
+    setSettingsLoading(true);
+    try {
+      // Update toggle
+      if ("auto_reply_enabled" in newSettings) {
+        await fetch("http://127.0.0.1:8000/analytics/facebook/auto-reply/toggle", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ enabled: newSettings.auto_reply_enabled })
+        });
+      }
+      
+      // Update settings (tone, delay)
+      if ("reply_mode" in newSettings || "reply_tone" in newSettings || "reply_delay_minutes" in newSettings) {
+        await fetch("http://127.0.0.1:8000/analytics/facebook/auto-reply/settings", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            reply_mode: newSettings.reply_mode || facebookSettings.reply_mode || "ai",
+            reply_tone: newSettings.reply_tone || facebookSettings.reply_tone,
+            reply_delay_minutes: newSettings.reply_delay_minutes ?? facebookSettings.reply_delay_minutes
+          })
+        });
+      }
+      
+      setFacebookSettings((prev) => ({ ...prev, ...newSettings }));
+    } catch (err) {
+      console.error("Failed to update Facebook settings:", err);
+    }
+    setSettingsLoading(false);
+  };
+
+  const updateInstagramSettings = async (newSettings) => {
+    setSettingsLoading(true);
+    try {
+      // Update toggle
+      if ("auto_reply_enabled" in newSettings) {
+        await fetch("http://127.0.0.1:8000/analytics/instagram/auto-reply/toggle", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ enabled: newSettings.auto_reply_enabled })
+        });
+      }
+      
+      // Update settings (mode, tone, delay)
+      if ("reply_mode" in newSettings || "reply_tone" in newSettings || "reply_delay_minutes" in newSettings) {
+        await fetch("http://127.0.0.1:8000/analytics/instagram/auto-reply/settings", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            reply_mode: newSettings.reply_mode || instagramSettings.reply_mode || "ai",
+            reply_tone: newSettings.reply_tone || instagramSettings.reply_tone,
+            reply_delay_minutes: newSettings.reply_delay_minutes ?? instagramSettings.reply_delay_minutes
+          })
+        });
+      }
+      
+      setInstagramSettings((prev) => ({ ...prev, ...newSettings }));
+    } catch (err) {
+      console.error("Failed to update Instagram settings:", err);
     }
     setSettingsLoading(false);
   };
@@ -261,68 +383,38 @@ export default function Analytics() {
         ))}
       </div>
 
-      {/* LinkedIn Auto-Reply Settings (shows only on LinkedIn tab) */}
+      {/* Auto-Reply Settings Panels */}
       {filter === "linkedin" && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Auto-Reply Settings</h3>
-          
-          <div className="space-y-4">
-            {/* Enable/Disable Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Enable Auto-Reply</label>
-                <p className="text-xs text-gray-500 mt-1">Automatically reply to comments using AI</p>
-              </div>
-              <button
-                onClick={() => updateLinkedInSettings({ auto_reply_enabled: !linkedinSettings.auto_reply_enabled })}
-                disabled={settingsLoading}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  linkedinSettings.auto_reply_enabled ? "bg-indigo-600" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    linkedinSettings.auto_reply_enabled ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Reply Tone Selector */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Reply Tone</label>
-              <select
-                value={linkedinSettings.reply_tone}
-                onChange={(e) => updateLinkedInSettings({ reply_tone: e.target.value })}
-                disabled={settingsLoading}
-                className="w-full md:w-64 border rounded-lg p-2 text-sm"
-              >
-                <option value="professional">Professional</option>
-                <option value="friendly">Friendly</option>
-                <option value="casual">Casual</option>
-              </select>
-            </div>
-
-            {/* Reply Delay Slider */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">
-                Reply Delay: {linkedinSettings.reply_delay_minutes} minutes
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="30"
-                value={linkedinSettings.reply_delay_minutes}
-                onChange={(e) => updateLinkedInSettings({ reply_delay_minutes: parseInt(e.target.value) })}
-                disabled={settingsLoading}
-                className="w-full md:w-96"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                How long to wait before replying to new comments (1-30 minutes)
-              </p>
-            </div>
-          </div>
-        </div>
+        <AutoReplySettingsPanel
+          platform="linkedin"
+          settings={linkedinSettings}
+          onToggle={(enabled) => updateLinkedInSettings({ auto_reply_enabled: enabled })}
+          onUpdateTone={(tone) => updateLinkedInSettings({ reply_tone: tone })}
+          onUpdateDelay={(delay) => updateLinkedInSettings({ reply_delay_minutes: delay })}
+          isLoading={settingsLoading}
+        />
+      )}
+      {filter === "facebook" && (
+        <AutoReplySettingsPanel
+          platform="facebook"
+          settings={facebookSettings}
+          onToggle={(enabled) => updateFacebookSettings({ auto_reply_enabled: enabled })}
+          onUpdateReplyMode={(mode) => updateFacebookSettings({ reply_mode: mode })}
+          onUpdateTone={(tone) => updateFacebookSettings({ reply_tone: tone })}
+          onUpdateDelay={(delay) => updateFacebookSettings({ reply_delay_minutes: delay })}
+          isLoading={settingsLoading}
+        />
+      )}
+      {filter === "instagram" && (
+        <AutoReplySettingsPanel
+          platform="instagram"
+          settings={instagramSettings}
+          onToggle={(enabled) => updateInstagramSettings({ auto_reply_enabled: enabled })}
+          onUpdateReplyMode={(mode) => updateInstagramSettings({ reply_mode: mode })}
+          onUpdateTone={(tone) => updateInstagramSettings({ reply_tone: tone })}
+          onUpdateDelay={(delay) => updateInstagramSettings({ reply_delay_minutes: delay })}
+          isLoading={settingsLoading}
+        />
       )}
 
       {/* Error Message */}
