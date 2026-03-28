@@ -1,6 +1,7 @@
 @echo off
 REM Agentic Social Manager - Quick Start Script for Windows
 
+
 echo.
 echo ====================================================
 echo  Agentic Social Manager - Starting Development
