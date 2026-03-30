@@ -140,13 +140,24 @@ class AutomationDispatchService:
 
         settings = automation_settings_collection.find_one(
             {"user_id": user_id, "platform": platform},
-            {"delay_seconds": 1},
+            {
+                "enabled": 1,
+                "delay_seconds": 1,
+                "reply_delay_minutes": 1,
+                "dm_enabled": 1,
+                "dm_reply_delay_minutes": 1,
+            },
         ) or {}
 
-        # Delay guard applies only to DM replies; comment replies should be near real-time.
-        delay_seconds = int(settings.get("delay_seconds", 0))
+        # DM replies can have a separate delay and enable flag from comment replies.
+        is_dm_reply = action.get("action_type") == "dm_reply"
+        if is_dm_reply and not self._is_dm_enabled(settings):
+            self._mark_skipped(action, "dm_disabled", "DM automation disabled")
+            return {"status": "skipped", "error_code": "dm_disabled"}
+
+        delay_seconds = self._resolve_delay_seconds(settings, is_dm_reply)
         created_at = action.get("created_at") or datetime.utcnow()
-        if action.get("action_type") == "dm_reply" and delay_seconds > 0 and datetime.utcnow() < (created_at + timedelta(seconds=delay_seconds)):
+        if is_dm_reply and delay_seconds > 0 and datetime.utcnow() < (created_at + timedelta(seconds=delay_seconds)):
             return {"status": "skipped", "error_code": "delay_not_elapsed"}
 
         context = event.get("channel_context", {})
@@ -176,6 +187,22 @@ class AutomationDispatchService:
             return {"status": "failed", "error_code": "missing_credentials"}
 
         send_result = self._send_action(action, event, creds)
+        if (
+            send_result.get("status") != "success"
+            and platform == "instagram"
+            and action.get("action_type") == "dm_reply"
+            and self._is_capability_error(send_result)
+        ):
+            fb_creds = get_platform_credentials(user_id, "facebook") or {}
+            fb_token = fb_creds.get("access_token")
+            if fb_token and fb_token != creds.get("access_token"):
+                logger.warning(
+                    "Retrying Instagram DM send with Facebook page token fallback for user %s",
+                    user_id,
+                )
+                fallback_creds = {**creds, "access_token": fb_token}
+                send_result = self._send_action(action, event, fallback_creds)
+
         if send_result.get("status") == "success":
             self._mark_sent(action, send_result.get("platform_response_id"))
             return {"status": "sent"}
@@ -183,6 +210,31 @@ class AutomationDispatchService:
         fail_code = send_result.get("error_code", "send_failed")
         self._mark_failed(action, fail_code, send_result.get("detail", "Unknown send failure"))
         return {"status": "failed", "error_code": fail_code}
+
+    def _is_capability_error(self, send_result: dict) -> bool:
+        detail = str(send_result.get("detail") or "").lower()
+        error_code = str(send_result.get("error_code") or "").lower()
+        return "capability" in detail or "(#3)" in detail or error_code.endswith("graph_http_error")
+
+    def _is_dm_enabled(self, settings: dict) -> bool:
+        dm_enabled = settings.get("dm_enabled")
+        if dm_enabled is not None:
+            return bool(dm_enabled)
+        return bool(settings.get("enabled", False))
+
+    def _resolve_delay_seconds(self, settings: dict, is_dm_reply: bool) -> int:
+        if not is_dm_reply:
+            return 0
+
+        dm_delay_minutes = settings.get("dm_reply_delay_minutes")
+        if dm_delay_minutes is not None:
+            return max(0, int(dm_delay_minutes)) * 60
+
+        reply_delay_minutes = settings.get("reply_delay_minutes")
+        if reply_delay_minutes is not None:
+            return max(0, int(reply_delay_minutes)) * 60
+
+        return max(0, int(settings.get("delay_seconds", 0)))
 
     def _hours_since_event(self, context: dict) -> Optional[float]:
         timestamp = context.get("timestamp")

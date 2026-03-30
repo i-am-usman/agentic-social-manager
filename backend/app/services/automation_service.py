@@ -5,6 +5,7 @@ from typing import Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from hashlib import md5
 from app.config import config
+from app.services.social_accounts import get_platform_credentials
 from app.services.database import (
     automation_events_collection,
     poll_cursor_state_collection,
@@ -52,25 +53,73 @@ class AutomationService:
     def _extract_sender(self, payload: dict) -> tuple[Optional[str], Optional[str]]:
         """Safely extract sender id/name from Graph payloads where `from` can be missing."""
         sender = (payload or {}).get("from") or {}
+        sender_name = sender.get("name") or sender.get("username")
         sender_id = sender.get("id")
         if not sender_id:
-            return None, None
-        sender_name = sender.get("name") or sender.get("username")
+            return None, sender_name
         return str(sender_id), sender_name
 
     def _fetch_json(self, url: str, params: dict, timeout: int = 30) -> dict:
         """Perform a GET request and return parsed JSON response."""
         return requests.get(url, params=params, timeout=timeout).json()
 
-    def _fetch_instagram_media_comments(self, media_id: str) -> tuple[str, dict]:
+    def _fetch_instagram_media_comments(self, media_id: str, access_token: str) -> tuple[str, dict]:
         """Fetch comments payload for a single Instagram media object."""
         comments_url = f"https://graph.facebook.com/{self.api_version}/{media_id}/comments"
         comments_params = {
             "fields": "id,text,from,hidden,timestamp",
             "limit": 25,
-            "access_token": self.ig_token,
+            "access_token": access_token,
         }
         return media_id, self._fetch_json(comments_url, comments_params, timeout=30)
+
+    def _fetch_instagram_graph_with_fallback(
+        self,
+        user_id: str,
+        url: str,
+        params: dict,
+        endpoint_label: str,
+    ) -> tuple[dict, Optional[str]]:
+        """Try Instagram token first, then Facebook page token for capability/token errors."""
+        token_candidates: list[tuple[str, str]] = []
+        if self.ig_token:
+            token_candidates.append(("instagram", self.ig_token))
+
+        fb_creds = get_platform_credentials(user_id, "facebook") or {}
+        fb_token = fb_creds.get("access_token")
+        if fb_token and fb_token != self.ig_token:
+            token_candidates.append(("facebook_page", fb_token))
+
+        if not token_candidates:
+            return {"error": {"code": 190, "message": "Missing Instagram and Facebook access tokens"}}, None
+
+        last_response: dict = {}
+        for idx, (token_source, token_value) in enumerate(token_candidates):
+            request_params = dict(params)
+            request_params["access_token"] = token_value
+            response = self._fetch_json(url, request_params, timeout=30)
+
+            if "error" not in response:
+                if token_source != "instagram":
+                    logger.info("Instagram %s succeeded with %s token fallback", endpoint_label, token_source)
+                return response, token_value
+
+            error = response.get("error", {})
+            error_code = error.get("code")
+            last_response = response
+
+            if error_code in {3, 190} and idx < len(token_candidates) - 1:
+                logger.warning(
+                    "Instagram %s failed with code %s using %s token; trying fallback",
+                    endpoint_label,
+                    error_code,
+                    token_source,
+                )
+                continue
+
+            return response, token_value
+
+        return last_response, None
     
     def _get_cursor_state(self, user_id: str, platform: str, event_type: str) -> dict:
         """Get or create cursor state for polling"""
@@ -219,20 +268,25 @@ class AutomationService:
                 
                 for comment in comments:
                     sender_id, sender_name = self._extract_sender(comment)
-                    if not sender_id:
-                        logger.debug("Skipping Facebook comment without sender: %s", comment.get("id"))
+                    # Ignore comments authored by the page itself to avoid self-reply loops.
+                    if sender_id and str(sender_id) == str(self.fb_page_id):
                         continue
 
-                    # Ignore comments authored by the page itself to avoid self-reply loops.
-                    if str(sender_id) == str(self.fb_page_id):
-                        continue
+                    creator_id = sender_id or f"fb_unknown:{comment.get('id')}"
+                    creator_name = sender_name or "Facebook User"
+
+                    if not sender_id:
+                        logger.debug(
+                            "Facebook comment missing sender id; using fallback creator_id for comment %s",
+                            comment.get("id"),
+                        )
 
                     comment_time = self._parse_graph_timestamp(comment.get("created_time"))
                     channel_context = {
                         "object_id": comment["id"],
                         "thread_id": post_id,
-                        "creator_id": sender_id,
-                        "creator_name": sender_name,
+                        "creator_id": creator_id,
+                        "creator_name": creator_name,
                         "timestamp": comment_time,
                         "text": comment.get("message", ""),
                         "platform": "facebook",
@@ -284,11 +338,16 @@ class AutomationService:
                 "access_token": self.ig_token,
             }
             
-            response = self._fetch_json(url, params, timeout=30)
+            response, ig_access_token = self._fetch_instagram_graph_with_fallback(
+                user_id,
+                url,
+                params,
+                endpoint_label="comment_created/media",
+            )
             
             if "error" in response:
                 error = response["error"]
-                logger.error(f"Instagram API error: {error}")
+                logger.error(f"Instagram comment sync API error: {error}")
                 self._update_cursor_state(
                     user_id,
                     "instagram",
@@ -301,6 +360,7 @@ class AutomationService:
             
             stored_count = 0
             media_items = response.get("data", [])
+            effective_ig_token = ig_access_token or self.ig_token
 
             # Fetch comments for recent media in parallel to reduce polling cycle latency.
             comment_payloads: list[tuple[str, dict]] = []
@@ -308,7 +368,7 @@ class AutomationService:
                 max_workers = min(8, len(media_items))
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     future_to_media_id = {
-                        executor.submit(self._fetch_instagram_media_comments, media["id"]): media["id"]
+                        executor.submit(self._fetch_instagram_media_comments, media["id"], effective_ig_token): media["id"]
                         for media in media_items
                     }
                     for future in as_completed(future_to_media_id):
@@ -339,21 +399,26 @@ class AutomationService:
                         continue
 
                     sender_id, sender_name = self._extract_sender(comment)
-                    if not sender_id:
-                        logger.debug("Skipping Instagram comment without sender: %s", comment.get("id"))
+                    # Ignore comments authored by the IG business account itself.
+                    if sender_id and str(sender_id) == str(self.ig_user_id):
                         continue
 
-                    # Ignore comments authored by the IG business account itself.
-                    if str(sender_id) == str(self.ig_user_id):
-                        continue
+                    creator_id = sender_id or f"ig_unknown:{comment.get('id')}"
+                    creator_name = sender_name or "Instagram User"
+
+                    if not sender_id:
+                        logger.debug(
+                            "Instagram comment missing sender id; using fallback creator_id for comment %s",
+                            comment.get("id"),
+                        )
 
                     comment_time = self._parse_graph_timestamp(comment.get("timestamp"))
                     
                     channel_context = {
                         "object_id": comment["id"],
                         "thread_id": media_id,
-                        "creator_id": sender_id,
-                        "creator_name": sender_name,
+                        "creator_id": creator_id,
+                        "creator_name": creator_name,
                         "timestamp": comment_time,
                         "text": comment.get("text", ""),
                         "platform": "instagram",
@@ -472,6 +537,18 @@ class AutomationService:
                     if self._store_automation_event(
                         user_id, "dm_received", "facebook", channel_context, datetime.utcnow()
                     ):
+                        insert_doc = dm_thread_document(
+                            user_id=user_id,
+                            platform="facebook",
+                            conversation_id=conversation_id,
+                            participant_id=sender_id,
+                            participant_name=customer.get("name") or sender_name,
+                            last_message_at=msg_time_naive,
+                        )
+                        # Avoid conflicting updates for same fields across $set and $setOnInsert.
+                        insert_doc.pop("last_message_at", None)
+                        insert_doc.pop("updated_at", None)
+
                         # Upsert dm_thread document
                         dm_threads_collection.update_one(
                             {
@@ -484,14 +561,7 @@ class AutomationService:
                                     "last_message_at": msg_time_naive,
                                     "updated_at": datetime.utcnow(),
                                 },
-                                "$setOnInsert": dm_thread_document(
-                                    user_id=user_id,
-                                    platform="facebook",
-                                    conversation_id=conversation_id,
-                                    participant_id=sender_id,
-                                    participant_name=customer.get("name") or sender_name,
-                                    last_message_at=msg_time_naive,
-                                ),
+                                "$setOnInsert": insert_doc,
                             },
                             upsert=True,
                         )
@@ -538,11 +608,16 @@ class AutomationService:
                 "access_token": self.ig_token,
             }
             
-            response = self._fetch_json(url, params, timeout=30)
+            response, _ = self._fetch_instagram_graph_with_fallback(
+                user_id,
+                url,
+                params,
+                endpoint_label="dm_received/conversations",
+            )
             
             if "error" in response:
                 error = response["error"]
-                logger.error(f"Instagram API error: {error}")
+                logger.error(f"Instagram DM sync API error: {error}")
                 self._update_cursor_state(
                     user_id,
                     "instagram",
@@ -611,6 +686,18 @@ class AutomationService:
                     if self._store_automation_event(
                         user_id, "dm_received", "instagram", channel_context, datetime.utcnow()
                     ):
+                        insert_doc = dm_thread_document(
+                            user_id=user_id,
+                            platform="instagram",
+                            conversation_id=conversation_id,
+                            participant_id=sender_id,
+                            participant_name=customer.get("username") or sender_name,
+                            last_message_at=msg_time_naive,
+                        )
+                        # Avoid conflicting updates for same fields across $set and $setOnInsert.
+                        insert_doc.pop("last_message_at", None)
+                        insert_doc.pop("updated_at", None)
+
                         # Upsert dm_thread document
                         dm_threads_collection.update_one(
                             {
@@ -623,14 +710,7 @@ class AutomationService:
                                     "last_message_at": msg_time_naive,
                                     "updated_at": datetime.utcnow(),
                                 },
-                                "$setOnInsert": dm_thread_document(
-                                    user_id=user_id,
-                                    platform="instagram",
-                                    conversation_id=conversation_id,
-                                    participant_id=sender_id,
-                                    participant_name=customer.get("username") or sender_name,
-                                    last_message_at=msg_time_naive,
-                                ),
+                                "$setOnInsert": insert_doc,
                             },
                             upsert=True,
                         )

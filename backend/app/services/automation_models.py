@@ -14,6 +14,10 @@ def automation_settings_document(
     keyword_blacklist: List[str] = None,
     template_reply: str = "Thank you for reaching out! We'll get back to you soon.",
     polling_interval_seconds: int = 120,
+    dm_enabled: Optional[bool] = None,
+    dm_reply_mode: Optional[str] = None,
+    dm_reply_tone: Optional[str] = None,
+    dm_reply_delay_minutes: Optional[int] = None,
 ):
     return {
         "user_id": user_id,
@@ -33,6 +37,11 @@ def automation_settings_document(
         "keyword_blacklist": keyword_blacklist or [],
         "template_reply": template_reply,
         "polling_interval_seconds": polling_interval_seconds,
+        # Optional DM-specific overrides; when None, comment settings are reused.
+        "dm_enabled": dm_enabled,
+        "dm_reply_mode": dm_reply_mode,
+        "dm_reply_tone": dm_reply_tone,
+        "dm_reply_delay_minutes": dm_reply_delay_minutes,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
     }

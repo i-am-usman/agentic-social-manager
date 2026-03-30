@@ -431,12 +431,24 @@ def process_automation_dispatch():
     try:
         dispatcher = AutomationDispatchService()
         summary = dispatcher.process_pending_actions(batch_size=200)
+        by_platform = summary.get("by_platform", {})
+        error_codes = summary.get("error_codes", {})
+        top_error_codes = ", ".join(
+            f"{code}:{count}" for code, count in sorted(error_codes.items(), key=lambda item: item[1], reverse=True)[:5]
+        ) or "none"
         logger.info(
-            "Dispatch engine: seen=%s sent=%s failed=%s skipped=%s",
+            "Dispatch engine: seen=%s sent=%s failed=%s skipped=%s fb(sent=%s failed=%s skipped=%s) ig(sent=%s failed=%s skipped=%s) top_errors=%s",
             summary.get("seen", 0),
             summary.get("sent", 0),
             summary.get("failed", 0),
             summary.get("skipped", 0),
+            by_platform.get("facebook", {}).get("sent", 0),
+            by_platform.get("facebook", {}).get("failed", 0),
+            by_platform.get("facebook", {}).get("skipped", 0),
+            by_platform.get("instagram", {}).get("sent", 0),
+            by_platform.get("instagram", {}).get("failed", 0),
+            by_platform.get("instagram", {}).get("skipped", 0),
+            top_error_codes,
         )
         return summary
     except PyMongoError as e:

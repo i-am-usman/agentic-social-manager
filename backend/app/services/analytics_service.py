@@ -172,9 +172,11 @@ class AnalyticsService:
             
             comments = []
             for comment in response.get("data", []):
+                author_info = comment.get("from") or {}
+                author_name = author_info.get("name") or author_info.get("id") or "Facebook User"
                 comments.append({
                     "id": comment.get("id"),
-                    "author": comment.get("from", {}).get("name", "Unknown"),
+                    "author": author_name,
                     "message": comment.get("message", ""),
                     "created_time": comment.get("created_time"),
                     "likes": comment.get("like_count", 0),
@@ -240,9 +242,11 @@ class AnalyticsService:
 
             replies = []
             for reply in response.get("data", []):
+                author_info = reply.get("from") or {}
+                author_name = author_info.get("name") or author_info.get("id") or "Facebook User"
                 replies.append({
                     "id": reply.get("id"),
-                    "author": reply.get("from", {}).get("name", "Unknown"),
+                    "author": author_name,
                     "message": reply.get("message", ""),
                     "created_time": reply.get("created_time"),
                     "likes": reply.get("like_count", 0),

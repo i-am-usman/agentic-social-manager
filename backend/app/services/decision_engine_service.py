@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timedelta
 from hashlib import md5
 from typing import Optional
@@ -26,6 +27,7 @@ class DecisionEngineService:
     _model_cache_ready = False
     _cached_model = None
     _cached_model_name = GEMINI_MODEL
+    _quota_exhausted_until: Optional[datetime] = None
 
     def __init__(self):
         if DecisionEngineService._model_cache_ready:
@@ -115,13 +117,19 @@ class DecisionEngineService:
         settings = automation_settings_collection.find_one({
             "user_id": user_id,
             "platform": platform,
-            "enabled": True,
         })
 
         if not settings:
             self._create_skipped_action(event, "settings_disabled", "Automation disabled for platform")
             self._mark_event_processed(event["_id"])
             return {"status": "skipped", "reason": "settings_disabled"}
+
+        if not self._is_event_enabled(settings, event_type):
+            reason = "dm_disabled" if event_type == "dm_received" else "settings_disabled"
+            message = "DM automation disabled" if event_type == "dm_received" else "Automation disabled for platform"
+            self._create_skipped_action(event, reason, message)
+            self._mark_event_processed(event["_id"])
+            return {"status": "skipped", "reason": reason}
 
         skip_reason = self._evaluate_guardrails(event, settings)
         if skip_reason:
@@ -137,11 +145,12 @@ class DecisionEngineService:
             self._mark_event_processed(event["_id"])
             return {"status": "pending"}
 
-        reply_mode = settings.get("reply_mode", "template")
+        reply_mode = self._resolve_reply_mode(settings, event_type)
+        reply_tone = self._resolve_reply_tone(settings, event_type)
         generation = self._generate_reply(
             event=event,
             mode=reply_mode,
-            tone=settings.get("tone", "professional"),
+            tone=reply_tone,
             template=settings.get("template_reply") or "Thank you for reaching out! We'll get back to you soon.",
         )
         reply_text = generation.get("text") or ""
@@ -153,7 +162,7 @@ class DecisionEngineService:
             fallback = settings.get("template_reply") or "Thank you for reaching out! We'll get back to you soon."
             reply_text = fallback
             reply_mode = "template"
-            if settings.get("reply_mode") == "ai" and not fallback_reason:
+            if reply_mode == "ai" and not fallback_reason:
                 fallback_reason = "empty_response"
                 fallback_detail = "AI returned no text"
 
@@ -167,6 +176,27 @@ class DecisionEngineService:
         )
         self._mark_event_processed(event["_id"])
         return {"status": "pending", "ai_fallback_reason": fallback_reason}
+
+    def _is_event_enabled(self, settings: dict, event_type: str) -> bool:
+        if event_type == "dm_received":
+            dm_enabled = settings.get("dm_enabled")
+            if dm_enabled is not None:
+                return bool(dm_enabled)
+        return bool(settings.get("enabled", False))
+
+    def _resolve_reply_mode(self, settings: dict, event_type: str) -> str:
+        if event_type == "dm_received":
+            dm_mode = settings.get("dm_reply_mode")
+            if dm_mode:
+                return dm_mode
+        return settings.get("reply_mode", "template")
+
+    def _resolve_reply_tone(self, settings: dict, event_type: str) -> str:
+        if event_type == "dm_received":
+            dm_tone = settings.get("dm_reply_tone")
+            if dm_tone:
+                return dm_tone
+        return settings.get("tone") or settings.get("reply_tone", "professional")
 
     def _evaluate_guardrails(self, event: dict, settings: dict) -> Optional[dict]:
         user_id = event.get("user_id")
@@ -276,6 +306,15 @@ class DecisionEngineService:
                 "ai_fallback_detail": None,
             }
 
+        quota_until = DecisionEngineService._quota_exhausted_until
+        if quota_until and datetime.utcnow() < quota_until:
+            return {
+                "text": template,
+                "reply_mode_used": "template",
+                "ai_fallback_reason": "quota_exceeded",
+                "ai_fallback_detail": f"Quota cooldown active until {quota_until.isoformat()}Z",
+            }
+
         if not self.model:
             logger.warning("AI mode requested but no Gemini model is available; using template fallback")
             return {
@@ -331,21 +370,38 @@ class DecisionEngineService:
             fallback_reason = "generation_error"
             if "quota" in error_detail.lower() or "resourceexhausted" in error_detail.lower() or "429" in error_detail:
                 fallback_reason = "quota_exceeded"
+                retry_seconds = self._extract_retry_seconds(error_detail)
+                DecisionEngineService._quota_exhausted_until = datetime.utcnow() + timedelta(seconds=retry_seconds)
+                logger.warning(
+                    "Gemini quota exceeded; switching to template fallback for %ss",
+                    retry_seconds,
+                )
+            else:
+                logger.error(
+                    "Gemini generation failed (model=%s, event_id=%s, platform=%s): %s",
+                    self.model_name,
+                    event.get("_id"),
+                    platform,
+                    exc,
+                    exc_info=True,
+                )
 
-            logger.error(
-                "Gemini generation failed (model=%s, event_id=%s, platform=%s): %s",
-                self.model_name,
-                event.get("_id"),
-                platform,
-                exc,
-                exc_info=True,
-            )
             return {
                 "text": template,
                 "reply_mode_used": "template",
                 "ai_fallback_reason": fallback_reason,
                 "ai_fallback_detail": error_detail,
             }
+
+    def _extract_retry_seconds(self, error_detail: str) -> int:
+        """Extract retry delay from Gemini quota error text; fallback to 60 seconds."""
+        match = re.search(r"Please retry in\s+([0-9]+(?:\.[0-9]+)?)s", error_detail)
+        if not match:
+            return 60
+        try:
+            return max(5, int(float(match.group(1))))
+        except (TypeError, ValueError):
+            return 60
 
     def _create_pending_action(
         self,

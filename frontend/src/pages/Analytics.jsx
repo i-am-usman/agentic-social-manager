@@ -23,13 +23,21 @@ export default function Analytics() {
     auto_reply_enabled: false,
     reply_mode: "ai",
     reply_tone: "professional",
-    reply_delay_minutes: 0
+    reply_delay_minutes: 0,
+    dm_enabled: false,
+    dm_reply_mode: "ai",
+    dm_reply_tone: "professional",
+    dm_reply_delay_minutes: 0,
   });
   const [instagramSettings, setInstagramSettings] = useState({
     auto_reply_enabled: false,
     reply_mode: "ai",
     reply_tone: "professional",
-    reply_delay_minutes: 0
+    reply_delay_minutes: 0,
+    dm_enabled: false,
+    dm_reply_mode: "ai",
+    dm_reply_tone: "professional",
+    dm_reply_delay_minutes: 0,
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
 
@@ -111,7 +119,7 @@ export default function Analytics() {
       });
       const data = await res.json();
       if (data.status === "success" && data.settings) {
-        setFacebookSettings(data.settings);
+        setFacebookSettings((prev) => ({ ...prev, ...data.settings }));
       }
     } catch (err) {
       console.error("Failed to fetch Facebook settings:", err);
@@ -125,7 +133,7 @@ export default function Analytics() {
       });
       const data = await res.json();
       if (data.status === "success" && data.settings) {
-        setInstagramSettings(data.settings);
+        setInstagramSettings((prev) => ({ ...prev, ...data.settings }));
       }
     } catch (err) {
       console.error("Failed to fetch Instagram settings:", err);
@@ -196,7 +204,15 @@ export default function Analytics() {
       }
       
       // Update settings (tone, delay)
-      if ("reply_mode" in newSettings || "reply_tone" in newSettings || "reply_delay_minutes" in newSettings) {
+      if (
+        "reply_mode" in newSettings ||
+        "reply_tone" in newSettings ||
+        "reply_delay_minutes" in newSettings ||
+        "dm_enabled" in newSettings ||
+        "dm_reply_mode" in newSettings ||
+        "dm_reply_tone" in newSettings ||
+        "dm_reply_delay_minutes" in newSettings
+      ) {
         await fetch("http://127.0.0.1:8000/analytics/facebook/auto-reply/settings", {
           method: "POST",
           headers: {
@@ -206,7 +222,11 @@ export default function Analytics() {
           body: JSON.stringify({
             reply_mode: newSettings.reply_mode || facebookSettings.reply_mode || "ai",
             reply_tone: newSettings.reply_tone || facebookSettings.reply_tone,
-            reply_delay_minutes: newSettings.reply_delay_minutes ?? facebookSettings.reply_delay_minutes
+            reply_delay_minutes: newSettings.reply_delay_minutes ?? facebookSettings.reply_delay_minutes,
+            dm_enabled: newSettings.dm_enabled ?? facebookSettings.dm_enabled,
+            dm_reply_mode: newSettings.dm_reply_mode || facebookSettings.dm_reply_mode || "ai",
+            dm_reply_tone: newSettings.dm_reply_tone || facebookSettings.dm_reply_tone,
+            dm_reply_delay_minutes: newSettings.dm_reply_delay_minutes ?? facebookSettings.dm_reply_delay_minutes,
           })
         });
       }
@@ -234,7 +254,15 @@ export default function Analytics() {
       }
       
       // Update settings (mode, tone, delay)
-      if ("reply_mode" in newSettings || "reply_tone" in newSettings || "reply_delay_minutes" in newSettings) {
+      if (
+        "reply_mode" in newSettings ||
+        "reply_tone" in newSettings ||
+        "reply_delay_minutes" in newSettings ||
+        "dm_enabled" in newSettings ||
+        "dm_reply_mode" in newSettings ||
+        "dm_reply_tone" in newSettings ||
+        "dm_reply_delay_minutes" in newSettings
+      ) {
         await fetch("http://127.0.0.1:8000/analytics/instagram/auto-reply/settings", {
           method: "POST",
           headers: {
@@ -244,7 +272,11 @@ export default function Analytics() {
           body: JSON.stringify({
             reply_mode: newSettings.reply_mode || instagramSettings.reply_mode || "ai",
             reply_tone: newSettings.reply_tone || instagramSettings.reply_tone,
-            reply_delay_minutes: newSettings.reply_delay_minutes ?? instagramSettings.reply_delay_minutes
+            reply_delay_minutes: newSettings.reply_delay_minutes ?? instagramSettings.reply_delay_minutes,
+            dm_enabled: newSettings.dm_enabled ?? instagramSettings.dm_enabled,
+            dm_reply_mode: newSettings.dm_reply_mode || instagramSettings.dm_reply_mode || "ai",
+            dm_reply_tone: newSettings.dm_reply_tone || instagramSettings.dm_reply_tone,
+            dm_reply_delay_minutes: newSettings.dm_reply_delay_minutes ?? instagramSettings.dm_reply_delay_minutes,
           })
         });
       }
@@ -402,6 +434,10 @@ export default function Analytics() {
           onUpdateReplyMode={(mode) => updateFacebookSettings({ reply_mode: mode })}
           onUpdateTone={(tone) => updateFacebookSettings({ reply_tone: tone })}
           onUpdateDelay={(delay) => updateFacebookSettings({ reply_delay_minutes: delay })}
+          onToggleDM={(enabled) => updateFacebookSettings({ dm_enabled: enabled })}
+          onUpdateDMReplyMode={(mode) => updateFacebookSettings({ dm_reply_mode: mode })}
+          onUpdateDMTone={(tone) => updateFacebookSettings({ dm_reply_tone: tone })}
+          onUpdateDMDelay={(delay) => updateFacebookSettings({ dm_reply_delay_minutes: delay })}
           isLoading={settingsLoading}
         />
       )}
@@ -413,6 +449,10 @@ export default function Analytics() {
           onUpdateReplyMode={(mode) => updateInstagramSettings({ reply_mode: mode })}
           onUpdateTone={(tone) => updateInstagramSettings({ reply_tone: tone })}
           onUpdateDelay={(delay) => updateInstagramSettings({ reply_delay_minutes: delay })}
+          onToggleDM={(enabled) => updateInstagramSettings({ dm_enabled: enabled })}
+          onUpdateDMReplyMode={(mode) => updateInstagramSettings({ dm_reply_mode: mode })}
+          onUpdateDMTone={(tone) => updateInstagramSettings({ dm_reply_tone: tone })}
+          onUpdateDMDelay={(delay) => updateInstagramSettings({ dm_reply_delay_minutes: delay })}
           isLoading={settingsLoading}
         />
       )}

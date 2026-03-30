@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Optional
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 import logging
@@ -17,9 +19,13 @@ class AutoReplyToggle(BaseModel):
 
 
 class AutoReplySettings(BaseModel):
-    reply_tone: str = "professional"
+    reply_tone: Literal["professional", "friendly", "casual"] = "professional"
     reply_delay_minutes: int = Field(default=0, ge=0, le=30)
-    reply_mode: str = "ai"
+    reply_mode: Literal["ai", "template"] = "ai"
+    dm_enabled: Optional[bool] = None
+    dm_reply_tone: Optional[Literal["professional", "friendly", "casual"]] = None
+    dm_reply_delay_minutes: Optional[int] = Field(default=None, ge=0, le=30)
+    dm_reply_mode: Optional[Literal["ai", "template"]] = None
 
 
 @router.post("/auto-reply/toggle")
@@ -63,6 +69,10 @@ def update_auto_reply_settings(payload: AutoReplySettings, user: dict = Depends(
                     "reply_delay_minutes": payload.reply_delay_minutes,
                     "delay_seconds": payload.reply_delay_minutes * 60,
                     "reply_mode": payload.reply_mode,
+                    "dm_enabled": payload.dm_enabled,
+                    "dm_reply_tone": payload.dm_reply_tone,
+                    "dm_reply_delay_minutes": payload.dm_reply_delay_minutes,
+                    "dm_reply_mode": payload.dm_reply_mode,
                     "tone": payload.reply_tone,
                     "updated_at": datetime.utcnow()
                 }
@@ -97,6 +107,11 @@ def get_auto_reply_settings(user: dict = Depends(get_current_user)):
                 "auto_reply_enabled": False,
                 "reply_tone": "professional",
                 "reply_delay_minutes": 0,
+                "reply_mode": "ai",
+                "dm_enabled": False,
+                "dm_reply_tone": "professional",
+                "dm_reply_delay_minutes": 0,
+                "dm_reply_mode": "ai",
             }
             return {
                 "status": "success",
@@ -110,6 +125,10 @@ def get_auto_reply_settings(user: dict = Depends(get_current_user)):
                 "reply_tone": settings.get("reply_tone", "professional"),
                 "reply_delay_minutes": settings.get("reply_delay_minutes", 0),
                 "reply_mode": settings.get("reply_mode", "ai"),
+                "dm_enabled": settings.get("dm_enabled", settings.get("enabled", False)),
+                "dm_reply_tone": settings.get("dm_reply_tone") or settings.get("reply_tone", "professional"),
+                "dm_reply_delay_minutes": settings.get("dm_reply_delay_minutes", settings.get("reply_delay_minutes", 0)),
+                "dm_reply_mode": settings.get("dm_reply_mode") or settings.get("reply_mode", "ai"),
             }
         }
         

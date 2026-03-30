@@ -8,6 +8,10 @@ export default function AutoReplySettingsPanel({
   onUpdateReplyMode,
   onUpdateTone,
   onUpdateDelay,
+  onToggleDM,
+  onUpdateDMReplyMode,
+  onUpdateDMTone,
+  onUpdateDMDelay,
   isLoading,
 }) {
   const platformColors = {
@@ -18,6 +22,7 @@ export default function AutoReplySettingsPanel({
 
   const colors = platformColors[platform] || platformColors.linkedin;
   const Icon = colors.icon;
+  const showDMSettings = Boolean(onToggleDM || onUpdateDMReplyMode || onUpdateDMTone || onUpdateDMDelay);
 
   return (
     <div className={`${colors.bg} border ${colors.border} rounded-lg p-6 mb-6`}>
@@ -96,6 +101,81 @@ export default function AutoReplySettingsPanel({
             How long to wait before replying to new comments (0-30 minutes)
           </p>
         </div>
+
+        {showDMSettings && (
+          <div className="border-t pt-4 mt-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Enable DM Auto-Reply</label>
+                <p className="text-xs text-gray-500 mt-1">Automatically reply to direct messages</p>
+              </div>
+              <button
+                onClick={() => onToggleDM(!settings.dm_enabled)}
+                disabled={isLoading || !onToggleDM}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  settings.dm_enabled ? "bg-indigo-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    settings.dm_enabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {onUpdateDMReplyMode && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">DM Reply Mode</label>
+                <select
+                  value={settings.dm_reply_mode || "ai"}
+                  onChange={(e) => onUpdateDMReplyMode(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full md:w-64 border rounded-lg p-2 text-sm"
+                >
+                  <option value="ai">AI</option>
+                  <option value="template">Template</option>
+                </select>
+              </div>
+            )}
+
+            {onUpdateDMTone && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">DM Reply Tone</label>
+                <select
+                  value={settings.dm_reply_tone || "professional"}
+                  onChange={(e) => onUpdateDMTone(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full md:w-64 border rounded-lg p-2 text-sm"
+                >
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="casual">Casual</option>
+                </select>
+              </div>
+            )}
+
+            {onUpdateDMDelay && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">
+                  DM Reply Delay: {settings.dm_reply_delay_minutes ?? 0} minutes
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={settings.dm_reply_delay_minutes ?? 0}
+                  onChange={(e) => onUpdateDMDelay(parseInt(e.target.value, 10))}
+                  disabled={isLoading}
+                  className="w-full md:w-96"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  How long to wait before replying to new direct messages (0-30 minutes)
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
