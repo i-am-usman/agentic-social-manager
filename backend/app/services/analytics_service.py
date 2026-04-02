@@ -1,5 +1,6 @@
 import requests
 from app.config import config
+from app.services.ai_service import AIService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -142,18 +143,18 @@ class AnalyticsService:
             "errors": errors if errors else None
         }
 
-    def get_post_comments(self, post_id, platform="facebook"):
+    def get_post_comments(self, post_id, platform="facebook", include_analysis: bool = False):
         """
         Fetch comments for a specific post
         """
         if platform == "facebook":
-            return self._get_facebook_comments(post_id)
+            return self._get_facebook_comments(post_id, include_analysis=include_analysis)
         elif platform == "instagram":
-            return self._get_instagram_comments(post_id)
+            return self._get_instagram_comments(post_id, include_analysis=include_analysis)
         else:
             return {"status": "error", "detail": "Invalid platform"}
 
-    def _get_facebook_comments(self, post_id):
+    def _get_facebook_comments(self, post_id, include_analysis: bool = False):
         """Fetch comments for a Facebook post"""
         if not self.fb_token:
             return {"status": "error", "detail": "Facebook credentials not configured"}
@@ -182,6 +183,9 @@ class AnalyticsService:
                     "likes": comment.get("like_count", 0),
                     "replies": self._get_facebook_comment_replies(comment.get("id"))
                 })
+
+            if include_analysis:
+                self._enrich_comment_analysis(comments)
             
             return {"status": "success", "comments": comments}
             
@@ -189,7 +193,7 @@ class AnalyticsService:
             logger.error(f"Error fetching Facebook comments: {e}", exc_info=True)
             return {"status": "error", "detail": str(e)}
 
-    def _get_instagram_comments(self, media_id):
+    def _get_instagram_comments(self, media_id, include_analysis: bool = False):
         """Fetch comments for an Instagram media"""
         if not self.ig_token:
             return {"status": "error", "detail": "Instagram credentials not configured"}
@@ -216,6 +220,9 @@ class AnalyticsService:
                     "likes": comment.get("like_count", 0),
                     "replies": self._get_instagram_comment_replies(comment.get("id"))
                 })
+
+            if include_analysis:
+                self._enrich_comment_analysis(comments)
             
             return {"status": "success", "comments": comments}
             
@@ -256,6 +263,21 @@ class AnalyticsService:
         except Exception as e:
             logger.warning(f"Error fetching Facebook comment replies for {comment_id}: {e}")
             return []
+
+    def _enrich_comment_analysis(self, comments):
+        """Attach sentiment and emotion analysis metadata to each comment."""
+        for comment in comments:
+            text = (comment.get("message") or "").strip()
+            if not text:
+                comment["analysis"] = {
+                    "sentiment": "neutral",
+                    "confidence": 0.0,
+                    "emotions": [],
+                    "summary": "No text provided for analysis."
+                }
+                continue
+
+            comment["analysis"] = AIService.analyze_sentiment_and_emotion(text)
 
     def _get_instagram_comment_replies(self, comment_id):
         """Fetch replies for an Instagram comment"""

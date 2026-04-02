@@ -28,6 +28,8 @@ export default function Generate() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editCaption, setEditCaption] = useState("");
   const [editHashtags, setEditHashtags] = useState([]);
+  const [analysis, setAnalysis] = useState(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [publishJobId, setPublishJobId] = useState(null);
   const [showProgress, setShowProgress] = useState(false);
 
@@ -187,6 +189,46 @@ export default function Generate() {
   };
 
   // -------------------------------
+  // 📌 Analysis — Sentiment & Emotion
+  // -------------------------------
+  const analyzeCaption = async (textToAnalyze) => {
+    const value = (textToAnalyze || "").trim();
+    if (!value) {
+      setAnalysis(null);
+      return;
+    }
+
+    setLoadingAnalysis(true);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/content/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: value, language }),
+      });
+
+      const data = await res.json();
+      if (data.status === "success" && data.analysis) {
+        setAnalysis(data.analysis);
+      } else {
+        setAnalysis(null);
+      }
+    } catch (err) {
+      setAnalysis(null);
+    }
+    setLoadingAnalysis(false);
+  };
+
+  const sentimentStyle = (sentiment) => {
+    if (sentiment === "positive") {
+      return "bg-green-100 text-green-700 border-green-200";
+    }
+    if (sentiment === "negative") {
+      return "bg-red-100 text-red-700 border-red-200";
+    }
+    return "bg-gray-100 text-gray-700 border-gray-200";
+  };
+
+  // -------------------------------
   // 📌 1 — Generate Caption
   // -------------------------------
   const handleGenerateCaption = async () => {
@@ -201,7 +243,9 @@ export default function Generate() {
       });
       const data = await res.json();
       if (data.status === "success" && data.caption) {
-        setCaption(extractOriginalCaption(data.caption, language));
+        const generatedCaption = extractOriginalCaption(data.caption, language);
+        setCaption(generatedCaption);
+        await analyzeCaption(generatedCaption);
       } else {
         alert(data.detail || "Failed to generate caption");
       }
@@ -289,6 +333,11 @@ export default function Generate() {
         // Also set in main states for preview
         setCaption(generatedCaption);
         setHashtags(generatedHashtags);
+        if (data.data.analysis) {
+          setAnalysis(data.data.analysis);
+        } else {
+          await analyzeCaption(generatedCaption);
+        }
         // Only set generated image if no media is uploaded
         if (mediaItems.length === 0) {
           setGeneratedImage(data.data.image);
@@ -378,6 +427,7 @@ export default function Generate() {
         setGeneratedImage("");
         setMediaItems([]);
         setImagePrompt("");
+        setAnalysis(null);
         setScheduledAt("");
         setSelectedPlatforms([]);
       } else {
@@ -393,6 +443,7 @@ export default function Generate() {
     setCaption(content);
     setHashtags(editedHashtags);
     setShowEditModal(false);
+    analyzeCaption(content);
     // Now user can review and save to db with handleSaveContent
     alert("Content updated! Now you can save it to database or make more changes.");
   };
@@ -535,6 +586,7 @@ export default function Generate() {
       setGeneratedImage("");
       setMediaItems([]);
       setImagePrompt("");
+      setAnalysis(null);
       setSelectedPlatforms([]);
     }
   };
@@ -869,6 +921,49 @@ export default function Generate() {
               )}
             </div>
             <p className="text-indigo-600 mt-2">{hashtags.length ? hashtags.join(" ") : <span className="text-gray-400 italic">No hashtags yet.</span>}</p>
+          </div>
+
+          {/* Sentiment & Emotion Analysis */}
+          <div className="bg-white p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <p className="font-semibold text-gray-800">Sentiment & Emotion Analysis:</p>
+              <button
+                onClick={() => analyzeCaption(caption)}
+                disabled={loadingAnalysis || !caption.trim()}
+                className="text-sm bg-indigo-600 text-white px-3 py-1 rounded disabled:opacity-50"
+              >
+                {loadingAnalysis ? "Analyzing..." : "Analyze"}
+              </button>
+            </div>
+
+            {!analysis ? (
+              <p className="text-gray-400 italic">No analysis yet. Generate or edit a caption, then analyze.</p>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 text-sm rounded-full border capitalize ${sentimentStyle(analysis.sentiment)}`}>
+                    {analysis.sentiment}
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    Confidence: {Math.round((analysis.confidence || 0) * 100)}%
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {(analysis.emotions || []).length ? (
+                    analysis.emotions.map((item, idx) => (
+                      <span key={`${item.name}_${idx}`} className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded border border-blue-200">
+                        {item.name} ({Math.round((item.score || 0) * 100)}%)
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500">No dominant emotions detected.</span>
+                  )}
+                </div>
+
+                <p className="text-sm text-gray-700">{analysis.summary}</p>
+              </div>
+            )}
           </div>
 
           {/* Media Preview */}

@@ -36,6 +36,10 @@ class HashtagRequest(BaseModel):
 class ImageRequest(BaseModel):
     topic: str
 
+class SentimentRequest(BaseModel):
+    text: str
+    language: str = "english"
+
 
 
 @router.post("/save")
@@ -164,6 +168,16 @@ async def generate_image(request: ImageRequest):
     try:
         image = AIService.generate_image(request.topic)
         return {"status": "success", "image": image}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analyze")
+async def analyze_text_sentiment(request: SentimentRequest):
+    """Analyze sentiment and emotions for a text snippet."""
+    try:
+        analysis = AIService.analyze_sentiment_and_emotion(request.text, request.language)
+        return {"status": "success", "analysis": analysis}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

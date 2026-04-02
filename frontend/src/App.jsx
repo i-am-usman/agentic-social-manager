@@ -9,6 +9,7 @@ import CustomPost from "./pages/CustomPost";
 import Profile from "./pages/Profile";
 import Analytics from "./pages/Analytics";
 import ConnectAccounts from "./pages/ConnectAccounts";
+import CommentAnalysis from "./pages/CommentAnalysis";
 import Navbar from "./components/Navbar";
 
 export default function App() {
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/custom-post" element={<CustomPost />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/comment-analysis" element={<CommentAnalysis />} />
             <Route path="/accounts" element={<ConnectAccounts />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </>

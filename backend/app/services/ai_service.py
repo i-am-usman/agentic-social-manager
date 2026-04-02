@@ -4,6 +4,8 @@
 import logging
 import base64
 import os
+import json
+import re
 from bytez import Bytez
 from google import genai
 
@@ -18,6 +20,39 @@ gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 class AIService:
     """AI generation using Gemini (text) + Bytez (images)"""
+
+    @staticmethod
+    def _extract_json_object(raw_text: str) -> dict:
+        """Extract a JSON object from model output, including fenced blocks."""
+        if not raw_text:
+            return {}
+
+        text = raw_text.strip()
+
+        # Handle fenced JSON blocks first.
+        fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.DOTALL)
+        if fenced:
+            text = fenced.group(1).strip()
+
+        # Try direct parse.
+        try:
+            parsed = json.loads(text)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            pass
+
+        # Fallback: parse first object-like section.
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            candidate = text[start:end + 1]
+            try:
+                parsed = json.loads(candidate)
+                return parsed if isinstance(parsed, dict) else {}
+            except Exception:
+                return {}
+
+        return {}
 
     @staticmethod
     def generate_caption(topic: str, language: str = "english") -> str:
@@ -114,8 +149,84 @@ class AIService:
 
     @staticmethod
     def generate_full_content(topic: str, language: str = "english"):
+        caption = AIService.generate_caption(topic, language)
         return {
-            "caption": AIService.generate_caption(topic, language),
+            "caption": caption,
             "hashtags": AIService.generate_hashtags(topic),
-            "image": AIService.generate_image(topic)
+            "image": AIService.generate_image(topic),
+            "analysis": AIService.analyze_sentiment_and_emotion(caption, language)
         }
+
+    @staticmethod
+    def analyze_sentiment_and_emotion(text: str, language: str = "english") -> dict:
+        """Analyze sentiment and emotions for any caption/post text."""
+        if not text or not text.strip():
+            return {
+                "sentiment": "neutral",
+                "confidence": 0.0,
+                "emotions": [],
+                "summary": "No text provided for analysis."
+            }
+
+        try:
+            prompt = (
+                "You are a sentiment and emotion analysis engine for social media text. "
+                f"Analyze the following {language} text and return ONLY valid JSON with this exact schema: "
+                '{"sentiment":"positive|neutral|negative","confidence":0.0,"emotions":[{"name":"joy","score":0.0}],"summary":"short explanation"}. '
+                "Rules: confidence and emotion scores must be between 0 and 1, include at most 4 emotions, and no markdown.\n\n"
+                f"Text:\n{text}"
+            )
+
+            response = gemini_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+
+            parsed = AIService._extract_json_object(response.text)
+
+            sentiment = str(parsed.get("sentiment", "neutral")).strip().lower()
+            if sentiment not in {"positive", "neutral", "negative"}:
+                sentiment = "neutral"
+
+            try:
+                confidence = float(parsed.get("confidence", 0.0))
+            except Exception:
+                confidence = 0.0
+            confidence = max(0.0, min(1.0, confidence))
+
+            emotions = parsed.get("emotions", [])
+            normalized_emotions = []
+            if isinstance(emotions, list):
+                for emotion in emotions[:4]:
+                    if not isinstance(emotion, dict):
+                        continue
+                    name = str(emotion.get("name", "")).strip().lower()
+                    if not name:
+                        continue
+                    try:
+                        score = float(emotion.get("score", 0.0))
+                    except Exception:
+                        score = 0.0
+                    normalized_emotions.append({
+                        "name": name,
+                        "score": max(0.0, min(1.0, score))
+                    })
+
+            summary = str(parsed.get("summary", "")).strip()
+            if not summary:
+                summary = "Sentiment and emotion analysis completed."
+
+            return {
+                "sentiment": sentiment,
+                "confidence": confidence,
+                "emotions": normalized_emotions,
+                "summary": summary
+            }
+        except Exception as e:
+            logger.error(f"Error analyzing sentiment and emotion: {e}")
+            return {
+                "sentiment": "neutral",
+                "confidence": 0.0,
+                "emotions": [],
+                "summary": "Analysis unavailable right now."
+            }

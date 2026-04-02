@@ -40,6 +40,9 @@ export default function Navbar({ setIsAuthenticated, onLogout }) {
           <Link to="/analytics" className="text-gray-700 hover:text-indigo-600">
             Analytics
           </Link>
+          <Link to="/comment-analysis" className="text-gray-700 hover:text-indigo-600">
+            Comment Analysis
+          </Link>
           <Link to="/accounts" className="text-gray-700 hover:text-indigo-600">
             Accounts
           </Link>

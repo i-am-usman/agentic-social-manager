@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Loader2, ThumbsUp, MessageCircle, Share2, ExternalLink, Instagram, Facebook, Linkedin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AutoReplySettingsPanel from "../components/AutoReplySettingsPanel";
 
 export default function Analytics() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState("all"); // all, facebook, instagram, linkedin (shows both personal & company)
@@ -393,7 +395,15 @@ export default function Analytics() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Social Media Analytics</h1>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold text-gray-800">Social Media Analytics</h1>
+        <button
+          onClick={() => navigate("/comment-analysis")}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700"
+        >
+          Open Comment Analysis
+        </button>
+      </div>
 
       {/* Filter Tabs */}
       <div className="flex gap-2 mb-6 border-b">
