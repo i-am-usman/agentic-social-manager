@@ -1,11 +1,246 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, Query
 from app.services.dependencies import get_current_user
 from app.services.analytics_service import AnalyticsService
 from app.services.social_accounts import get_platform_credentials
+from app.services.database import automation_actions_collection, automation_events_collection
 import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
+
+
+def _normalize_datetime(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.replace(tzinfo=None) if value.tzinfo else value
+
+    raw = str(value).strip()
+    if not raw:
+        return None
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    elif len(raw) >= 5 and raw[-5] in {"+", "-"} and raw[-3] != ":":
+        raw = raw[:-2] + ":" + raw[-2:]
+
+    try:
+        parsed = datetime.fromisoformat(raw)
+        return parsed.replace(tzinfo=None) if parsed.tzinfo else parsed
+    except ValueError:
+        return None
+
+
+def _compute_text_sentiment(text: str) -> str:
+    sample = (text or "").lower()
+    positive_tokens = {
+        "good", "great", "nice", "love", "awesome", "excellent", "thanks", "thank you", "amazing"
+    }
+    negative_tokens = {
+        "bad", "worst", "hate", "poor", "terrible", "awful", "issue", "problem", "angry"
+    }
+
+    if any(token in sample for token in positive_tokens):
+        return "positive"
+    if any(token in sample for token in negative_tokens):
+        return "negative"
+    return "neutral"
+
+
+def _date_bucket_key(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%d")
+
+
+@router.get("/dashboard")
+async def get_dashboard_summary(
+    range_days: int = Query(7, ge=1, le=90),
+    user: dict = Depends(get_current_user),
+):
+    """Unified engagement dashboard payload focused on Facebook and Instagram."""
+    try:
+        user_id = str(user["_id"])
+        window_start = datetime.utcnow() - timedelta(days=range_days)
+        platforms = ["facebook", "instagram"]
+
+        fb_creds = get_platform_credentials(user_id, "facebook")
+        ig_creds = get_platform_credentials(user_id, "instagram")
+        analytics_service = AnalyticsService(
+            fb_page_id=fb_creds.get("page_id") if fb_creds else None,
+            fb_token=fb_creds.get("access_token") if fb_creds else None,
+            ig_user_id=ig_creds.get("ig_user_id") if ig_creds else None,
+            ig_token=ig_creds.get("access_token") if ig_creds else None,
+        )
+
+        media_result = analytics_service.get_all_media(limit=50)
+        posts = media_result.get("posts", []) if media_result.get("status") == "success" else []
+
+        actions = list(
+            automation_actions_collection.find(
+                {
+                    "user_id": user_id,
+                    "platform": {"$in": platforms},
+                    "created_at": {"$gte": window_start},
+                }
+            )
+            .sort("created_at", -1)
+            .limit(200)
+        )
+
+        events = list(
+            automation_events_collection.find(
+                {
+                    "user_id": user_id,
+                    "platform": {"$in": platforms},
+                    "created_at": {"$gte": window_start},
+                }
+            )
+            .sort("created_at", -1)
+            .limit(300)
+        )
+
+        event_by_id = {str(event.get("_id")): event for event in events}
+
+        platform_split = {"facebook": 0, "instagram": 0}
+        channel_split = {"comments": 0, "dms": 0}
+        sentiment_counts = {"positive": 0, "neutral": 0, "negative": 0}
+
+        date_keys = []
+        trend_comments = {}
+        trend_dms = {}
+        trend_replies_sent = {}
+        for offset in range(range_days):
+            day = (window_start + timedelta(days=offset)).date()
+            key = day.strftime("%Y-%m-%d")
+            date_keys.append(key)
+            trend_comments[key] = 0
+            trend_dms[key] = 0
+            trend_replies_sent[key] = 0
+
+        for event in events:
+            platform = event.get("platform")
+            event_type = event.get("event_type")
+            if platform in platform_split:
+                platform_split[platform] += 1
+            if event_type == "comment_created":
+                channel_split["comments"] += 1
+                event_dt = _normalize_datetime(event.get("created_at"))
+                if event_dt:
+                    key = _date_bucket_key(event_dt)
+                    if key in trend_comments:
+                        trend_comments[key] += 1
+            elif event_type == "dm_received":
+                channel_split["dms"] += 1
+                event_dt = _normalize_datetime(event.get("created_at"))
+                if event_dt:
+                    key = _date_bucket_key(event_dt)
+                    if key in trend_dms:
+                        trend_dms[key] += 1
+
+            sentiment = _compute_text_sentiment((event.get("channel_context") or {}).get("text", ""))
+            sentiment_counts[sentiment] += 1
+
+        sent_actions = [a for a in actions if a.get("status") == "sent"]
+        failed_actions = [a for a in actions if a.get("status") == "failed"]
+        skipped_actions = [a for a in actions if a.get("status") == "skipped"]
+        pending_actions = [a for a in actions if a.get("status") == "pending"]
+
+        latency_seconds = []
+        recent_actions = []
+        for action in actions[:25]:
+            event_id = str(action.get("event_id") or "")
+            event = event_by_id.get(event_id)
+            context = (event or {}).get("channel_context") or {}
+
+            created_at = _normalize_datetime(action.get("created_at"))
+            sent_at = _normalize_datetime(action.get("sent_at"))
+            if sent_at and created_at:
+                latency_seconds.append(max(0, (sent_at - created_at).total_seconds()))
+
+            recent_actions.append(
+                {
+                    "platform": action.get("platform"),
+                    "channel_type": "dm" if action.get("action_type") == "dm_reply" else "comment",
+                    "status": action.get("status"),
+                    "user_said": (context.get("text") or "")[:140],
+                    "ai_replied": (action.get("generated_text") or "")[:180],
+                    "ai_fallback_reason": action.get("ai_fallback_reason"),
+                    "created_at": action.get("created_at"),
+                }
+            )
+
+        for action in sent_actions:
+            action_dt = _normalize_datetime(action.get("created_at"))
+            if not action_dt:
+                continue
+            key = _date_bucket_key(action_dt)
+            if key in trend_replies_sent:
+                trend_replies_sent[key] += 1
+
+        top_posts = []
+        for post in posts:
+            likes = int(post.get("likes", 0) or 0)
+            comments = int(post.get("comments", 0) or 0)
+            shares = int(post.get("shares", 0) or 0)
+            score = likes + (comments * 2) + (shares * 3)
+            top_posts.append(
+                {
+                    "id": post.get("id"),
+                    "platform": post.get("platform"),
+                    "message": (post.get("message") or post.get("caption") or "")[:120],
+                    "likes": likes,
+                    "comments": comments,
+                    "shares": shares,
+                    "score": score,
+                    "permalink": post.get("permalink"),
+                }
+            )
+        top_posts.sort(key=lambda item: item["score"], reverse=True)
+
+        total_ai_replies = len(sent_actions)
+        time_saved_minutes = total_ai_replies * 2
+        avg_latency = round(sum(latency_seconds) / len(latency_seconds), 2) if latency_seconds else None
+
+        return {
+            "status": "success",
+            "summary": {
+                "range_days": range_days,
+                "platform_scope": platforms,
+                "totals": {
+                    "incoming_comments": channel_split["comments"],
+                    "incoming_dms": channel_split["dms"],
+                    "ai_auto_replies_sent": total_ai_replies,
+                    "hours_saved_estimate": round(time_saved_minutes / 60, 2),
+                    "average_ai_response_seconds": avg_latency,
+                },
+                "automation_health": {
+                    "pending": len(pending_actions),
+                    "failed": len(failed_actions),
+                    "skipped": len(skipped_actions),
+                    "sent": total_ai_replies,
+                },
+                "platform_split": platform_split,
+                "channel_split": channel_split,
+                "sentiment": sentiment_counts,
+            },
+            "top_posts": top_posts[:5],
+            "recent_ai_actions": recent_actions[:10],
+            "trends": {
+                "labels": date_keys,
+                "incoming_comments": [trend_comments[key] for key in date_keys],
+                "incoming_dms": [trend_dms[key] for key in date_keys],
+                "ai_replies_sent": [trend_replies_sent[key] for key in date_keys],
+            },
+            "meta": {
+                "generated_at": datetime.utcnow().isoformat() + "Z",
+                "partial_data": bool(media_result.get("errors")),
+                "errors_by_platform": media_result.get("errors") or [],
+                "timezone": "UTC",
+            },
+        }
+    except Exception as e:
+        logger.error(f"Error in get_dashboard_summary: {e}", exc_info=True)
+        return {"status": "error", "detail": str(e)}
 
 
 @router.post("/comments/{comment_id}/reply")
