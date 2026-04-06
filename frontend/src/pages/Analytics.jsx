@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Loader2, ThumbsUp, MessageCircle, Share2, ExternalLink, Instagram, Facebook, Linkedin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AutoReplySettingsPanel from "../components/AutoReplySettingsPanel";
@@ -42,6 +42,7 @@ export default function Analytics() {
     dm_reply_delay_minutes: 0,
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -393,6 +394,19 @@ export default function Analytics() {
     return (post.likes || 0) + (post.comments || 0) + (post.shares || 0);
   };
 
+  const buildSearchableText = (post) => {
+    const content = `${post?.message || ""} ${post?.caption || ""}`;
+    const hashtagList = Array.isArray(post?.hashtags) ? post.hashtags.join(" ") : "";
+    const inlineHashtags = (content.match(/#[\p{L}\p{N}_]+/gu) || []).join(" ");
+    return `${content} ${hashtagList} ${inlineHashtags}`.toLowerCase();
+  };
+
+  const filteredPosts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return posts;
+    return posts.filter((post) => buildSearchableText(post).includes(query));
+  }, [posts, searchQuery]);
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-6 flex items-center justify-between gap-3">
@@ -423,6 +437,19 @@ export default function Analytics() {
             {tab}
           </button>
         ))}
+      </div>
+
+      <div className="mb-6 rounded-lg border bg-white p-3 shadow-sm">
+        <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-2">
+          Search posts by caption or hashtags
+        </label>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Try: launch, #sale, eid, growth..."
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        />
       </div>
 
       {/* Auto-Reply Settings Panels */}
@@ -480,17 +507,15 @@ export default function Analytics() {
           <Loader2 className="animate-spin text-indigo-600" size={40} />
           <span className="ml-3 text-gray-600">Loading analytics...</span>
         </div>
-      ) : posts.length === 0 ? (
+      ) : filteredPosts.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No posts found</p>
-          <p className="text-gray-400 text-sm mt-2">
-            Make sure your Facebook and Instagram accounts are properly configured
-          </p>
+          <p className="text-gray-500 text-lg">No posts match your search</p>
+          <p className="text-gray-400 text-sm mt-2">Try different words or hashtag terms.</p>
         </div>
       ) : (
         /* Posts Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <div
               key={post.id}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"

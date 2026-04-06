@@ -111,6 +111,7 @@ async def get_post_comments(
     post_id: str,
     platform: str = Query("facebook", regex="^(facebook|instagram)$"),
     include_analysis: bool = Query(False),
+    include_replies: bool = Query(False),
     user: dict = Depends(get_current_user)
 ):
     """
@@ -125,7 +126,12 @@ async def get_post_comments(
             ig_user_id=ig_creds.get("ig_user_id") if ig_creds else None,
             ig_token=ig_creds.get("access_token") if ig_creds else None,
         )
-        result = analytics_service.get_post_comments(post_id, platform, include_analysis=include_analysis)
+        result = analytics_service.get_post_comments(
+            post_id,
+            platform,
+            include_analysis=include_analysis,
+            include_replies=include_replies,
+        )
         return result
     except Exception as e:
         logger.error(f"Error in get_post_comments: {e}", exc_info=True)

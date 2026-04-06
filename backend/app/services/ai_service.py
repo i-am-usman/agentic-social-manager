@@ -8,6 +8,12 @@ import json
 import re
 from bytez import Bytez
 from google import genai
+from app.config import config
+
+try:
+    from groq import Groq
+except Exception:  # pragma: no cover - optional dependency fallback
+    Groq = None
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +59,48 @@ class AIService:
                 return {}
 
         return {}
+
+    @staticmethod
+    def _normalize_analysis_payload(parsed: dict, model_name: str) -> dict:
+        sentiment = str(parsed.get("sentiment", "neutral")).strip().lower()
+        if sentiment not in {"positive", "neutral", "negative"}:
+            sentiment = "neutral"
+
+        try:
+            confidence = float(parsed.get("confidence", 0.0))
+        except Exception:
+            confidence = 0.0
+        confidence = max(0.0, min(1.0, confidence))
+
+        emotions = parsed.get("emotions", [])
+        normalized_emotions = []
+        if isinstance(emotions, list):
+            for emotion in emotions[:4]:
+                if not isinstance(emotion, dict):
+                    continue
+                name = str(emotion.get("name", "")).strip().lower()
+                if not name:
+                    continue
+                try:
+                    score = float(emotion.get("score", 0.0))
+                except Exception:
+                    score = 0.0
+                normalized_emotions.append({
+                    "name": name,
+                    "score": max(0.0, min(1.0, score))
+                })
+
+        summary = str(parsed.get("summary", "")).strip()
+        if not summary:
+            summary = "Sentiment and emotion analysis completed."
+
+        return {
+            "sentiment": sentiment,
+            "confidence": confidence,
+            "emotions": normalized_emotions,
+            "summary": summary,
+            "model": model_name,
+        }
 
     @staticmethod
     def generate_caption(topic: str, language: str = "english") -> str:
@@ -230,3 +278,96 @@ class AIService:
                 "emotions": [],
                 "summary": "Analysis unavailable right now."
             }
+
+    @staticmethod
+    def analyze_comment_batch(comments: list, language: str = "auto", model_name: str = "llama-3.3-70b-versatile") -> dict:
+        """Analyze many comments in one request and return results keyed by comment id."""
+        if not comments:
+            return {"results": [], "model": model_name}
+
+        structured_comments = []
+        for index, comment in enumerate(comments):
+            if not isinstance(comment, dict):
+                continue
+            structured_comments.append({
+                "index": index,
+                "id": str(comment.get("id") or index),
+                "author": str(comment.get("author") or "Unknown"),
+                "message": str(comment.get("message") or "").strip(),
+            })
+
+        if not structured_comments:
+            return {"results": [], "model": model_name}
+
+        prompt = (
+            "You are a sentiment and emotion analysis engine for social media comments. "
+            f"Analyze every comment in the input array and return ONLY valid JSON with this exact schema: "
+            '{"results":[{"id":"comment-id","sentiment":"positive|neutral|negative","confidence":0.0,"emotions":[{"name":"joy","score":0.0}],"summary":"short explanation"}]}. '
+            "Rules: return one result for every input comment id, preserve the ids exactly, use at most 4 emotions per comment, keep confidence and emotion scores between 0 and 1, and no markdown. "
+            "Language rules: comments may be English, Urdu (Arabic script), Roman Urdu, or mixed language. Auto-detect each comment language and analyze accordingly. "
+            "Always keep sentiment labels in English (positive|neutral|negative) and emotion names in English (joy, anger, sadness, fear, surprise, disgust, love, etc). "
+            "If a comment is empty, mark it neutral with confidence 0 and an empty emotions array.\n\n"
+            f"Language: {language}\n"
+            f"Comments JSON:\n{json.dumps(structured_comments, ensure_ascii=False)}"
+        )
+
+        try:
+            groq_api_key = getattr(config, "GROQ_API_KEY", None)
+            groq_model = getattr(config, "GROQ_MODEL", model_name)
+            if not groq_api_key or Groq is None:
+                unavailable_results = []
+                for comment in structured_comments:
+                    unavailable_results.append({
+                        "id": comment["id"],
+                        "analysis": {
+                            "sentiment": "neutral",
+                            "confidence": 0.0,
+                            "emotions": [],
+                            "summary": "Groq is not configured for comment analysis.",
+                            "model": groq_model,
+                        },
+                    })
+                return {"results": unavailable_results, "model": groq_model}
+
+            client = Groq(api_key=groq_api_key)
+            response = client.chat.completions.create(
+                model=groq_model,
+                messages=[
+                    {"role": "system", "content": "Return only strict JSON."},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.2,
+            )
+            raw_text = (response.choices[0].message.content or "").strip()
+            parsed = AIService._extract_json_object(raw_text)
+            model_used = groq_model
+
+            raw_results = parsed.get("results", [])
+            normalized = []
+            if isinstance(raw_results, list):
+                for item in raw_results:
+                    if not isinstance(item, dict):
+                        continue
+                    comment_id = str(item.get("id", "")).strip()
+                    if not comment_id:
+                        continue
+                    normalized.append({
+                        "id": comment_id,
+                        "analysis": AIService._normalize_analysis_payload(item, model_used),
+                    })
+            return {"results": normalized, "model": model_used}
+        except Exception as e:
+            logger.error(f"Error analyzing comment batch: {e}")
+            fallback = []
+            for comment in structured_comments:
+                fallback.append({
+                    "id": comment["id"],
+                    "analysis": {
+                        "sentiment": "neutral",
+                        "confidence": 0.0,
+                        "emotions": [],
+                        "summary": "Groq analysis failed for this request.",
+                        "model": model_name,
+                    },
+                })
+            return {"results": fallback, "model": model_name}
