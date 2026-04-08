@@ -63,6 +63,11 @@ class AnalyticsService:
         return cached
 
     def _store_cached_analysis(self, comment: dict, analysis: dict):
+        summary = str((analysis or {}).get("summary") or "").lower()
+        # Avoid persisting transient fallback responses in cache.
+        if "not configured" in summary or "failed" in summary or "unavailable" in summary:
+            return
+
         cache_key = self._cache_key_for_comment(comment)
         COMMENT_ANALYSIS_CACHE[cache_key] = analysis
         COMMENT_ANALYSIS_CACHE.move_to_end(cache_key)

@@ -52,6 +52,13 @@ def _date_bucket_key(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%d")
 
 
+def _hour_label(hour: int) -> str:
+    suffix = "AM" if hour < 12 else "PM"
+    normalized = hour % 12
+    normalized = 12 if normalized == 0 else normalized
+    return f"{normalized}:00 {suffix}"
+
+
 @router.get("/dashboard")
 async def get_dashboard_summary(
     range_days: int = Query(7, ge=1, le=90),
@@ -178,11 +185,18 @@ async def get_dashboard_summary(
                 trend_replies_sent[key] += 1
 
         top_posts = []
+        hour_buckets = {hour: {"engagement": 0, "posts": 0} for hour in range(24)}
         for post in posts:
             likes = int(post.get("likes", 0) or 0)
             comments = int(post.get("comments", 0) or 0)
             shares = int(post.get("shares", 0) or 0)
             score = likes + (comments * 2) + (shares * 3)
+
+            created_time = _normalize_datetime(post.get("created_time"))
+            if created_time:
+                hour_buckets[created_time.hour]["engagement"] += score
+                hour_buckets[created_time.hour]["posts"] += 1
+
             top_posts.append(
                 {
                     "id": post.get("id"),
@@ -196,6 +210,96 @@ async def get_dashboard_summary(
                 }
             )
         top_posts.sort(key=lambda item: item["score"], reverse=True)
+
+        best_hour_candidates = []
+        for hour, bucket in hour_buckets.items():
+            post_count = bucket["posts"]
+            if post_count <= 0:
+                continue
+            avg_score = bucket["engagement"] / post_count
+            # Slightly reward hours with more sample size without fully overriding average quality.
+            confidence_weighted_score = avg_score * (1 + min(post_count, 6) / 20)
+            best_hour_candidates.append(
+                {
+                    "hour": hour,
+                    "label": _hour_label(hour),
+                    "posts": post_count,
+                    "average_engagement_score": round(avg_score, 2),
+                    "confidence_score": round(confidence_weighted_score, 2),
+                }
+            )
+
+        best_hour_candidates.sort(
+            key=lambda item: (item["confidence_score"], item["posts"]),
+            reverse=True,
+        )
+
+        best_time_prediction = {
+            "status": "insufficient_data",
+            "recommended_hour": None,
+            "recommended_label": None,
+            "top_windows": [],
+            "coverage_posts": len(posts),
+            "message": "Need more post history to estimate best posting time.",
+        }
+        if best_hour_candidates:
+            best = best_hour_candidates[0]
+            best_time_prediction = {
+                "status": "ready",
+                "recommended_hour": best["hour"],
+                "recommended_label": best["label"],
+                "top_windows": best_hour_candidates[:3],
+                "coverage_posts": len(posts),
+                "message": f"ASMA predicts highest engagement around {best['label']}.",
+            }
+
+        daily_engagement = [trend_comments[key] + trend_dms[key] for key in date_keys]
+        anomaly_alert = {
+            "status": "insufficient_data",
+            "is_spike": False,
+            "severity": "none",
+            "latest_window": date_keys[-1] if date_keys else None,
+            "latest_engagement": daily_engagement[-1] if daily_engagement else 0,
+            "baseline_engagement": None,
+            "delta_percent": None,
+            "spike_ratio": None,
+            "message": "Need more baseline data to detect anomalies.",
+        }
+
+        if len(daily_engagement) >= 3:
+            current_value = daily_engagement[-1]
+            baseline_values = daily_engagement[:-1]
+            baseline_avg = (sum(baseline_values) / len(baseline_values)) if baseline_values else 0
+
+            spike_ratio = (current_value / baseline_avg) if baseline_avg > 0 else None
+            delta_percent = (
+                round(((current_value - baseline_avg) / baseline_avg) * 100, 2)
+                if baseline_avg > 0
+                else None
+            )
+
+            is_spike = bool(spike_ratio and spike_ratio >= 3 and current_value >= 5)
+            severity = "none"
+            if is_spike:
+                severity = "high" if spike_ratio >= 5 else "medium"
+
+            message = "Engagement is stable compared to recent baseline."
+            if is_spike:
+                message = (
+                    f"Traffic spike detected: engagement is {round(spike_ratio, 2)}x above recent baseline."
+                )
+
+            anomaly_alert = {
+                "status": "ready",
+                "is_spike": is_spike,
+                "severity": severity,
+                "latest_window": date_keys[-1],
+                "latest_engagement": current_value,
+                "baseline_engagement": round(baseline_avg, 2),
+                "delta_percent": delta_percent,
+                "spike_ratio": round(spike_ratio, 2) if spike_ratio is not None else None,
+                "message": message,
+            }
 
         total_ai_replies = len(sent_actions)
         time_saved_minutes = total_ai_replies * 2
@@ -225,6 +329,8 @@ async def get_dashboard_summary(
             },
             "top_posts": top_posts[:5],
             "recent_ai_actions": recent_actions[:10],
+            "best_time_to_post": best_time_prediction,
+            "anomaly_alert": anomaly_alert,
             "trends": {
                 "labels": date_keys,
                 "incoming_comments": [trend_comments[key] for key in date_keys],
