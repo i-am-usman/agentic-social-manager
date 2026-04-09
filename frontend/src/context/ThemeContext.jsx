@@ -16,9 +16,11 @@ export function ThemeProvider({ children }) {
   const applyTheme = (themeName) => {
     const root = document.documentElement;
     if (themeName === "light") {
+      root.classList.remove("dark");
       root.classList.add("light-theme");
       root.classList.remove("dark-theme");
     } else {
+      root.classList.add("dark");
       root.classList.add("dark-theme");
       root.classList.remove("light-theme");
     }

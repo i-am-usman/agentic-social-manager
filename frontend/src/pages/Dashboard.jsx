@@ -121,22 +121,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <div className="relative mb-6 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 px-6 py-6 text-white shadow-[0_30px_80px_rgba(2,6,23,0.42)] lg:px-8 lg:py-8">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.22),_transparent_30%),radial-gradient(circle_at_80%_10%,_rgba(45,212,191,0.12),_transparent_24%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.14),_transparent_26%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(2,6,23,1))]" />
-          <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
+        <div className="relative mb-6 overflow-hidden rounded-[2rem] border border-slate-200 bg-gradient-to-r from-indigo-50 via-white to-purple-50 px-6 py-6 text-slate-800 shadow-sm lg:px-8 lg:py-8 dark:border-white/10 dark:bg-slate-950 dark:text-white dark:shadow-[0_30px_80px_rgba(2,6,23,0.42)]">
+          <div className="absolute inset-0 hidden dark:block dark:bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.22),_transparent_30%),radial-gradient(circle_at_80%_10%,_rgba(45,212,191,0.12),_transparent_24%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.14),_transparent_26%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(2,6,23,1))]" />
+          <div className="absolute inset-0 hidden opacity-20 dark:block [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
 
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold tracking-wide text-slate-200 backdrop-blur">
-                <ShieldCheck size={14} className="text-indigo-300" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/90 px-3 py-1 text-xs font-semibold tracking-wide text-slate-700 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+                <ShieldCheck size={14} className="text-indigo-500 dark:text-indigo-300" />
                 ASMA COMMAND CENTER
               </div>
 
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Engagement Command Center</h1>
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/30">
+                <h1 className="text-3xl font-black tracking-tight text-slate-800 sm:text-4xl dark:text-white">Engagement Command Center</h1>
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-400/30 dark:text-emerald-300">
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
@@ -145,27 +145,27 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              <p className="max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base dark:text-slate-300">
                 Facebook + Instagram live automation intelligence with predictive signals, AI response tracking, and spike detection.
               </p>
 
               <div className="flex flex-wrap gap-3 pt-1">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 backdrop-blur">
-                  <Bot size={14} className="text-indigo-300" /> AI replies active
+                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/90 px-3 py-1 text-xs text-slate-700 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+                  <Bot size={14} className="text-indigo-500 dark:text-indigo-300" /> AI replies active
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 backdrop-blur">
-                  <Radar size={14} className="text-cyan-300" /> Spike detection on
+                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-white/90 px-3 py-1 text-xs text-slate-700 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+                  <Radar size={14} className="text-cyan-500 dark:text-cyan-300" /> Spike detection on
                 </div>
               </div>
             </div>
 
-            <div className="relative flex items-center gap-4 rounded-[1.5rem] border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(2,6,23,0.35)] backdrop-blur-xl">
+            <div className="relative flex items-center gap-4 rounded-[1.5rem] border border-slate-200 bg-white px-5 py-4 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5 dark:shadow-[0_20px_60px_rgba(2,6,23,0.35)]">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 shadow-lg shadow-indigo-500/30">
                 <Sparkles className="text-white" size={28} />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-200">Freshness</p>
-                <p className="mt-1 text-sm text-slate-200">Last updated: {lastUpdatedLabel}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-200">Freshness</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-200">Last updated: {lastUpdatedLabel}</p>
               </div>
             </div>
           </div>
@@ -177,13 +177,13 @@ export default function Dashboard() {
                   <CheckCircle2 size={18} />
                 </span>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-white">Sign in successful</p>
-                  <p className="mt-0.5 text-sm text-emerald-100">Welcome back to ASMA.</p>
+                  <p className="text-sm font-bold text-emerald-900 dark:text-white">Sign in successful</p>
+                  <p className="mt-0.5 text-sm text-emerald-700 dark:text-emerald-100">Welcome back to ASMA.</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setAuthFlashMessage("")}
-                  className="rounded-md p-1 text-emerald-200 transition-colors hover:bg-white/10 hover:text-white"
+                  className="rounded-md p-1 text-emerald-700 transition-colors hover:bg-emerald-100 dark:text-emerald-200 dark:hover:bg-white/10 dark:hover:text-white"
                   aria-label="Dismiss login success message"
                 >
                   <X size={16} />
@@ -192,13 +192,13 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_60px_rgba(2,6,23,0.35)] backdrop-blur-xl">
+          <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5 dark:shadow-[0_20px_60px_rgba(2,6,23,0.35)]">
             <div>
-              <p className="text-sm font-semibold text-white">Live sync</p>
-              <p className="text-xs text-slate-300">Last updated: {lastUpdatedLabel}</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-white">Live sync</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">Last updated: {lastUpdatedLabel}</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`rounded-full px-2 py-1 text-xs font-semibold ${refreshing ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/25" : "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/25"}`}>
+              <span className={`rounded-full px-2 py-1 text-xs font-semibold ${refreshing ? "bg-amber-500/15 text-amber-700 ring-1 ring-amber-400/25 dark:text-amber-300" : "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-400/25 dark:text-emerald-300"}`}>
                 {refreshing ? "Refreshing" : "Live"}
               </span>
               <button
@@ -207,7 +207,7 @@ export default function Dashboard() {
                   setRefreshing(true);
                   loadDashboard().finally(() => setRefreshing(false));
                 }}
-                className="rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/15"
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
               >
                 Refresh now
               </button>
@@ -225,8 +225,8 @@ export default function Dashboard() {
               type="button"
               className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all ${
                 rangeDays === days
-                  ? "border-indigo-400/30 bg-indigo-500/15 text-white shadow-[0_10px_30px_rgba(99,102,241,0.18)]"
-                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                  ? "border-indigo-200 bg-indigo-100 text-indigo-700 shadow-sm dark:border-indigo-400/30 dark:bg-indigo-500/15 dark:text-white dark:shadow-[0_10px_30px_rgba(99,102,241,0.18)]"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
               }`}
               onClick={() => {
                 setLoading(true);
@@ -239,13 +239,13 @@ export default function Dashboard() {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <div className="mb-6 rounded-xl border border-rose-300/30 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-400/20 dark:bg-rose-500/10 dark:text-rose-100">
             {error}
           </div>
         )}
 
         {!!dashboard?.meta?.partial_data && (
-          <div className="mb-6 rounded-xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          <div className="mb-6 rounded-xl border border-amber-300/40 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
             Partial data received from one or more platform APIs. Some cards may be incomplete.
           </div>
         )}
@@ -253,7 +253,7 @@ export default function Dashboard() {
         {loading ? (
             <div className="flex h-32 items-center justify-center">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-400" />
-            <p className="ml-3 text-slate-300">Loading dashboard...</p>
+            <p className="ml-3 text-slate-500 dark:text-slate-300">Loading dashboard...</p>
           </div>
         ) : (
           <>
@@ -293,8 +293,8 @@ export default function Dashboard() {
             <EngagementTrendChart trends={trends} />
 
             <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
-                <h3 className="mb-4 text-lg font-bold tracking-tight text-white">Automation Health</h3>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-800 dark:shadow-none">
+                <h3 className="mb-4 text-lg font-bold tracking-tight text-slate-800 dark:text-white">Automation Health</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${healthBadge("sent")}`}>Sent</span>
@@ -310,7 +310,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${healthBadge("skipped")}`}>Skipped</span>
-                    <span className="font-bold text-slate-300">{health.skipped || 0}</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">{health.skipped || 0}</span>
                   </div>
                 </div>
               </div>
@@ -344,20 +344,20 @@ export default function Dashboard() {
               <AnomalyAlertPanel insight={anomalyAlert} hottestPost={topPosts[0]} />
             </div>
 
-            <div className="mb-8 rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
-              <h3 className="mb-4 text-lg font-bold tracking-tight text-white">Top Performing Posts</h3>
+            <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-800 dark:shadow-none">
+              <h3 className="mb-4 text-lg font-bold tracking-tight text-slate-800 dark:text-white">Top Performing Posts</h3>
               <div className="space-y-3">
-                {topPosts.length === 0 && <p className="text-sm text-slate-400">No post data yet.</p>}
+                {topPosts.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">No post data yet.</p>}
                 {topPosts.map((post) => (
-                  <div key={post.id} className="cursor-pointer rounded-xl border border-white/10 p-3 transition-all hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/5">
+                  <div key={post.id} className="cursor-pointer rounded-xl border border-slate-200 p-3 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/5">
                     <div className="mb-1 flex items-center justify-between">
                       <span className={`rounded px-2 py-1 text-xs font-semibold ${platformBadge(post.platform)}`}>
                         {post.platform}
                       </span>
-                      <span className="text-xs text-slate-400">Score {post.score}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Score {post.score}</span>
                     </div>
-                    <p className="truncate text-sm text-slate-200">{post.message || "(no caption)"}</p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="truncate text-sm text-slate-700 dark:text-slate-200">{post.message || "(no caption)"}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       {post.likes} likes • {post.comments} comments • {post.shares} shares
                     </p>
                     {post.permalink && (
@@ -365,7 +365,7 @@ export default function Dashboard() {
                         href={post.permalink}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-2 inline-block text-xs font-medium text-indigo-300 hover:text-indigo-200"
+                        className="mt-2 inline-block text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
                       >
                         Open post context
                       </a>
@@ -375,12 +375,12 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="mb-8 rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
-              <h3 className="mb-4 text-lg font-bold tracking-tight text-white">Live AI Action Trail</h3>
+            <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-800 dark:shadow-none">
+              <h3 className="mb-4 text-lg font-bold tracking-tight text-slate-800 dark:text-white">Live AI Action Trail</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-slate-400">
+                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500 dark:border-white/10 dark:text-slate-400">
                       <th className="py-3 pr-3">Platform</th>
                       <th className="py-3 pr-3">Channel</th>
                       <th className="py-3 pr-3">Status</th>
@@ -391,29 +391,29 @@ export default function Dashboard() {
                   <tbody>
                     {recentActions.length === 0 && (
                       <tr>
-                        <td colSpan="5" className="py-4 text-center text-slate-400">
+                        <td colSpan="5" className="py-4 text-center text-slate-500 dark:text-slate-400">
                           No recent AI actions.
                         </td>
                       </tr>
                     )}
                     {recentActions.map((item, index) => (
-                      <tr key={`${item.created_at || "na"}-${index}`} className="cursor-pointer border-b border-white/5 transition-colors hover:bg-white/5 last:border-b-0">
+                      <tr key={`${item.created_at || "na"}-${index}`} className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 last:border-b-0 dark:border-white/5 dark:hover:bg-white/5">
                         <td className="py-2 pr-3">
                           <span className={`rounded px-2 py-1 text-xs font-semibold ${platformBadge(item.platform)}`}>
                             {item.platform}
                           </span>
                         </td>
-                        <td className="py-2 pr-3 uppercase text-xs text-slate-400">{item.channel_type}</td>
+                        <td className="py-2 pr-3 uppercase text-xs text-slate-500 dark:text-slate-400">{item.channel_type}</td>
                         <td className="py-2 pr-3">
                           <span className={`rounded px-2 py-1 text-xs font-semibold ${statusBadge(item.status)}`}>
                             {item.status}
                           </span>
                         </td>
-                        <td className="max-w-xs py-2 pr-3 truncate text-slate-200">{item.user_said || "-"}</td>
-                        <td className="max-w-xs py-2 pr-3 truncate text-slate-200">
+                        <td className="max-w-xs py-2 pr-3 truncate text-slate-700 dark:text-slate-200">{item.user_said || "-"}</td>
+                        <td className="max-w-xs py-2 pr-3 truncate text-slate-700 dark:text-slate-200">
                           <span title={item.ai_replied || ""}>{item.ai_replied || "-"}</span>
                           {item.ai_fallback_reason && (
-                            <div className="mt-1 text-[11px] text-amber-200">
+                            <div className="mt-1 text-[11px] text-amber-700 dark:text-amber-200">
                               Fallback: {item.ai_fallback_reason}
                             </div>
                           )}
@@ -427,17 +427,17 @@ export default function Dashboard() {
           </>
         )}
 
-        <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 p-8 text-white shadow-[0_30px_80px_rgba(2,6,23,0.42)]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.2),_transparent_30%),radial-gradient(circle_at_85%_20%,_rgba(45,212,191,0.12),_transparent_24%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.14),_transparent_28%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(2,6,23,1))]" />
-          <div className="absolute inset-0 opacity-18 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
+        <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 p-8 text-slate-800 shadow-sm dark:border-white/10 dark:bg-slate-950 dark:text-white dark:shadow-[0_30px_80px_rgba(2,6,23,0.42)]">
+          <div className="absolute inset-0 hidden dark:block dark:bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.2),_transparent_30%),radial-gradient(circle_at_85%_20%,_rgba(45,212,191,0.12),_transparent_24%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.14),_transparent_28%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(2,6,23,1))]" />
+          <div className="absolute inset-0 hidden opacity-18 dark:block [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl space-y-3">
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold tracking-wide text-slate-200 backdrop-blur">
-                <Sparkles size={14} className="text-indigo-300" />
+              <p className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white px-3 py-1 text-xs font-semibold tracking-wide text-slate-700 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+                <Sparkles size={14} className="text-indigo-500 dark:text-indigo-300" />
                 AI CONTENT STUDIO
               </p>
-              <h2 className="text-2xl font-black tracking-tight sm:text-3xl">Ready to create something sharp and on-brand?</h2>
-              <p className="max-w-xl text-sm leading-7 text-slate-300">
+              <h2 className="text-2xl font-black tracking-tight text-slate-800 sm:text-3xl dark:text-white">Ready to create something sharp and on-brand?</h2>
+              <p className="max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-300">
                 Move from insights to action by generating content, captions, and campaigns directly from your command center.
               </p>
             </div>

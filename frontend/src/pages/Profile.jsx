@@ -524,7 +524,7 @@ export default function Profile() {
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
 
         <div className="relative">
-          <p className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">Creator Workspace</p>
+          <p className="creator-workspace-label inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">Creator Workspace</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-white">Profile Command Center</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-300">Manage your identity, publishing profile, and saved content in one control surface.</p>
         </div>

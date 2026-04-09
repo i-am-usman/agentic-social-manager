@@ -5,10 +5,10 @@
 /* stylelint-enable at-rule-no-unknown */
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap');
-/* Urdu text styling */
+
 .font-noto {
   font-family: 'Noto Nastaliq Urdu', serif;
-  direction: rtl;   /* Right-to-left alignment */
+  direction: rtl;
   text-align: right;
 }
 
@@ -20,25 +20,68 @@ body,
 
 body {
   margin: 0;
-  color: #e5edf8;
-  background:
-    radial-gradient(circle at top, rgba(51, 65, 85, 0.78), rgba(30, 41, 59, 0.88) 45%, rgba(15, 23, 42, 0.95) 100%);
+  color: #1f2937;
+  background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%);
   background-attachment: fixed;
+}
+
+html.light-theme {
+  color-scheme: light;
+}
+
+html.light-theme body {
+  color: #1f2937;
+  background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%);
+  background-attachment: fixed;
+}
+
+html.dark,
+html.dark-theme,
+html:not(.light-theme) {
   color-scheme: dark;
 }
 
+html.dark body,
+html.dark-theme body,
+html:not(.light-theme) body {
+  color: #e5edf8;
+  background: radial-gradient(circle at top, rgba(51, 65, 85, 0.78), rgba(30, 41, 59, 0.88) 45%, rgba(15, 23, 42, 0.95) 100%);
+  background-attachment: fixed;
+}
+
 ::selection {
+  background: rgba(129, 140, 248, 0.2);
+  color: #1f2937;
+}
+
+html.dark ::selection,
+html.dark-theme ::selection,
+html:not(.light-theme) ::selection {
   background: rgba(129, 140, 248, 0.35);
   color: #fff;
 }
 
-.login-page input:-webkit-autofill,
-.login-page input:-webkit-autofill:hover,
-.login-page input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #ffffff;
-  -webkit-box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.72) inset;
-  box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.22) inset;
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1f2937;
+  -webkit-box-shadow: 0 0 0 1000px rgba(243, 244, 246, 0.98) inset;
+  box-shadow: 0 0 0 1000px rgba(243, 244, 246, 0.98) inset;
   transition: background-color 9999s ease-out 0s;
+}
+
+html.dark input:-webkit-autofill,
+html.dark input:-webkit-autofill:hover,
+html.dark input:-webkit-autofill:focus,
+html.dark-theme input:-webkit-autofill,
+html.dark-theme input:-webkit-autofill:hover,
+html.dark-theme input:-webkit-autofill:focus,
+html:not(.light-theme) input:-webkit-autofill,
+html:not(.light-theme) input:-webkit-autofill:hover,
+html:not(.light-theme) input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.72) inset;
+  box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.22) inset;
 }
 
 ::-webkit-scrollbar {
@@ -47,546 +90,38 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.8);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
-  border-radius: 999px;
-  border: 2px solid rgba(15, 23, 42, 0.9);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.55);
-}
-
-/* ===== DARK THEME (Default) ===== */
-html.dark-theme,
-html:not(.light-theme) {
-  color-scheme: dark;
-}
-
-html.dark-theme body,
-html:not(.light-theme) body {
-  margin: 0;
-  color: #e5edf8;
-  background:
-    radial-gradient(circle at top, rgba(51, 65, 85, 0.78), rgba(30, 41, 59, 0.88) 45%, rgba(15, 23, 42, 0.95) 100%);
-  background-attachment: fixed;
-}
-
-html.dark-theme input:-webkit-autofill,
-html.dark-theme input:-webkit-autofill:hover,
-html.dark-theme input:-webkit-autofill:focus,
-html:not(.light-theme) input:-webkit-autofill,
-html:not(.light-theme) input:-webkit-autofill:hover,
-html:not(.light-theme) input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #ffffff;
-  -webkit-box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.72) inset;
-  box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.22) inset;
-  transition: background-color 9999s ease-out 0s;
-}
-
-/* Dark theme headings - white for visibility */
-html.dark-theme h1,
-html.dark-theme h2,
-html.dark-theme h3,
-html.dark-theme h4,
-html.dark-theme h5,
-html.dark-theme h6,
-html:not(.light-theme) h1,
-html:not(.light-theme) h2,
-html:not(.light-theme) h3,
-html:not(.light-theme) h4,
-html:not(.light-theme) h5,
-html:not(.light-theme) h6 {
-  color: #ffffff !important;
-}
-
-/* Dark theme default text colors */
-html.dark-theme p,
-html.dark-theme span,
-html.dark-theme label,
-html:not(.light-theme) p,
-html:not(.light-theme) span,
-html:not(.light-theme) label {
-  color: #e5edf8;
-}
-
-/* Dark theme: Text in cards must be light colored */
-html.dark-theme .bg-slate-900 p,
-html.dark-theme .bg-slate-900 span,
-html.dark-theme .bg-slate-900 label,
-html.dark-theme .bg-slate-950 p,
-html.dark-theme .bg-slate-950 span,
-html.dark-theme .bg-slate-950 label,
-html.dark-theme .bg-slate-900\/85 p,
-html.dark-theme .bg-slate-900\/85 span,
-html.dark-theme .bg-slate-900\/85 label,
-html.dark-theme .bg-slate-950\/85 p,
-html.dark-theme .bg-slate-950\/85 span,
-html.dark-theme .bg-slate-950\/85 label,
-html:not(.light-theme) .bg-slate-900 p,
-html:not(.light-theme) .bg-slate-900 span,
-html:not(.light-theme) .bg-slate-900 label,
-html:not(.light-theme) .bg-slate-950 p,
-html:not(.light-theme) .bg-slate-950 span,
-html:not(.light-theme) .bg-slate-950 label,
-html:not(.light-theme) .bg-slate-900\/85 p,
-html:not(.light-theme) .bg-slate-900\/85 span,
-html:not(.light-theme) .bg-slate-900\/85 label,
-html:not(.light-theme) .bg-slate-950\/85 p,
-html:not(.light-theme) .bg-slate-950\/85 span,
-html:not(.light-theme) .bg-slate-950\/85 label {
-  color: #e5edf8 !important;
-}
-
-/* Dark theme: All text in cards must be light colored */
-html.dark-theme .bg-slate-900 [class*="text-"],
-html.dark-theme .bg-slate-950 [class*="text-"],
-html.dark-theme .bg-slate-900\/85 [class*="text-"],
-html.dark-theme .bg-slate-950\/85 [class*="text-"],
-html.dark-theme [class*="bg-gradient"] [class*="text-"],
-html:not(.light-theme) .bg-slate-900 [class*="text-"],
-html:not(.light-theme) .bg-slate-950 [class*="text-"],
-html:not(.light-theme) .bg-slate-900\/85 [class*="text-"],
-html:not(.light-theme) .bg-slate-950\/85 [class*="text-"],
-html:not(.light-theme) [class*="bg-gradient"] [class*="text-"] {
-  color: #e5edf8 !important;
-}
-
-/* ===== LIGHT THEME ===== */
-html.light-theme {
-  color-scheme: light;
-}
-
-html.light-theme body {
-  margin: 0;
-  color: #1f2937;
-  background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%);
-  background-attachment: fixed;
-}
-
-html.light-theme input:-webkit-autofill,
-html.light-theme input:-webkit-autofill:hover,
-html.light-theme input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #1f2937;
-  -webkit-box-shadow: 0 0 0px 1000px rgba(243, 244, 246, 0.98) inset;
-  box-shadow: 0 0 0px 1000px rgba(243, 244, 246, 0.98) inset;
-  transition: background-color 9999s ease-out 0s;
-}
-
-html.light-theme ::selection {
-  background: rgba(129, 140, 248, 0.2);
-  color: #1f2937;
-}
-
-/* Light theme headings - dark for visibility */
-html.light-theme h1,
-html.light-theme h2,
-html.light-theme h3,
-html.light-theme h4,
-html.light-theme h5,
-html.light-theme h6 {
-  color: rgb(15 23 42) !important;
-}
-
-/* Light theme: Headings INSIDE dark cards/backgrounds should be white */
-html.light-theme .bg-slate-900 h1,
-html.light-theme .bg-slate-900 h2,
-html.light-theme .bg-slate-900 h3,
-html.light-theme .bg-slate-900 h4,
-html.light-theme .bg-slate-900 h5,
-html.light-theme .bg-slate-900 h6,
-html.light-theme .bg-slate-950 h1,
-html.light-theme .bg-slate-950 h2,
-html.light-theme .bg-slate-950 h3,
-html.light-theme .bg-slate-950 h4,
-html.light-theme .bg-slate-950 h5,
-html.light-theme .bg-slate-950 h6,
-html.light-theme .bg-slate-900\/85 h1,
-html.light-theme .bg-slate-900\/85 h2,
-html.light-theme .bg-slate-900\/85 h3,
-html.light-theme .bg-slate-900\/85 h4,
-html.light-theme .bg-slate-900\/85 h5,
-html.light-theme .bg-slate-900\/85 h6,
-html.light-theme .bg-slate-950\/85 h1,
-html.light-theme .bg-slate-950\/85 h2,
-html.light-theme .bg-slate-950\/85 h3,
-html.light-theme .bg-slate-950\/85 h4,
-html.light-theme .bg-slate-950\/85 h5,
-html.light-theme .bg-slate-950\/85 h6 {
-  color: #ffffff !important;
-}
-
-/* Light theme: Text INSIDE dark cards/backgrounds should be light */
-html.light-theme .bg-slate-900 p,
-html.light-theme .bg-slate-900 span,
-html.light-theme .bg-slate-900 label,
-html.light-theme .bg-slate-950 p,
-html.light-theme .bg-slate-950 span,
-html.light-theme .bg-slate-950 label,
-html.light-theme .bg-slate-900\/85 p,
-html.light-theme .bg-slate-900\/85 span,
-html.light-theme .bg-slate-900\/85 label,
-html.light-theme .bg-slate-950\/85 p,
-html.light-theme .bg-slate-950\/85 span,
-html.light-theme .bg-slate-950\/85 label {
-  color: #e5edf8 !important;
-}
-
-html.light-theme ::-webkit-scrollbar-track {
   background: rgba(243, 244, 246, 0.9);
 }
 
-html.light-theme ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: rgba(107, 114, 128, 0.4);
+  border-radius: 999px;
   border: 2px solid rgba(243, 244, 246, 1);
 }
 
-html.light-theme ::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: rgba(107, 114, 128, 0.6);
 }
 
-/* Light theme Tailwind color overrides */
-html.light-theme {
-  --color-slate-900: 15 23 42;
-  --color-slate-800: 30 41 59;
-  --color-slate-700: 51 65 85;
-  --color-slate-600: 71 85 105;
-  --color-slate-300: 203 213 225;
-  --color-slate-200: 226 232 240;
-  --color-slate-100: 241 245 250;
-  --color-white: 255 255 255;
+html.dark ::-webkit-scrollbar-track,
+html.dark-theme ::-webkit-scrollbar-track,
+html:not(.light-theme) ::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.8);
 }
 
-/* Light theme TEXT COLORS - stronger contrast */
-/* Light theme: Override all text to be light inside dark card backgrounds */
-html.light-theme .bg-slate-900 *,
-html.light-theme .bg-slate-950 *,
-html.light-theme .bg-slate-900\/85 *,
-html.light-theme .bg-slate-950\/85 * {
-  --tw-text-opacity: 1;
+html.dark ::-webkit-scrollbar-thumb,
+html.dark-theme ::-webkit-scrollbar-thumb,
+html:not(.light-theme) ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border: 2px solid rgba(15, 23, 42, 0.9);
 }
 
-html.light-theme .bg-slate-900 [class*="text-"],
-html.light-theme .bg-slate-950 [class*="text-"],
-html.light-theme .bg-slate-900\/85 [class*="text-"],
-html.light-theme .bg-slate-950\/85 [class*="text-"] {
-  color: #e5edf8 !important;
+html.dark ::-webkit-scrollbar-thumb:hover,
+html.dark-theme ::-webkit-scrollbar-thumb:hover,
+html:not(.light-theme) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
 }
 
-/* Light theme: Gradient dark backgrounds must have light text */
-html.light-theme [class*="bg-gradient-to-"][class*="from-slate-900"],
-html.light-theme [class*="bg-gradient-to-"][class*="from-slate-950"],
-html.light-theme [class*="bg-gradient"][class*="slate-900"],
-html.light-theme [class*="bg-gradient"][class*="slate-950"] {
-  color: #ffffff !important;
-}
-
-html.light-theme [class*="bg-gradient-to-"][class*="from-slate-900"] *,
-html.light-theme [class*="bg-gradient-to-"][class*="from-slate-950"] *,
-html.light-theme [class*="bg-gradient"][class*="slate-900"] *,
-html.light-theme [class*="bg-gradient"][class*="slate-950"] * {
-  color: #ffffff !important;
-}
-
-html.light-theme [class*="bg-gradient-to-"][class*="from-slate-900"] [class*="text-"],
-html.light-theme [class*="bg-gradient-to-"][class*="from-slate-950"] [class*="text-"],
-html.light-theme [class*="bg-gradient"][class*="slate-900"] [class*="text-"],
-html.light-theme [class*="bg-gradient"][class*="slate-950"] [class*="text-"] {
-  color: #ffffff !important;
-}
-
-/* Light theme: Specific color overrides inside gradient dark cards */
-html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-indigo-300,
-html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-indigo-300,
-html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-cyan-100,
-html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-cyan-100,
-html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-amber-200,
-html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-amber-200,
-html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-amber-100,
-html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-amber-100,
-html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-blue-100,
-html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-blue-100,
-html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-rose-100,
-html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-rose-100 {
-  color: #ffffff !important;
-}
-
-/* Ensure headings inside dark cards in light theme are white */
-html.light-theme .bg-slate-900 h1,
-html.light-theme .bg-slate-900 h2,
-html.light-theme .bg-slate-900 h3,
-html.light-theme .bg-slate-900 h4,
-html.light-theme .bg-slate-900 h5,
-html.light-theme .bg-slate-900 h6,
-html.light-theme .bg-slate-950 h1,
-html.light-theme .bg-slate-950 h2,
-html.light-theme .bg-slate-950 h3,
-html.light-theme .bg-slate-950 h4,
-html.light-theme .bg-slate-950 h5,
-html.light-theme .bg-slate-950 h6,
-html.light-theme .bg-slate-900\/85 h1,
-html.light-theme .bg-slate-900\/85 h2,
-html.light-theme .bg-slate-900\/85 h3,
-html.light-theme .bg-slate-900\/85 h4,
-html.light-theme .bg-slate-900\/85 h5,
-html.light-theme .bg-slate-900\/85 h6,
-html.light-theme .bg-slate-950\/85 h1,
-html.light-theme .bg-slate-950\/85 h2,
-html.light-theme .bg-slate-950\/85 h3,
-html.light-theme .bg-slate-950\/85 h4,
-html.light-theme .bg-slate-950\/85 h5,
-html.light-theme .bg-slate-950\/85 h6 {
-  color: #ffffff !important;
-}
-
-html.light-theme .text-white {
-  color: rgb(15 23 42) !important;
-}
-
-/* Light theme: Fix white background badges/labels - make text visible */
-html.light-theme [class*="bg-white"] {
-  background-color: rgb(226 232 240) !important;
-  color: rgb(15 23 42) !important;
-}
-
-html.light-theme [class*="bg-white"] span,
-html.light-theme [class*="bg-white"] p,
-html.light-theme [class*="bg-white"] label {
-  color: rgb(15 23 42) !important;
-}
-
-/* Light theme: Specific fix for CREATOR WORKSPACE label */
-html.light-theme .rounded-full {
-  background-color: inherit;
-}
-
-html.light-theme .rounded-full[class*="bg"] {
-  color: rgb(15 23 42) !important;
-}
-
-/* Light theme: Text colors INSIDE dark cards should be light */
-html.light-theme .bg-slate-900 .text-slate-100,
-html.light-theme .bg-slate-900 .text-slate-200,
-html.light-theme .bg-slate-900 .text-slate-300,
-html.light-theme .bg-slate-900 .text-slate-400,
-html.light-theme .bg-slate-950 .text-slate-100,
-html.light-theme .bg-slate-950 .text-slate-200,
-html.light-theme .bg-slate-950 .text-slate-300,
-html.light-theme .bg-slate-950 .text-slate-400,
-html.light-theme .bg-slate-900\/85 .text-slate-100,
-html.light-theme .bg-slate-900\/85 .text-slate-200,
-html.light-theme .bg-slate-900\/85 .text-slate-300,
-html.light-theme .bg-slate-900\/85 .text-slate-400,
-html.light-theme .bg-slate-950\/85 .text-slate-100,
-html.light-theme .bg-slate-950\/85 .text-slate-200,
-html.light-theme .bg-slate-950\/85 .text-slate-300,
-html.light-theme .bg-slate-950\/85 .text-slate-400 {
-  color: #e5edf8 !important;
-}
-
-html.light-theme .text-slate-100 {
-  color: rgb(15 23 42) !important;
-}
-
-html.light-theme .text-slate-200 {
-  color: rgb(30 41 59) !important;
-}
-
-html.light-theme .text-slate-300 {
-  color: rgb(51 65 85) !important;
-}
-
-html.light-theme .text-slate-400 {
-  color: rgb(71 85 105) !important;
-}
-
-html.light-theme .text-slate-50 {
-  color: rgb(30 41 59) !important;
-}
-
-html.light-theme .text-slate-500 {
-  color: rgb(100 116 139) !important;
-}
-
-html.light-theme .text-slate-600 {
-  color: rgb(71 85 105) !important;
-}
-
-html.light-theme .text-slate-700 {
-  color: rgb(51 65 85) !important;
-}
-
-html.light-theme .text-slate-800 {
-  color: rgb(30 41 59) !important;
-}
-
-html.light-theme .text-slate-900 {
-  color: rgb(15 23 42) !important;
-}
-
-html.light-theme h1,
-html.light-theme h2,
-html.light-theme h3,
-html.light-theme h4,
-html.light-theme h5,
-html.light-theme h6 {
-  color: rgb(15 23 42) !important;
-}
-
-/* Light theme: Brighter text inside dark cards for better visibility */
-html.light-theme .bg-slate-950 .text-indigo-200,
-html.light-theme .bg-slate-950 .text-slate-300,
-html.light-theme .bg-slate-900 .text-indigo-200,
-html.light-theme .bg-slate-900 .text-slate-300,
-html.light-theme .bg-indigo-500\/10 .text-indigo-200,
-html.light-theme .bg-indigo-500\/10 .text-white {
-  color: #ffffff !important;
-}
-
-/* Light theme: Force bright text colors in profile card */
-html.light-theme [class*="bg-slate-950"] p.text-slate-300,
-html.light-theme [class*="bg-slate-950"] p.text-indigo-200 {
-  color: #ffffff !important;
-}
-
-html.light-theme p,
-html.light-theme span,
-html.light-theme label,
-html.light-theme div {
-  color: rgb(30 41 59);
-}
-
-/* Light theme BACKGROUND COLORS - proper card/panel contrast */
-html.light-theme .bg-slate-900 {
-  background-color: rgb(226 232 240) !important;
-}
-
-html.light-theme .bg-slate-950 {
-  background-color: rgb(255 255 255) !important;
-}
-
-html.light-theme .bg-slate-900\/50 {
-  background-color: rgba(226, 232, 240, 0.5);
-}
-
-html.light-theme .bg-slate-900\/75 {
-  background-color: rgba(226, 232, 240, 0.75);
-}
-
-html.light-theme .bg-slate-900\/85,
-html.light-theme .bg-slate-950\/85 {
-  background-color: rgba(226, 232, 240, 0.85) !important;
-}
-
-html.light-theme .bg-slate-900\/95 {
-  background-color: rgb(243 244 246) !important;
-}
-
-html.light-theme .bg-white\/5,
-html.light-theme .bg-white\/10,
-html.light-theme .bg-white\/15 {
-  background-color: rgb(243 244 246) !important;
-}
-
-html.light-theme .bg-white\/20 {
-  background-color: rgb(241 245 250) !important;
-}
-
-html.light-theme .hover\:bg-white\/5:hover,
-html.light-theme .hover\:bg-white\/10:hover {
-  background-color: rgb(226 232 240) !important;
-}
-
-html.light-theme .bg-slate-800 {
-  background-color: rgb(226 232 240) !important;
-}
-
-/* Light theme BORDERS */
-html.light-theme [class*="border-white"] {
-  border-color: rgb(203 213 225) !important;
-}
-
-html.light-theme .border-slate-700 {
-  border-color: rgb(203 213 225) !important;
-}
-
-html.light-theme .border-slate-600 {
-  border-color: rgb(203 213 225) !important;
-}
-
-html.light-theme .border-white {
-  border-color: rgb(203 213 225) !important;
-}
-
-/* Light theme PLACEHOLDER TEXT */
-html.light-theme ::placeholder {
-  color: rgb(100 116 139) !important;
-}
-
-html.light-theme input::placeholder {
-  color: rgb(100 116 139) !important;
-}
-
-html.light-theme textarea::placeholder {
-  color: rgb(100 116 139) !important;
-}
-
-/* Light theme SPECIFIC PAGE OVERRIDES */
-html.light-theme .text-rose-300 {
-  color: rgb(225 29 72) !important;
-}
-
-html.light-theme .text-emerald-300 {
-  color: rgb(5 150 105) !important;
-}
-
-html.light-theme .text-indigo-200 {
-  color: rgb(76 29 149) !important;
-}
-/* Light theme: Brighter indigo text INSIDE dark backgrounds */
-html.light-theme .bg-slate-950 .text-indigo-200,
-html.light-theme .bg-slate-900 .text-indigo-200,
-html.light-theme .bg-indigo-500\/10 .text-indigo-200,
-html.light-theme .bg-indigo-500\/10 .text-white {
-  color: #ffffff !important;
-}
-html.light-theme .text-cyan-200 {
-  color: rgb(34 211 238) !important;
-}
-
-html.light-theme input[type="text"],
-html.light-theme input[type="email"],
-html.light-theme input[type="password"],
-html.light-theme input[type="search"],
-html.light-theme textarea,
-html.light-theme select {
-  color: rgb(15 23 42) !important;
-  background-color: rgb(255 255 255) !important;
-  border-color: rgb(203 213 225) !important;
-}
-
-html.light-theme input[type="text"]:focus,
-html.light-theme input[type="email"]:focus,
-html.light-theme input[type="password"]:focus,
-html.light-theme input[type="search"]:focus,
-html.light-theme textarea:focus,
-html.light-theme select:focus {
-  border-color: rgb(99 102 241) !important;
-  background-color: rgb(255 255 255) !important;
-}
-
-/* Light theme BUTTONS - ensure text visibility */
-html.light-theme button {
-  color: inherit;
-}
-
-html.light-theme .hover\:text-white:hover {
-  color: rgb(15 23 42) !important;
-}
-
-html.light-theme .hover\:text-indigo-200:hover {
-  color: rgb(76 29 149) !important;
+html.light-theme .creator-workspace-label {
+  color: rgb(15 23 42);
 }

@@ -49,7 +49,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen bg-transparent text-slate-100">
+        <div className="min-h-screen bg-transparent text-slate-800 dark:text-slate-100">
           {!authChecked ? (
             <div className="flex min-h-screen items-center justify-center">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-400" />

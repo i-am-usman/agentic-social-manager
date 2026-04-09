@@ -408,9 +408,9 @@ export default function Analytics() {
   }, [posts, searchQuery]);
 
   return (
-    <div className="mx-auto max-w-7xl p-6 text-slate-100">
+    <div className="mx-auto max-w-7xl p-6 text-slate-900 dark:text-slate-100">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold text-white">Social Media Analytics</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Social Media Analytics</h1>
         <button
           onClick={() => navigate("/comment-analysis")}
           className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(79,70,229,0.25)] hover:bg-indigo-500"
@@ -420,15 +420,15 @@ export default function Analytics() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="mb-6 flex gap-2 border-b border-white/10">
+      <div className="mb-6 flex gap-2 border-b border-slate-200 dark:border-white/10">
         {["all", "facebook", "instagram", "linkedin"].map((tab) => (
           <button
             key={tab}
             onClick={() => setFilter(tab)}
             className={`px-6 py-3 text-sm font-semibold capitalize flex items-center gap-2 ${
               filter === tab
-                ? "border-b-2 border-indigo-600 text-indigo-600"
-                : "text-slate-400 hover:text-indigo-300"
+                ? "border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                : "text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300"
             }`}
           >
             {tab === "facebook" && <Facebook size={18} />}
@@ -439,8 +439,8 @@ export default function Analytics() {
         ))}
       </div>
 
-      <div className="mb-6 rounded-2xl border border-white/10 bg-slate-900/75 p-4 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
+        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
           Search posts by caption or hashtags
         </label>
         <input
@@ -448,7 +448,7 @@ export default function Analytics() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Try: launch, #sale, eid, growth..."
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:focus:bg-white/10"
         />
       </div>
 
@@ -496,8 +496,8 @@ export default function Analytics() {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 rounded-xl border border-amber-400/20 bg-amber-500/10 p-4">
-          <p className="text-sm text-amber-100">{error}</p>
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-500/10">
+          <p className="text-sm text-amber-700 dark:text-amber-100">{error}</p>
         </div>
       )}
 
@@ -505,12 +505,12 @@ export default function Analytics() {
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-indigo-600" size={40} />
-          <span className="ml-3 text-slate-400">Loading analytics...</span>
+          <span className="ml-3 text-slate-600 dark:text-slate-400">Loading analytics...</span>
         </div>
       ) : filteredPosts.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-lg text-slate-400">No posts match your search</p>
-          <p className="mt-2 text-sm text-slate-500">Try different words or hashtag terms.</p>
+          <p className="text-lg text-slate-500 dark:text-slate-400">No posts match your search</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-500">Try different words or hashtag terms.</p>
         </div>
       ) : (
         /* Posts Grid */
@@ -518,10 +518,10 @@ export default function Analytics() {
           {filteredPosts.map((post) => (
             <div
               key={post.id}
-              className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/75 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] transition-all hover:-translate-y-0.5 hover:border-white/20"
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] transition-all hover:-translate-y-0.5 hover:border-slate-300 dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] dark:hover:border-white/20"
             >
               {/* Platform Badge */}
-              <div className="flex items-center justify-between border-b border-white/10 bg-white/5 p-3">
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5">
                 <div className="flex items-center gap-2">
                   {post.platform === "facebook" ? (
                     <>
@@ -545,7 +545,7 @@ export default function Analytics() {
                     href={post.permalink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-400 hover:text-indigo-300"
+                    className="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300"
                   >
                     <ExternalLink size={16} />
                   </a>
@@ -563,29 +563,29 @@ export default function Analytics() {
 
               {/* Content */}
               <div className="p-4">
-                <p className="mb-3 line-clamp-3 text-sm text-slate-200">
+                <p className="mb-3 line-clamp-3 text-sm text-slate-700 dark:text-slate-200">
                   {post.message || post.caption || "No caption"}
                 </p>
 
-                <p className="mb-3 text-xs text-slate-400">
+                <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
                   {formatDate(post.created_time)}
                 </p>
 
                 {/* Engagement Metrics */}
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="flex items-center gap-1 text-sm text-slate-400">
+                  <div className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
                     <ThumbsUp size={16} className="text-blue-500" />
                     <span>{post.likes || 0}</span>
                   </div>
                   <button
                     onClick={() => openCommentsModal(post)}
-                    className="flex items-center gap-1 text-sm text-slate-400 hover:text-indigo-300"
+                    className="flex items-center gap-1 text-sm text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300"
                   >
                     <MessageCircle size={16} className="text-green-500" />
                     <span>{post.comments || post.comments_count || 0}</span>
                   </button>
                   {(post.platform === "facebook" || post.platform === "linkedin") && (
-                    <div className="flex items-center gap-1 text-sm text-slate-400">
+                    <div className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
                       <Share2 size={16} className="text-purple-500" />
                       <span>{post.shares || 0}</span>
                     </div>
@@ -594,7 +594,7 @@ export default function Analytics() {
 
                 {/* LinkedIn-specific metrics */}
                 {post.platform === "linkedin" && (post.impressions || post.clicks) && (
-                  <div className="mb-3 flex items-center gap-4 text-xs text-slate-500">
+                  <div className="mb-3 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-500">
                     {post.impressions > 0 && (
                       <div>Impressions: <span className="font-semibold">{post.impressions}</span></div>
                     )}
@@ -608,8 +608,8 @@ export default function Analytics() {
                 )}
 
                 {/* Total Engagement */}
-                <div className="border-t border-white/10 pt-3">
-                  <p className="text-xs text-slate-400">
+                <div className="border-t border-slate-200 pt-3 dark:border-white/10">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Total Engagement:{" "}
                     <span className="font-semibold text-indigo-600">
                       {getTotalEngagement(post)}
@@ -625,18 +625,18 @@ export default function Analytics() {
       {/* Comments Modal */}
       {selectedPost && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-950/95 shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
+          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white/95 shadow-[0_30px_80px_rgba(2,6,23,0.12)] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
             {/* Modal Header */}
-            <div className="sticky top-0 flex items-center justify-between border-b border-white/10 bg-slate-950/95 p-4">
+            <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white/95 p-4 dark:border-white/10 dark:bg-slate-950/95">
               <div className="flex items-center gap-2">
                 <MessageCircle size={20} className="text-indigo-600" />
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   Comments ({comments.length})
                 </h3>
               </div>
               <button
                 onClick={closeCommentsModal}
-                className="text-2xl text-slate-400 hover:text-white"
+                className="text-2xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               >
                 ×
               </button>
@@ -645,8 +645,8 @@ export default function Analytics() {
             {/* Modal Content */}
             <div className="p-4">
               {/* Post Preview */}
-              <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-3">
-                <p className="line-clamp-2 text-sm text-slate-200">
+              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5">
+                <p className="line-clamp-2 text-sm text-slate-700 dark:text-slate-200">
                   {selectedPost.message || selectedPost.caption || "No caption"}
                 </p>
               </div>
@@ -657,31 +657,31 @@ export default function Analytics() {
                   <Loader2 className="animate-spin text-indigo-600" size={30} />
                 </div>
               ) : comments.length === 0 ? (
-                <p className="py-8 text-center text-slate-400">No comments yet</p>
+                <p className="py-8 text-center text-slate-500 dark:text-slate-400">No comments yet</p>
               ) : (
                 <div className="space-y-4">
                   {comments.map((comment) => (
                     <div
                       key={comment.id}
-                      className="rounded-xl border border-white/10 bg-slate-900/70 p-3"
+                      className="rounded-xl border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-slate-900/70"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <p className="text-sm font-semibold text-slate-100">
                           {comment.author}
                         </p>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           {formatDate(comment.created_time)}
                         </p>
                       </div>
-                      <p className="mb-2 text-sm text-slate-200">
+                      <p className="mb-2 text-sm text-slate-700 dark:text-slate-200">
                         {comment.message}
                       </p>
-                      <div className="flex items-center gap-1 text-xs text-slate-400">
+                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                         <ThumbsUp size={12} />
                         <span>{comment.likes || 0}</span>
                       </div>
                       {Array.isArray(comment.replies) && comment.replies.length > 0 && (
-                        <div className="mt-3 ml-4 border-l-2 border-white/10 pl-3">
+                        <div className="mt-3 ml-4 border-l-2 border-slate-200 pl-3 dark:border-white/10">
                           <button
                             onClick={() => toggleReplies(comment.id)}
                             className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
@@ -693,13 +693,13 @@ export default function Analytics() {
                           {expandedReplies[comment.id] && (
                             <div className="mt-2 space-y-2">
                               {comment.replies.map((reply) => (
-                                <div key={reply.id} className="rounded-md border border-white/10 bg-white/5 p-2">
+                                <div key={reply.id} className="rounded-md border border-slate-200 bg-slate-50 p-2 dark:border-white/10 dark:bg-white/5">
                                   <div className="flex items-start justify-between mb-1">
-                                    <p className="text-xs font-semibold text-slate-100">{reply.author}</p>
-                                    <p className="text-[11px] text-slate-400">{formatDate(reply.created_time)}</p>
+                                    <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">{reply.author}</p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{formatDate(reply.created_time)}</p>
                                   </div>
-                                  <p className="mb-1 text-xs text-slate-200">{reply.message}</p>
-                                  <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                                  <p className="mb-1 text-xs text-slate-700 dark:text-slate-200">{reply.message}</p>
+                                  <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
                                     <ThumbsUp size={10} />
                                     <span>{reply.likes || 0}</span>
                                   </div>
@@ -718,7 +718,7 @@ export default function Analytics() {
                               setReplyDrafts((prev) => ({ ...prev, [comment.id]: e.target.value }))
                             }
                             placeholder="Write a reply..."
-                            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-sm text-slate-100 outline-none"
+                            className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                           />
                           <button
                             onClick={() => handleReply(comment.id)}

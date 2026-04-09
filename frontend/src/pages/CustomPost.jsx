@@ -370,51 +370,51 @@ export default function CustomPost() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 text-slate-100">
-      <h1 className="mb-8 text-3xl font-bold text-slate-100">📝 Create Custom Post</h1>
+    <div className="max-w-4xl mx-auto p-6 text-slate-900 dark:text-slate-100">
+      <h1 className="mb-8 text-3xl font-bold text-slate-900 dark:text-slate-100">📝 Create Custom Post</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* LEFT: Content Editor */}
         <div className="md:col-span-2 space-y-6">
           {/* Title */}
           <div>
-            <label className="mb-2 block font-semibold text-slate-200">Post Title</label>
+            <label className="mb-2 block font-semibold text-slate-700 dark:text-slate-200">Post Title</label>
             <input
               type="text"
               placeholder="Enter post title (e.g., 'My Amazing Trip')"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-white/10"
             />
           </div>
 
           {/* Content */}
           <div>
-            <label className="mb-2 block font-semibold text-slate-200">Content/Caption</label>
+            <label className="mb-2 block font-semibold text-slate-700 dark:text-slate-200">Content/Caption</label>
             <textarea
               placeholder="Write your post content here... You can include emojis and multiple paragraphs!"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="h-32 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+              className="h-32 w-full rounded-xl border border-slate-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-white/10"
             />
           </div>
 
           {/* Hashtags */}
           <div>
-            <label className="mb-2 block font-semibold text-slate-200">Hashtags</label>
+            <label className="mb-2 block font-semibold text-slate-700 dark:text-slate-200">Hashtags</label>
             <input
               type="text"
               placeholder="Enter hashtags separated by spaces (#travel #photography #adventure)"
               value={hashtags}
               onChange={(e) => setHashtags(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-white/10"
             />
           </div>
 
           {/* Media Upload */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 backdrop-blur">
-            <label className="mb-2 block font-semibold text-slate-100">Upload Media</label>
-            <label className="mb-2 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-indigo-300/40 p-3 hover:bg-white/10">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 backdrop-blur dark:border-white/10 dark:bg-slate-900/70">
+            <label className="mb-2 block font-semibold text-slate-900 dark:text-slate-100">Upload Media</label>
+            <label className="mb-2 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-indigo-300/40 p-3 hover:bg-slate-50 dark:hover:bg-white/10">
               <Upload size={18} className="text-indigo-300" />
               <span className="text-sm text-indigo-200">Click to upload or drag files</span>
               <input
@@ -426,7 +426,7 @@ export default function CustomPost() {
                 className="hidden"
               />
             </label>
-            <p className="text-xs text-slate-400">Images ≤8MB | Videos ≤500MB | Max 10 items</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Images ≤8MB | Videos ≤500MB | Max 10 items</p>
 
             {/* Media Grid */}
             {mediaItems.length > 0 && (
@@ -437,7 +437,7 @@ export default function CustomPost() {
                       <img src={item.preview} alt={item.name} className="w-full h-20 object-cover rounded-lg" />
                     ) : (
                       <div className="flex h-20 w-full items-center justify-center rounded-lg bg-slate-800">
-                        <span className="text-xs text-slate-300">🎥 Video</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-300">🎥 Video</span>
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex gap-1 justify-center items-center opacity-0 group-hover:opacity-100 transition">
@@ -488,20 +488,20 @@ export default function CustomPost() {
 
           {/* Schedule */}
           <div>
-            <label className="mb-2 block font-semibold text-slate-200">Schedule (Optional)</label>
+            <label className="mb-2 block font-semibold text-slate-700 dark:text-slate-200">Schedule (Optional)</label>
             <input
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 p-2 text-slate-100 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+              className="w-full rounded-xl border border-slate-200 bg-white p-2 text-slate-900 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:focus:bg-white/10"
             />
           </div>
 
           {/* Platforms */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-3 backdrop-blur">
-            <label className="mb-2 block text-sm font-semibold text-slate-100">Platforms to Post</label>
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 backdrop-blur dark:border-white/10 dark:bg-slate-900/70">
+            <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Platforms to Post</label>
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-slate-200">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("facebook")}
@@ -510,7 +510,7 @@ export default function CustomPost() {
                 />
                 Facebook {!connectedAccounts.facebook?.connected && <span className="text-xs text-red-400">(not connected)</span>}
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-200">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("instagram")}
@@ -519,7 +519,7 @@ export default function CustomPost() {
                 />
                 Instagram {!connectedAccounts.instagram?.connected && <span className="text-xs text-red-400">(not connected)</span>}
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-200">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("linkedin-personal")}
@@ -528,7 +528,7 @@ export default function CustomPost() {
                 />
                 LinkedIn Personal {!connectedAccounts.linkedin_personal?.connected && <span className="text-xs text-red-400">(not connected)</span>}
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-200">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("linkedin-company")}

@@ -25,18 +25,18 @@ export default function AutoReplySettingsPanel({
   const showDMSettings = Boolean(onToggleDM || onUpdateDMReplyMode || onUpdateDMTone || onUpdateDMDelay);
 
   return (
-    <div className="mb-6 rounded-2xl border border-white/10 bg-slate-900/75 p-6 backdrop-blur">
+    <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-none">
       <div className="flex items-center gap-2 mb-4">
         <Icon size={24} className={colors.text} />
-        <h3 className="text-lg font-semibold text-slate-100">Auto-Reply Settings</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Auto-Reply Settings</h3>
       </div>
 
       <div className="space-y-4">
         {/* Enable/Disable Toggle */}
         <div className="flex items-center justify-between">
           <div>
-            <label className="text-sm font-medium text-slate-200">Enable Auto-Reply</label>
-            <p className="mt-1 text-xs text-slate-400">Automatically reply to comments using AI</p>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Enable Auto-Reply</label>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Automatically reply to comments using AI</p>
           </div>
           <button
             onClick={() => onToggle(!settings.auto_reply_enabled)}
@@ -55,12 +55,12 @@ export default function AutoReplySettingsPanel({
 
         {onUpdateReplyMode && (
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-200">Reply Mode</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Reply Mode</label>
             <select
               value={settings.reply_mode || "ai"}
               onChange={(e) => onUpdateReplyMode(e.target.value)}
               disabled={isLoading}
-              className="w-full rounded-lg border border-white/10 bg-white/5 p-2 text-sm text-slate-100 md:w-64"
+              className="w-full rounded-lg border border-slate-200 bg-white p-2 text-sm text-slate-900 md:w-64 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
             >
               <option value="ai">AI</option>
               <option value="template">Template</option>
@@ -70,12 +70,12 @@ export default function AutoReplySettingsPanel({
 
         {/* Reply Tone Selector */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-200">Reply Tone</label>
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Reply Tone</label>
           <select
             value={settings.reply_tone}
             onChange={(e) => onUpdateTone(e.target.value)}
             disabled={isLoading}
-            className="w-full rounded-lg border border-white/10 bg-white/5 p-2 text-sm text-slate-100 md:w-64"
+            className="w-full rounded-lg border border-slate-200 bg-white p-2 text-sm text-slate-900 md:w-64 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
           >
             <option value="professional">Professional</option>
             <option value="friendly">Friendly</option>
@@ -85,7 +85,7 @@ export default function AutoReplySettingsPanel({
 
         {/* Reply Delay Slider */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-200">
+          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
             Reply Delay: {settings.reply_delay_minutes} minutes
           </label>
           <input
@@ -97,17 +97,17 @@ export default function AutoReplySettingsPanel({
             disabled={isLoading}
             className="w-full md:w-96"
           />
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             How long to wait before replying to new comments (0-30 minutes)
           </p>
         </div>
 
         {showDMSettings && (
-          <div className="border-t pt-4 mt-2 space-y-4">
+          <div className="border-t border-slate-200 pt-4 mt-2 space-y-4 dark:border-white/10">
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-sm font-medium text-slate-200">Enable DM Auto-Reply</label>
-                <p className="mt-1 text-xs text-slate-400">Automatically reply to direct messages</p>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Enable DM Auto-Reply</label>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Automatically reply to direct messages</p>
               </div>
               <button
                 onClick={() => onToggleDM(!settings.dm_enabled)}
@@ -126,12 +126,12 @@ export default function AutoReplySettingsPanel({
 
             {onUpdateDMReplyMode && (
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-200">DM Reply Mode</label>
+                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">DM Reply Mode</label>
                 <select
                   value={settings.dm_reply_mode || "ai"}
                   onChange={(e) => onUpdateDMReplyMode(e.target.value)}
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 p-2 text-sm text-slate-100 md:w-64"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-sm text-slate-900 md:w-64 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                 >
                   <option value="ai">AI</option>
                   <option value="template">Template</option>
@@ -141,12 +141,12 @@ export default function AutoReplySettingsPanel({
 
             {onUpdateDMTone && (
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-200">DM Reply Tone</label>
+                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">DM Reply Tone</label>
                 <select
                   value={settings.dm_reply_tone || "professional"}
                   onChange={(e) => onUpdateDMTone(e.target.value)}
                   disabled={isLoading}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 p-2 text-sm text-slate-100 md:w-64"
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2 text-sm text-slate-900 md:w-64 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                 >
                   <option value="professional">Professional</option>
                   <option value="friendly">Friendly</option>
@@ -157,7 +157,7 @@ export default function AutoReplySettingsPanel({
 
             {onUpdateDMDelay && (
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-200">
+                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
                   DM Reply Delay: {settings.dm_reply_delay_minutes ?? 0} minutes
                 </label>
                 <input
@@ -169,7 +169,7 @@ export default function AutoReplySettingsPanel({
                   disabled={isLoading}
                   className="w-full md:w-96"
                 />
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   How long to wait before replying to new direct messages (0-30 minutes)
                 </p>
               </div>

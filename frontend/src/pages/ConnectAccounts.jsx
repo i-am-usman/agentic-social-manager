@@ -214,7 +214,11 @@ export default function ConnectAccounts() {
     return (
       <p
         className={`mt-2 text-xs ${
-          msg.type === "error" ? "text-red-600" : msg.type === "success" ? "text-green-600" : "text-gray-500"
+          msg.type === "error"
+            ? "text-rose-600 dark:text-rose-300"
+            : msg.type === "success"
+              ? "text-emerald-600 dark:text-emerald-300"
+              : "text-slate-500 dark:text-slate-400"
         }`}
       >
         {msg.message}
@@ -223,35 +227,35 @@ export default function ConnectAccounts() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent p-4 text-slate-100 sm:p-6">
+    <div className="min-h-screen bg-slate-50 p-4 text-slate-900 sm:p-6 dark:bg-transparent dark:text-slate-100">
       <div className="max-w-5xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Connect Social Accounts</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Connect Social Accounts</h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Connect your social media accounts for seamless publishing and analytics.
           </p>
-          {pageError && <p className="mt-2 text-sm text-rose-300">{pageError}</p>}
+          {pageError && <p className="mt-2 text-sm text-rose-600 dark:text-rose-300">{pageError}</p>}
         </div>
 
         {/* Facebook & Instagram Row */}
         <div className="grid md:grid-cols-2 gap-6">
           {/* Facebook Card */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
             <div className="flex items-center gap-2 mb-2">
               <Facebook size={20} className="text-blue-600" />
-              <h2 className="text-xl font-semibold text-white">Facebook Page</h2>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Facebook Page</h2>
             </div>
-            <p className="mb-4 text-xs text-slate-400">Page ID and Access Token required.</p>
+            <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Page ID and Access Token required.</p>
 
             <div className="space-y-3">
               <input
-                className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                 placeholder="Facebook Page ID"
                 value={fbForm.pageId}
                 onChange={(e) => setFbForm((prev) => ({ ...prev, pageId: e.target.value }))}
               />
               <input
-                className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                 placeholder="Facebook Page Access Token"
                 type="password"
                 value={fbForm.accessToken}
@@ -275,7 +279,7 @@ export default function ConnectAccounts() {
               )}
             </div>
 
-            <div className="mt-3 text-xs text-slate-400">
+            <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
               {accounts.facebook.connected ? `ID: ${accounts.facebook.page_id}` : "Not connected"}
             </div>
 
@@ -283,22 +287,22 @@ export default function ConnectAccounts() {
           </div>
 
           {/* Instagram Card */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
             <div className="flex items-center gap-2 mb-2">
               <Instagram size={20} className="text-pink-600" />
-              <h2 className="text-xl font-semibold text-white">Instagram</h2>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Instagram</h2>
             </div>
-            <p className="mb-4 text-xs text-slate-400">User ID and Access Token required.</p>
+            <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">User ID and Access Token required.</p>
 
             <div className="space-y-3">
               <input
-                className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                 placeholder="Instagram User ID"
                 value={igForm.igUserId}
                 onChange={(e) => setIgForm((prev) => ({ ...prev, igUserId: e.target.value }))}
               />
               <input
-                className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                 placeholder="Instagram Access Token"
                 type="password"
                 value={igForm.accessToken}
@@ -322,7 +326,7 @@ export default function ConnectAccounts() {
               )}
             </div>
 
-            <div className="mt-3 text-xs text-slate-400">
+            <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
               {accounts.instagram.connected ? `ID: ${accounts.instagram.ig_user_id}` : "Not connected"}
             </div>
 
@@ -332,29 +336,29 @@ export default function ConnectAccounts() {
 
         {/* LinkedIn Section */}
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-white">LinkedIn Accounts</h2>
-          <p className="mb-6 text-sm text-slate-400">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">LinkedIn Accounts</h2>
+          <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">
             Manage your personal profile and company page separately.
           </p>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* LinkedIn Personal Profile Card */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
               <div className="flex items-center gap-2 mb-2">
                 <Linkedin size={20} className="text-blue-700" />
-                <h3 className="text-lg font-semibold text-white">Personal Profile</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Personal Profile</h3>
               </div>
-              <p className="mb-4 text-xs text-slate-400">Post to your personal LinkedIn profile.</p>
+              <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Post to your personal LinkedIn profile.</p>
 
               <div className="space-y-3">
                 <input
-                  className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                   placeholder="LinkedIn User ID"
                   value={liPersonalForm.linkedinUserId}
                   onChange={(e) => setLiPersonalForm((prev) => ({ ...prev, linkedinUserId: e.target.value }))}
                 />
                 <input
-                  className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                   placeholder="LinkedIn Access Token"
                   type="password"
                   value={liPersonalForm.accessToken}
@@ -383,7 +387,7 @@ export default function ConnectAccounts() {
                 )}
               </div>
 
-              <div className="mt-3 text-xs text-slate-400">
+              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                 {accounts.linkedin_personal.connected
                   ? `${accounts.linkedin_personal.linkedin_user_id}`
                   : "Not connected"}
@@ -393,29 +397,29 @@ export default function ConnectAccounts() {
             </div>
 
             {/* LinkedIn Company Page Card */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
               <div className="flex items-center gap-2 mb-2">
                 <Linkedin size={20} className="text-blue-700" />
-                <h3 className="text-lg font-semibold text-white">Company Page</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Company Page</h3>
               </div>
-              <p className="mb-4 text-xs text-slate-400">Post to your company's LinkedIn page.</p>
+              <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Post to your company's LinkedIn page.</p>
 
               <div className="space-y-3">
                 <input
-                  className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                   placeholder="LinkedIn User ID (page admin)"
                   value={liCompanyForm.linkedinUserId}
                   onChange={(e) => setLiCompanyForm((prev) => ({ ...prev, linkedinUserId: e.target.value }))}
                 />
                 <input
-                  className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                   placeholder="LinkedIn Access Token"
                   type="password"
                   value={liCompanyForm.accessToken}
                   onChange={(e) => setLiCompanyForm((prev) => ({ ...prev, accessToken: e.target.value }))}
                 />
                 <input
-                  className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
+                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                   placeholder="Organization ID (required)"
                   value={liCompanyForm.organizationId}
                   onChange={(e) => setLiCompanyForm((prev) => ({ ...prev, organizationId: e.target.value }))}
@@ -443,7 +447,7 @@ export default function ConnectAccounts() {
                 )}
               </div>
 
-              <div className="mt-3 text-xs text-slate-400">
+              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                 {accounts.linkedin_company.connected
                   ? `Org: ${accounts.linkedin_company.organization_id}`
                   : "Not connected"}
