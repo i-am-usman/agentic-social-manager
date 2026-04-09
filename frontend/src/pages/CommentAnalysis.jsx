@@ -39,9 +39,9 @@ function PieSummaryCard({ title, data, total, emptyLabel }) {
 
   if (!total) {
     return (
-      <div className="rounded-lg border bg-white p-4">
-        <h3 className="text-sm font-semibold text-gray-800 mb-2">{title}</h3>
-        <p className="text-xs text-gray-500">{emptyLabel}</p>
+      <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-4">
+        <h3 className="mb-2 text-sm font-semibold text-slate-100">{title}</h3>
+        <p className="text-xs text-slate-400">{emptyLabel}</p>
       </div>
     );
   }
@@ -80,16 +80,16 @@ function PieSummaryCard({ title, data, total, emptyLabel }) {
   });
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.45)] backdrop-blur">
-      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-cyan-100/70 blur-2xl" />
-      <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-fuchsia-100/70 blur-2xl" />
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_45px_-24px_rgba(2,6,23,0.8)] backdrop-blur">
+      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-cyan-400/10 blur-2xl" />
+      <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-fuchsia-400/10 blur-2xl" />
       <div className="relative">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{title}</h3>
             <p className="text-xs text-slate-400 mt-1">Summary for the selected post</p>
           </div>
-          <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">100%</span>
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-300 shadow-sm">100%</span>
         </div>
 
         <div className="flex justify-center">
@@ -101,12 +101,12 @@ function PieSummaryCard({ title, data, total, emptyLabel }) {
                     key={slice.id}
                     d={slice.d}
                     fill={slice.color}
-                    stroke="#ffffff"
+                    stroke="rgba(15,23,42,0.55)"
                     strokeWidth="2"
                     className="transition-transform duration-300 hover:scale-[1.03] origin-center"
                   />
                 ))}
-                <circle cx={center} cy={center} r="30" fill="#ffffff" />
+                <circle cx={center} cy={center} r="30" fill="rgba(2,6,23,0.92)" />
               </g>
 
               <g transform="translate(72,36)">
@@ -127,11 +127,11 @@ function PieSummaryCard({ title, data, total, emptyLabel }) {
                       height="38"
                     >
                       <div
-                        className="rounded-xl border-2 bg-white px-2 py-1 text-right shadow-sm"
+                        className="rounded-xl border-2 bg-slate-950/95 px-2 py-1 text-right shadow-sm"
                         style={{ borderColor: slice.color }}
                       >
                         <p className="text-[9px] uppercase tracking-[0.16em] text-slate-400">{slice.name}</p>
-                        <p className="text-lg font-black leading-4 text-slate-900">{slice.percentage}%</p>
+                        <p className="text-lg font-black leading-4 text-slate-100">{slice.percentage}%</p>
                       </div>
                     </foreignObject>
                   </g>
@@ -143,10 +143,10 @@ function PieSummaryCard({ title, data, total, emptyLabel }) {
 
         <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
           {slices.map((slice) => (
-            <div key={`${slice.id}_legend`} className="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-1.5">
+            <div key={`${slice.id}_legend`} className="flex items-center gap-2 rounded-lg bg-white/5 px-2 py-1.5">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: slice.color }} />
-              <span className="capitalize text-slate-600">{slice.name}</span>
-              <span className="ml-auto font-semibold text-slate-500">{formatPercent(slice.value, total)}</span>
+              <span className="capitalize text-slate-300">{slice.name}</span>
+              <span className="ml-auto font-semibold text-slate-400">{formatPercent(slice.value, total)}</span>
             </div>
           ))}
         </div>
@@ -250,9 +250,9 @@ export default function CommentAnalysis() {
   };
 
   const sentimentStyle = (sentiment) => {
-    if (sentiment === "positive") return "bg-green-50 border-green-200 text-green-700";
-    if (sentiment === "negative") return "bg-red-50 border-red-200 text-red-700";
-    return "bg-gray-50 border-gray-200 text-gray-700";
+    if (sentiment === "positive") return "bg-emerald-500/10 border-emerald-400/20 text-emerald-100";
+    if (sentiment === "negative") return "bg-rose-500/10 border-rose-400/20 text-rose-100";
+    return "bg-slate-500/10 border-slate-400/20 text-slate-200";
   };
 
   const commentSummary = useMemo(() => {
@@ -315,26 +315,26 @@ export default function CommentAnalysis() {
   }, [posts, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8fbff,_#eef3ff_40%,_#f5f7fb_72%,_#eef2ff)]">
+    <div className="min-h-screen bg-transparent">
       <div className="mx-auto max-w-7xl p-6">
         <div className="mb-5">
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Comment Analysis</h1>
-          <p className="mt-1 text-sm text-slate-500">Select a post first, then inspect the sliding detail panel, chart summary, and comments below.</p>
+          <h1 className="text-3xl font-black tracking-tight text-white">Comment Analysis</h1>
+          <p className="mt-1 text-sm text-slate-400">Select a post first, then inspect the sliding detail panel, chart summary, and comments below.</p>
         </div>
 
-        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur">
+        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/75 p-4 shadow-sm backdrop-blur">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Post selector</p>
               <p className="text-sm text-slate-600">Choose Facebook or Instagram content from the strip below.</p>
             </div>
-            <div className="flex gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
+            <div className="flex gap-2 rounded-full border border-white/10 bg-white/5 p-1">
               {["all", "facebook", "instagram"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setFilter(tab)}
                   className={`rounded-full px-4 py-2 text-sm capitalize transition ${
-                    filter === tab ? "bg-slate-900 text-white shadow" : "text-slate-600 hover:bg-white"
+                    filter === tab ? "bg-slate-900 text-white shadow" : "text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   {tab}
@@ -352,7 +352,7 @@ export default function CommentAnalysis() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Try: #launch, eid campaign, discount..."
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-indigo-400/40"
             />
           </div>
 
@@ -373,15 +373,15 @@ export default function CommentAnalysis() {
                     className={`group min-w-[250px] rounded-2xl border p-3 text-left transition-all duration-300 ${
                       isSelected
                         ? "border-slate-900 bg-slate-900 text-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.9)]"
-                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:shadow-md"
+                        : "border-white/10 bg-slate-900/70 hover:-translate-y-0.5 hover:shadow-md"
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl border ${isSelected ? "border-white/30" : "border-slate-200"}`}>
+                      <div className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl border ${isSelected ? "border-white/30" : "border-white/10"}`}>
                         {post.image ? (
                           <img src={post.image} alt="Post preview" className="h-full w-full object-cover" />
                         ) : (
-                          <div className={`flex h-full items-center justify-center text-[10px] font-semibold ${isSelected ? "bg-white/10 text-white/70" : "bg-slate-100 text-slate-400"}`}>
+                          <div className={`flex h-full items-center justify-center text-[10px] font-semibold ${isSelected ? "bg-white/10 text-white/70" : "bg-slate-800/70 text-slate-300"}`}>
                             No Image
                           </div>
                         )}
@@ -389,14 +389,14 @@ export default function CommentAnalysis() {
 
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex items-center justify-between gap-2">
-                          <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${isSelected ? "bg-white/10 text-white/80" : "bg-slate-100 text-slate-500"}`}>
+                          <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${isSelected ? "bg-white/10 text-white/80" : "bg-slate-800/70 text-slate-300"}`}>
                             {post.platform}
                           </span>
                           <span className={`text-[11px] ${isSelected ? "text-white/70" : "text-slate-400"}`}>
                             {formatDate(post.created_time)}
                           </span>
                         </div>
-                        <p className={`line-clamp-2 text-sm ${isSelected ? "text-white" : "text-slate-700"}`}>
+                        <p className={`line-clamp-2 text-sm ${isSelected ? "text-white" : "text-slate-200"}`}>
                           {post.message || post.caption || "No caption"}
                         </p>
                       </div>
@@ -409,14 +409,14 @@ export default function CommentAnalysis() {
         </div>
 
         <div
-          className={`mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/85 shadow-sm backdrop-blur transition-all duration-500 ${
+          className={`mb-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/75 shadow-sm backdrop-blur transition-all duration-500 ${
             selectedPost ? "max-h-[260px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
           <div className="p-4 md:p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-4">
-                <div className="h-20 w-20 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
+                <div className="h-20 w-20 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-sm">
                   {selectedPost?.image ? (
                     <img src={selectedPost.image} alt="Selected post preview" className="h-full w-full object-cover" />
                   ) : (
@@ -425,12 +425,12 @@ export default function CommentAnalysis() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Selected post</p>
-                  <h2 className="mt-1 text-xl font-bold text-slate-900">{selectedPost?.platform === "facebook" ? "Facebook" : "Instagram"}</h2>
-                  <p className="mt-2 max-w-2xl text-sm text-slate-600">{selectedPost?.message || selectedPost?.caption || "No caption"}</p>
+                  <h2 className="mt-1 text-xl font-bold text-slate-100">{selectedPost?.platform === "facebook" ? "Facebook" : "Instagram"}</h2>
+                  <p className="mt-2 max-w-2xl text-sm text-slate-300">{selectedPost?.message || selectedPost?.caption || "No caption"}</p>
                 </div>
               </div>
 
-              <label className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700">
+              <label className="inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
@@ -450,7 +450,7 @@ export default function CommentAnalysis() {
         </div>
 
       {error && (
-        <div className="mb-4 p-3 border border-yellow-200 bg-yellow-50 rounded-lg text-sm text-yellow-800">
+        <div className="mb-4 rounded-lg border border-amber-400/20 bg-amber-500/10 p-3 text-sm text-amber-100">
           {error}
         </div>
       )}
@@ -474,10 +474,10 @@ export default function CommentAnalysis() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-4 shadow-sm backdrop-blur">
           <div className="flex items-center gap-2 mb-3">
             <MessageCircle size={18} className="text-indigo-600" />
-            <h2 className="text-lg font-semibold text-slate-800">Comments with Analysis</h2>
+            <h2 className="text-lg font-semibold text-slate-100">Comments with Analysis</h2>
           </div>
 
           {!selectedPost ? (
@@ -485,20 +485,20 @@ export default function CommentAnalysis() {
           ) : loadingComments ? (
             <div className="flex items-center justify-center py-8 gap-2">
               <Loader2 className="animate-spin text-indigo-600" size={26} />
-              <span className="text-sm text-slate-600">Analyzing comments...</span>
+              <span className="text-sm text-slate-300">Analyzing comments...</span>
             </div>
           ) : comments.length === 0 ? (
             <p className="text-sm text-slate-500">No comments found for this post.</p>
           ) : (
             <div className="space-y-3 max-h-[56vh] overflow-y-auto pr-1">
               {comments.map((comment) => (
-                <div key={comment.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div key={comment.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-slate-800">{comment.author}</p>
-                    <p className="text-xs text-slate-500">{formatDate(comment.created_time)}</p>
+                    <p className="text-sm font-semibold text-slate-100">{comment.author}</p>
+                    <p className="text-xs text-slate-400">{formatDate(comment.created_time)}</p>
                   </div>
 
-                  <p className="mb-3 text-sm text-slate-700">{comment.message}</p>
+                  <p className="mb-3 text-sm text-slate-200">{comment.message}</p>
 
                   {comment.analysis ? (
                     <div className={`rounded-2xl border p-3 ${sentimentStyle(comment.analysis.sentiment)}`}>

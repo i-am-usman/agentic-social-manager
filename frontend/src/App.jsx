@@ -12,8 +12,23 @@ import ConnectAccounts from "./pages/ConnectAccounts";
 import CommentAnalysis from "./pages/CommentAnalysis";
 import Navbar from "./components/Navbar";
 
+function PublicRoute({ isAuthenticated, children }) {
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+}
+
+function ProtectedRoute({ isAuthenticated, children }) {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // ✅ Check token on app load
   useEffect(() => {
@@ -21,6 +36,7 @@ export default function App() {
     if (token) {
       setIsAuthenticated(true);
     }
+    setAuthChecked(true);
   }, []);
 
   // ✅ Logout handler
@@ -31,35 +47,102 @@ export default function App() {
 
   return (
     <Router>
-      {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} onLogout={handleLogout} />}
-
-      <Routes>
-        {/* Guest Routes */}
-        {!isAuthenticated && (
+      <div className="min-h-screen bg-transparent text-slate-100">
+        {!authChecked ? (
+          <div className="flex min-h-screen items-center justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-400" />
+          </div>
+        ) : (
           <>
-            <Route
-              path="/login"
-              element={<Login setIsAuthenticated={setIsAuthenticated} />}
-            />
-            <Route path="/register" element={<Register />} />
-            <Route path="*" element={<Navigate to="/login" />} />
+            {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} onLogout={handleLogout} />}
+
+            <Routes>
+              <Route
+                path="/login"
+                element={(
+                  <PublicRoute isAuthenticated={isAuthenticated}>
+                    <Login setIsAuthenticated={setIsAuthenticated} />
+                  </PublicRoute>
+                )}
+              />
+              <Route
+                path="/register"
+                element={(
+                  <PublicRoute isAuthenticated={isAuthenticated}>
+                    <Register />
+                  </PublicRoute>
+                )}
+              />
+
+              <Route
+                path="/dashboard"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/generate"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Generate />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/custom-post"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <CustomPost />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/profile"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Profile />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/analytics"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Analytics />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/comment-analysis"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <CommentAnalysis />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/accounts"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <ConnectAccounts />
+                  </ProtectedRoute>
+                )}
+              />
+
+              <Route
+                path="/"
+                element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+              />
+              <Route
+                path="*"
+                element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+              />
+            </Routes>
           </>
         )}
-
-        {/* Authenticated Routes */}
-        {isAuthenticated && (
-          <>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/generate" element={<Generate />} />
-            <Route path="/custom-post" element={<CustomPost />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/comment-analysis" element={<CommentAnalysis />} />
-            <Route path="/accounts" element={<ConnectAccounts />} />
-            <Route path="*" element={<Navigate to="/dashboard" />} />
-          </>
-        )}
-      </Routes>
+      </div>
     </Router>
   );
 }

@@ -9,10 +9,10 @@ export default function SplitBarChart({ title, rows, gradientStart = "#8b5cf6", 
   }));
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-lg font-bold tracking-tight text-slate-800">{title}</h3>
+    <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+      <h3 className="mb-4 text-lg font-bold tracking-tight text-white">{title}</h3>
       {data.length === 0 ? (
-        <p className="text-sm text-slate-500">No split data available.</p>
+        <p className="text-sm text-slate-400">No split data available.</p>
       ) : (
         <>
           <div className="h-44 w-full">
@@ -24,11 +24,17 @@ export default function SplitBarChart({ title, rows, gradientStart = "#8b5cf6", 
                     <stop offset="100%" stopColor={gradientEnd} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="label" tick={{ fontSize: 12, fill: "#475569" }} width={72} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.18)" />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="label" tick={{ fontSize: 12, fill: "#cbd5e1" }} width={72} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)" }}
+                  contentStyle={{
+                    borderRadius: 12,
+                    borderColor: "rgba(148, 163, 184, 0.18)",
+                    background: "rgba(15, 23, 42, 0.96)",
+                    color: "#e2e8f0",
+                    boxShadow: "0 10px 30px rgba(2, 6, 23, 0.35)",
+                  }}
                   formatter={(value) => [value, "Count"]}
                 />
                 <Bar dataKey="value" fill={`url(#${gradientId})`} radius={[0, 10, 10, 0]} />
@@ -37,7 +43,7 @@ export default function SplitBarChart({ title, rows, gradientStart = "#8b5cf6", 
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
             {data.map((item) => (
-              <div key={item.label} className="rounded-xl border border-slate-100 bg-slate-50 px-2 py-1.5 text-center text-slate-700">
+              <div key={item.label} className="rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-center text-slate-300">
                 <span className="font-semibold">{item.label}: </span>
                 {item.value}
               </div>

@@ -370,53 +370,53 @@ export default function CustomPost() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">📝 Create Custom Post</h1>
+    <div className="max-w-4xl mx-auto p-6 text-slate-100">
+      <h1 className="mb-8 text-3xl font-bold text-slate-100">📝 Create Custom Post</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* LEFT: Content Editor */}
         <div className="md:col-span-2 space-y-6">
           {/* Title */}
           <div>
-            <label className="block font-semibold text-gray-800 mb-2">Post Title</label>
+            <label className="mb-2 block font-semibold text-slate-200">Post Title</label>
             <input
               type="text"
               placeholder="Enter post title (e.g., 'My Amazing Trip')"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-3 border rounded-lg"
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
             />
           </div>
 
           {/* Content */}
           <div>
-            <label className="block font-semibold text-gray-800 mb-2">Content/Caption</label>
+            <label className="mb-2 block font-semibold text-slate-200">Content/Caption</label>
             <textarea
               placeholder="Write your post content here... You can include emojis and multiple paragraphs!"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full p-3 border rounded-lg h-32"
+              className="h-32 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
             />
           </div>
 
           {/* Hashtags */}
           <div>
-            <label className="block font-semibold text-gray-800 mb-2">Hashtags</label>
+            <label className="mb-2 block font-semibold text-slate-200">Hashtags</label>
             <input
               type="text"
               placeholder="Enter hashtags separated by spaces (#travel #photography #adventure)"
               value={hashtags}
               onChange={(e) => setHashtags(e.target.value)}
-              className="w-full p-3 border rounded-lg"
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
             />
           </div>
 
           {/* Media Upload */}
-          <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <label className="block font-semibold text-gray-800 mb-2">Upload Media</label>
-            <label className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-indigo-300 rounded-lg cursor-pointer hover:bg-indigo-100 mb-2">
-              <Upload size={18} className="text-indigo-600" />
-              <span className="text-sm text-indigo-600">Click to upload or drag files</span>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 backdrop-blur">
+            <label className="mb-2 block font-semibold text-slate-100">Upload Media</label>
+            <label className="mb-2 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-indigo-300/40 p-3 hover:bg-white/10">
+              <Upload size={18} className="text-indigo-300" />
+              <span className="text-sm text-indigo-200">Click to upload or drag files</span>
               <input
                 type="file"
                 accept="image/*,video/*"
@@ -426,7 +426,7 @@ export default function CustomPost() {
                 className="hidden"
               />
             </label>
-            <p className="text-xs text-gray-600">Images ≤8MB | Videos ≤500MB | Max 10 items</p>
+            <p className="text-xs text-slate-400">Images ≤8MB | Videos ≤500MB | Max 10 items</p>
 
             {/* Media Grid */}
             {mediaItems.length > 0 && (
@@ -436,20 +436,20 @@ export default function CustomPost() {
                     {item.type === "image" ? (
                       <img src={item.preview} alt={item.name} className="w-full h-20 object-cover rounded-lg" />
                     ) : (
-                      <div className="w-full h-20 bg-gray-300 rounded-lg flex items-center justify-center">
-                        <span className="text-xs text-gray-700">🎥 Video</span>
+                      <div className="flex h-20 w-full items-center justify-center rounded-lg bg-slate-800">
+                        <span className="text-xs text-slate-300">🎥 Video</span>
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex gap-1 justify-center items-center opacity-0 group-hover:opacity-100 transition">
                       <button
                         onClick={() => moveMediaItem(item.id, "up")}
-                        className="bg-gray-500 text-white p-1 rounded text-xs"
+                        className="rounded bg-slate-600 p-1 text-xs text-white hover:bg-slate-500"
                       >
                         ↑
                       </button>
                       <button
                         onClick={() => moveMediaItem(item.id, "down")}
-                        className="bg-gray-500 text-white p-1 rounded text-xs"
+                        className="rounded bg-slate-600 p-1 text-xs text-white hover:bg-slate-500"
                       >
                         ↓
                       </button>
@@ -467,7 +467,7 @@ export default function CustomPost() {
                 ))}
               </div>
             )}
-            {uploadingMedia && <p className="text-sm text-indigo-600 mt-2 animate-pulse">Uploading...</p>}
+            {uploadingMedia && <p className="mt-2 text-sm text-indigo-300 animate-pulse">Uploading...</p>}
             
             {/* Instagram Carousel Warning */}
             {selectedPlatforms.includes("instagram") && mediaItems.length > 1 && (
@@ -488,54 +488,54 @@ export default function CustomPost() {
 
           {/* Schedule */}
           <div>
-            <label className="block font-semibold text-gray-800 mb-2">Schedule (Optional)</label>
+            <label className="mb-2 block font-semibold text-slate-200">Schedule (Optional)</label>
             <input
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-2 text-slate-100 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
             />
           </div>
 
           {/* Platforms */}
-          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <label className="block font-semibold text-gray-800 mb-2 text-sm">Platforms to Post</label>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-3 backdrop-blur">
+            <label className="mb-2 block text-sm font-semibold text-slate-100">Platforms to Post</label>
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-slate-200">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("facebook")}
                   disabled={!connectedAccounts.facebook?.connected}
                   onChange={() => togglePlatform("facebook")}
                 />
-                Facebook {!connectedAccounts.facebook?.connected && <span className="text-xs text-red-600">(not connected)</span>}
+                Facebook {!connectedAccounts.facebook?.connected && <span className="text-xs text-red-400">(not connected)</span>}
               </label>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-slate-200">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("instagram")}
                   disabled={!connectedAccounts.instagram?.connected}
                   onChange={() => togglePlatform("instagram")}
                 />
-                Instagram {!connectedAccounts.instagram?.connected && <span className="text-xs text-red-600">(not connected)</span>}
+                Instagram {!connectedAccounts.instagram?.connected && <span className="text-xs text-red-400">(not connected)</span>}
               </label>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-slate-200">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("linkedin-personal")}
                   disabled={!connectedAccounts.linkedin_personal?.connected}
                   onChange={() => togglePlatform("linkedin-personal")}
                 />
-                LinkedIn Personal {!connectedAccounts.linkedin_personal?.connected && <span className="text-xs text-red-600">(not connected)</span>}
+                LinkedIn Personal {!connectedAccounts.linkedin_personal?.connected && <span className="text-xs text-red-400">(not connected)</span>}
               </label>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-slate-200">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("linkedin-company")}
                   disabled={!connectedAccounts.linkedin_company?.connected}
                   onChange={() => togglePlatform("linkedin-company")}
                 />
-                LinkedIn Company {!connectedAccounts.linkedin_company?.connected && <span className="text-xs text-red-600">(not connected)</span>}
+                LinkedIn Company {!connectedAccounts.linkedin_company?.connected && <span className="text-xs text-red-400">(not connected)</span>}
               </label>
             </div>
           </div>

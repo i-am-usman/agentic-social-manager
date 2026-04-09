@@ -71,7 +71,7 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [jobId]);
+  }, [jobId, onComplete]);
 
   if (!jobId) return null;
 
@@ -119,11 +119,11 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="mx-4 w-full max-w-md rounded-2xl border border-white/10 bg-slate-950/95 p-6 text-slate-100 shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
         <div className="flex flex-col items-center mb-6">
           {getStatusIcon()}
-          <h2 className="text-2xl font-bold mt-4 text-gray-800">
+          <h2 className="mt-4 text-2xl font-bold text-white">
             {getEffectiveStatus() === 'failed' ? 'Publishing Failed' :
              getEffectiveStatus() === 'partial' ? 'Publishing completed with issues' :
              getEffectiveStatus() === 'completed' || getEffectiveStatus() === 'success' ? 'Published Successfully!' :
@@ -134,13 +134,13 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
         {/* Progress Bar */}
         {jobStatus && jobStatus.status !== 'completed' && jobStatus.status !== 'failed' && (
           <div className="mb-6">
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div className="h-3 w-full overflow-hidden rounded-full bg-slate-700">
               <div
                 className={`h-full ${getProgressColor()} transition-all duration-500 ease-out`}
                 style={{ width: `${jobStatus.progress || 0}%` }}
               />
             </div>
-            <p className="text-sm text-gray-600 mt-2 text-center">
+            <p className="mt-2 text-center text-sm text-slate-400">
               {jobStatus.progress || 0}%
             </p>
           </div>
@@ -148,7 +148,7 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
 
         {/* Status Message */}
         <div className="mb-6">
-          <p className="text-gray-700 text-center">
+          <p className="text-center text-slate-200">
             {jobStatus?.message || 'Initializing...'}
           </p>
         </div>
@@ -156,12 +156,12 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
         {/* Platform Status */}
         {jobStatus?.platforms && Object.keys(jobStatus.platforms).length > 0 && (
           <div className="mb-6 space-y-2">
-            <p className="text-sm font-semibold text-gray-600 mb-2">Platform Status:</p>
+            <p className="mb-2 text-sm font-semibold text-slate-300">Platform Status:</p>
             {Object.entries(jobStatus.platforms).map(([platform, status]) => (
-              <div key={platform} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="capitalize text-gray-700">{platform}</span>
+              <div key={platform} className="flex items-center justify-between rounded-lg bg-white/5 p-2">
+                <span className="capitalize text-slate-200">{platform}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 capitalize">{status}</span>
+                  <span className="text-sm capitalize text-slate-400">{status}</span>
                   {getPlatformStatus(platform)}
                 </div>
               </div>
@@ -179,9 +179,9 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
 
         {/* Result Details */}
         {jobStatus?.result && (
-          <div className="mb-4 p-3 bg-gray-50 rounded">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Result:</p>
-            <p className="text-sm text-gray-600">
+          <div className="mb-4 rounded-lg bg-white/5 p-3">
+            <p className="mb-2 text-sm font-semibold text-slate-200">Result:</p>
+            <p className="text-sm text-slate-300">
               {jobStatus.result.message || 
                (jobStatus.result.status === 'success' ? 'Published successfully to all platforms!' :
                 jobStatus.result.status === 'partial' ? `Published to some platforms. ${jobStatus.result.failed_platforms?.join(', ')} failed.` :
@@ -202,7 +202,7 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
         {(jobStatus?.status === 'completed' || jobStatus?.status === 'failed') && (
           <button
             onClick={handleClose}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-500"
           >
             Close
           </button>

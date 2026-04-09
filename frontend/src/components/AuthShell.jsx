@@ -21,8 +21,9 @@ export default function AuthShell({
 }) {
   return (
     <div className="login-page relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.28),_transparent_32%),radial-gradient(circle_at_80%_20%,_rgba(147,51,234,0.18),_transparent_26%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(2,6,23,1))]" />
-      <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.26),_transparent_30%),radial-gradient(circle_at_82%_18%,_rgba(45,212,191,0.12),_transparent_24%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.16),_transparent_28%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(2,6,23,1))]" />
+      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:52px_52px]" />
+      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/5 to-transparent blur-3xl" />
 
       <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-10">
         <section className="flex flex-col justify-center gap-8">
@@ -48,7 +49,7 @@ export default function AuthShell({
               return (
                 <div
                   key={item.title}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl transition-transform duration-200 hover:-translate-y-1"
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:border-indigo-300/30 hover:bg-white/7"
                 >
                   <ItemIcon size={18} className="text-indigo-300" />
                   <p className="mt-3 text-sm font-semibold text-white">{item.title}</p>

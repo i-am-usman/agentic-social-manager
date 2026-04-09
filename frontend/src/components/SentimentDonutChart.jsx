@@ -21,10 +21,10 @@ export default function SentimentDonutChart({ sentiment }) {
   const total = positive + neutral + negative;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-lg font-bold tracking-tight text-slate-800">Audience Mood</h3>
+    <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+      <h3 className="mb-4 text-lg font-bold tracking-tight text-white">Audience Mood</h3>
       {total === 0 ? (
-        <p className="text-sm text-slate-500">No sentiment signals yet.</p>
+        <p className="text-sm text-slate-400">No sentiment signals yet.</p>
       ) : (
         <>
           <div className="h-48 w-full">
@@ -50,9 +50,9 @@ export default function SentimentDonutChart({ sentiment }) {
             {data.map((item) => {
               const pct = total ? Math.round((item.value / total) * 100) : 0;
               return (
-                <div key={item.name} className="rounded-xl border border-slate-100 bg-slate-50 px-2 py-2 text-center">
+                <div key={item.name} className="rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-center">
                   <p className="font-semibold" style={{ color: COLORS[item.key] }}>{item.name}</p>
-                  <p className="text-slate-700">{pct}%</p>
+                  <p className="text-slate-300">{pct}%</p>
                 </div>
               );
             })}

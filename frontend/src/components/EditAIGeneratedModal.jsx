@@ -38,12 +38,12 @@ export default function EditAIGeneratedModal({ isOpen, content, hashtags, onSave
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-950/95 text-slate-100">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-gray-800">Edit AI-Generated Content</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-slate-950/95 p-6">
+          <h2 className="text-xl font-bold text-white">Edit AI-Generated Content</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-white">
             <X size={24} />
           </button>
         </div>
@@ -52,19 +52,19 @@ export default function EditAIGeneratedModal({ isOpen, content, hashtags, onSave
         <div className="p-6 space-y-6">
           {/* Caption/Content */}
           <div>
-            <label className="block font-semibold text-gray-800 mb-2">Caption</label>
+            <label className="mb-2 block font-semibold text-slate-100">Caption</label>
             <textarea
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
               placeholder="Edit the AI-generated caption..."
-              className="w-full p-3 border rounded-lg h-40"
+              className="h-40 w-full rounded-lg border border-white/10 bg-white/5 p-3 text-slate-100"
             />
-            <p className="text-xs text-gray-500 mt-1">{editedContent.length} characters</p>
+            <p className="mt-1 text-xs text-slate-400">{editedContent.length} characters</p>
           </div>
 
           {/* Hashtags */}
           <div>
-            <label className="block font-semibold text-gray-800 mb-2">Hashtags</label>
+            <label className="mb-2 block font-semibold text-slate-100">Hashtags</label>
             
             {/* Add Hashtag */}
             <div className="flex gap-2 mb-3">
@@ -79,7 +79,7 @@ export default function EditAIGeneratedModal({ isOpen, content, hashtags, onSave
                     handleAddHashtag();
                   }
                 }}
-                className="flex-1 p-2 border rounded-lg text-sm"
+                className="flex-1 rounded-lg border border-white/10 bg-white/5 p-2 text-sm text-slate-100"
               />
               <button
                 onClick={handleAddHashtag}
@@ -95,12 +95,12 @@ export default function EditAIGeneratedModal({ isOpen, content, hashtags, onSave
                 {editedHashtags.map((tag, idx) => (
                   <div
                     key={idx}
-                    className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-full bg-indigo-500/15 px-3 py-1 text-sm text-indigo-200"
                   >
                     <span>{tag}</span>
                     <button
                       onClick={() => handleRemoveHashtag(tag)}
-                      className="text-indigo-600 hover:text-indigo-800"
+                      className="text-indigo-300 hover:text-indigo-100"
                     >
                       <X size={14} />
                     </button>
@@ -108,25 +108,25 @@ export default function EditAIGeneratedModal({ isOpen, content, hashtags, onSave
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm italic">No hashtags added yet</p>
+              <p className="text-sm italic text-slate-400">No hashtags added yet</p>
             )}
           </div>
 
           {/* Preview */}
-          <div className="bg-gray-50 p-4 rounded-lg border">
-            <h3 className="font-semibold text-gray-800 mb-2">Preview</h3>
-            <p className="text-gray-700 text-sm whitespace-pre-wrap">{editedContent}</p>
+          <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+            <h3 className="mb-2 font-semibold text-slate-100">Preview</h3>
+            <p className="whitespace-pre-wrap text-sm text-slate-200">{editedContent}</p>
             {editedHashtags.length > 0 && (
-              <p className="text-gray-600 text-sm mt-2">{editedHashtags.join(" ")}</p>
+              <p className="mt-2 text-sm text-slate-300">{editedHashtags.join(" ")}</p>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-6 border-t sticky bottom-0 bg-white justify-end">
+        <div className="sticky bottom-0 flex justify-end gap-3 border-t border-white/10 bg-slate-950/95 p-6">
           <button
             onClick={onClose}
-            className="px-6 py-2 border rounded-lg font-semibold text-gray-700 hover:bg-gray-100"
+            className="rounded-lg border border-white/10 px-6 py-2 font-semibold text-slate-200 hover:bg-white/5"
           >
             Cancel
           </button>

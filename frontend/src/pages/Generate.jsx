@@ -225,7 +225,7 @@ export default function Generate() {
     if (sentiment === "negative") {
       return "bg-red-100 text-red-700 border-red-200";
     }
-    return "bg-gray-100 text-gray-700 border-gray-200";
+    return "bg-slate-700/40 text-slate-200 border-slate-500/50";
   };
 
   // -------------------------------
@@ -597,8 +597,8 @@ export default function Generate() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">
+    <div className="max-w-5xl mx-auto p-6 text-slate-100">
+      <h1 className="mb-8 text-3xl font-bold text-slate-100">
         AI Content Generator ✨
       </h1>
 
@@ -609,13 +609,13 @@ export default function Generate() {
           <input
             type="text"
             placeholder="Enter a topic, e.g., 'Sunset photography'"
-            className="w-full p-3 border rounded-lg mb-4"
+            className="mb-4 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
           />
 
           {/* LANGUAGE SELECTION */}
-          <div className="flex gap-6 mb-4 font-semibold text-gray-800 items-center">
+          <div className="mb-4 flex items-center gap-6 font-semibold text-slate-200">
             <span>Select Language:</span>
             <label className="flex items-center gap-2">
               <input
@@ -641,17 +641,17 @@ export default function Generate() {
           <input
             type="text"
             placeholder="Enter an image prompt, e.g., 'Loyalty of a Dog'"
-            className="w-full p-3 border rounded-lg mb-4"
+            className="mb-4 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
             value={imagePrompt}
             onChange={(e) => setImagePrompt(e.target.value)}
           />
 
           {/* MEDIA UPLOAD - Images & Videos */}
-          <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <p className="font-semibold text-gray-800 mb-2">Upload Images & Videos (Max 10):</p>
-            <label className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-indigo-300 rounded-lg cursor-pointer hover:bg-indigo-100 mb-2">
-              <Upload size={18} className="text-indigo-600" />
-              <span className="text-sm text-indigo-600">Click to upload or drag files here</span>
+          <div className="mb-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4 backdrop-blur">
+            <p className="mb-2 font-semibold text-slate-100">Upload Images & Videos (Max 10):</p>
+            <label className="mb-2 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-indigo-300/40 p-3 hover:bg-white/10">
+              <Upload size={18} className="text-indigo-300" />
+              <span className="text-sm text-indigo-200">Click to upload or drag files here</span>
               <input
                 type="file"
                 accept="image/*,video/*"
@@ -661,7 +661,7 @@ export default function Generate() {
                 className="hidden"
               />
             </label>
-            <p className="text-xs text-gray-600 mb-2">Supported: JPG, PNG, WebP, GIF (images ≤8MB) | MP4, MOV, WebM (videos ≤500MB)</p>
+            <p className="mb-2 text-xs text-slate-400">Supported: JPG, PNG, WebP, GIF (images ≤8MB) | MP4, MOV, WebM (videos ≤500MB)</p>
             
             {/* Media Items Grid */}
             {mediaItems.length > 0 && (
@@ -671,8 +671,8 @@ export default function Generate() {
                     {item.type === "image" ? (
                       <img src={item.preview} alt={`Media ${idx + 1}`} className="w-full h-24 object-cover rounded-lg" />
                     ) : (
-                      <div className="w-full h-24 bg-gray-300 rounded-lg flex items-center justify-center">
-                        <span className="text-xs text-gray-700">Video: {item.name}</span>
+                      <div className="flex h-24 w-full items-center justify-center rounded-lg bg-slate-800">
+                        <span className="text-xs text-slate-300">Video: {item.name}</span>
                       </div>
                     )}
                     
@@ -680,14 +680,14 @@ export default function Generate() {
                     <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition">
                       <button
                         onClick={() => moveMediaItem(item.id, "up")}
-                        className="bg-gray-500 text-white p-1 rounded text-xs hover:bg-gray-700"
+                        className="rounded bg-slate-600 p-1 text-xs text-white hover:bg-slate-500"
                         title="Move up"
                       >
                         ↑
                       </button>
                       <button
                         onClick={() => moveMediaItem(item.id, "down")}
-                        className="bg-gray-500 text-white p-1 rounded text-xs hover:bg-gray-700"
+                        className="rounded bg-slate-600 p-1 text-xs text-white hover:bg-slate-500"
                         title="Move down"
                       >
                         ↓
@@ -710,7 +710,7 @@ export default function Generate() {
               </div>
             )}
             
-            {uploadingMedia && <p className="text-sm text-indigo-600 mt-2 animate-pulse">Uploading...</p>}
+            {uploadingMedia && <p className="mt-2 text-sm text-indigo-300 animate-pulse">Uploading...</p>}
             
             {/* Instagram Carousel Warning */}
             {selectedPlatforms.includes("instagram") && mediaItems.length > 1 && (
@@ -747,20 +747,20 @@ export default function Generate() {
 
           {/* SCHEDULED TIME */}
           <div className="mt-2 mb-4">
-            <p className="font-semibold text-gray-800 mb-2">Schedule Post At (Optional):</p>
+            <p className="mb-2 font-semibold text-slate-200">Schedule Post At (Optional):</p>
             <input
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="p-2 border rounded-lg w-full"
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-2 text-slate-100 outline-none transition focus:border-indigo-400/40 focus:bg-white/10"
             />
           </div>
 
           {/* PLATFORM SELECTION */}
-          <div className="mt-2 mb-6 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <p className="font-semibold text-gray-800 mb-2">Select Platforms to Post:</p>
+          <div className="mt-2 mb-6 rounded-2xl border border-white/10 bg-slate-900/70 p-3 backdrop-blur">
+            <p className="mb-2 font-semibold text-slate-100">Select Platforms to Post:</p>
             <div className="flex gap-4">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-slate-300">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("facebook")}
@@ -772,7 +772,7 @@ export default function Generate() {
                   <span className="text-xs text-red-600">(not connected)</span>
                 )}
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-slate-300">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("instagram")}
@@ -784,7 +784,7 @@ export default function Generate() {
                   <span className="text-xs text-red-600">(not connected)</span>
                 )}
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-slate-300">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("linkedin-personal")}
@@ -796,7 +796,7 @@ export default function Generate() {
                   <span className="text-xs text-red-600">(not connected)</span>
                 )}
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-slate-300">
                 <input
                   type="checkbox"
                   checked={selectedPlatforms.includes("linkedin-company")}
@@ -872,9 +872,9 @@ export default function Generate() {
         {/* RIGHT: Generated outputs */}
         <div className="space-y-6">
           {/* Caption */}
-          <div className="bg-gray-100 p-4 rounded-lg min-h-[120px]">
+          <div className="min-h-[120px] rounded-lg border border-white/10 bg-slate-900/75 p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="font-semibold text-gray-800">Caption ({language}):</p>
+              <p className="font-semibold text-slate-100">Caption ({language}):</p>
               {caption && (
                 <button
                   onClick={() => {
@@ -893,16 +893,16 @@ export default function Generate() {
               )}
             </div>
             <p
-              className={`mt-2 ${language === "urdu" ? "text-right font-noto text-lg" : "text-left"} text-gray-700`}
+              className={`mt-2 ${language === "urdu" ? "text-right font-noto text-lg" : "text-left"} text-slate-200`}
             >
-              {caption || <span className="text-gray-400 italic">No caption yet.</span>}
+              {caption || <span className="italic text-slate-500">No caption yet.</span>}
             </p>
           </div>
 
           {/* Hashtags */}
-          <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="rounded-lg border border-white/10 bg-slate-900/75 p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="font-semibold text-gray-800">Hashtags:</p>
+              <p className="font-semibold text-slate-100">Hashtags:</p>
               {hashtags.length > 0 && (
                 <button
                   onClick={() => {
@@ -920,13 +920,13 @@ export default function Generate() {
                 </button>
               )}
             </div>
-            <p className="text-indigo-600 mt-2">{hashtags.length ? hashtags.join(" ") : <span className="text-gray-400 italic">No hashtags yet.</span>}</p>
+            <p className="mt-2 text-indigo-300">{hashtags.length ? hashtags.join(" ") : <span className="italic text-slate-500">No hashtags yet.</span>}</p>
           </div>
 
           {/* Sentiment & Emotion Analysis */}
-          <div className="bg-white p-4 rounded-lg border">
+          <div className="rounded-lg border border-white/10 bg-slate-900/75 p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="font-semibold text-gray-800">Sentiment & Emotion Analysis:</p>
+              <p className="font-semibold text-slate-100">Sentiment & Emotion Analysis:</p>
               <button
                 onClick={() => analyzeCaption(caption)}
                 disabled={loadingAnalysis || !caption.trim()}
@@ -937,14 +937,14 @@ export default function Generate() {
             </div>
 
             {!analysis ? (
-              <p className="text-gray-400 italic">No analysis yet. Generate or edit a caption, then analyze.</p>
+              <p className="italic text-slate-500">No analysis yet. Generate or edit a caption, then analyze.</p>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className={`px-3 py-1 text-sm rounded-full border capitalize ${sentimentStyle(analysis.sentiment)}`}>
                     {analysis.sentiment}
                   </span>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-slate-400">
                     Confidence: {Math.round((analysis.confidence || 0) * 100)}%
                   </span>
                 </div>
@@ -952,23 +952,23 @@ export default function Generate() {
                 <div className="flex flex-wrap gap-2">
                   {(analysis.emotions || []).length ? (
                     analysis.emotions.map((item, idx) => (
-                      <span key={`${item.name}_${idx}`} className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded border border-blue-200">
+                      <span key={`${item.name}_${idx}`} className="rounded border border-blue-300/20 bg-blue-500/10 px-2 py-1 text-xs text-blue-200">
                         {item.name} ({Math.round((item.score || 0) * 100)}%)
                       </span>
                     ))
                   ) : (
-                    <span className="text-sm text-gray-500">No dominant emotions detected.</span>
+                    <span className="text-sm text-slate-400">No dominant emotions detected.</span>
                   )}
                 </div>
 
-                <p className="text-sm text-gray-700">{analysis.summary}</p>
+                <p className="text-sm text-slate-200">{analysis.summary}</p>
               </div>
             )}
           </div>
 
           {/* Media Preview */}
-          <div className="bg-white p-4 rounded-lg border">
-            <p className="font-semibold text-gray-800 mb-2">Uploaded/Generated Media:</p>
+          <div className="rounded-lg border border-white/10 bg-slate-900/75 p-4">
+            <p className="mb-2 font-semibold text-slate-100">Uploaded/Generated Media:</p>
             {mediaItems.length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
                 {mediaItems.map((item, idx) => (
@@ -976,8 +976,8 @@ export default function Generate() {
                     {item.type === "image" ? (
                       <img src={item.preview} alt={`Media ${idx + 1}`} className="w-full h-20 object-cover rounded-lg" />
                     ) : (
-                      <div className="w-full h-20 bg-gray-300 rounded-lg flex items-center justify-center">
-                        <span className="text-xs text-gray-700">Video</span>
+                      <div className="flex h-20 w-full items-center justify-center rounded-lg bg-slate-700">
+                        <span className="text-xs text-slate-200">Video</span>
                       </div>
                     )}
                     <div className="absolute top-0.5 left-0.5 bg-blue-600 text-white text-xs px-1 rounded">{item.order + 1}</div>
@@ -987,10 +987,10 @@ export default function Generate() {
             ) : generatedImage ? (
               <div className="w-full">
                 <img src={generatedImage} alt="Generated" className="rounded-lg shadow-md max-h-96 object-contain w-full" />
-                <p className="text-xs text-gray-500 mt-2 text-center">AI-generated image</p>
+                <p className="mt-2 text-center text-xs text-slate-400">AI-generated image</p>
               </div>
             ) : (
-              <div className="text-gray-400 italic text-center py-8">No media uploaded or generated yet.</div>
+              <div className="py-8 text-center italic text-slate-500">No media uploaded or generated yet.</div>
             )}
           </div>
         </div>

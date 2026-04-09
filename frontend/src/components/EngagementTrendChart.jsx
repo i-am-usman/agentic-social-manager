@@ -28,14 +28,14 @@ export default function EngagementTrendChart({ trends }) {
   }));
 
   return (
-    <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="mb-8 rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
       <div className="mb-4">
-        <h3 className="text-lg font-bold tracking-tight text-slate-800">Engagement vs AI Replies</h3>
-        <p className="text-xs text-slate-500">Incoming engagement compared against automation output.</p>
+        <h3 className="text-lg font-bold tracking-tight text-white">Engagement vs AI Replies</h3>
+        <p className="text-xs text-slate-400">Incoming engagement compared against automation output.</p>
       </div>
 
       {data.length === 0 ? (
-        <p className="text-sm text-slate-500">No trend data yet for this period.</p>
+        <p className="text-sm text-slate-400">No trend data yet for this period.</p>
       ) : (
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -50,11 +50,17 @@ export default function EngagementTrendChart({ trends }) {
                   <stop offset="95%" stopColor="#9333ea" stopOpacity={0.04} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#64748b" }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.18)" />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#94a3b8" }} />
               <Tooltip
-                contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)" }}
+                contentStyle={{
+                  borderRadius: 12,
+                  borderColor: "rgba(148, 163, 184, 0.18)",
+                  background: "rgba(15, 23, 42, 0.96)",
+                  color: "#e2e8f0",
+                  boxShadow: "0 10px 30px rgba(2, 6, 23, 0.35)",
+                }}
                 formatter={(value, name) => {
                   if (name === "engagement") return [value, "Incoming Engagement"];
                   if (name === "aiReplies") return [value, "AI Replies Sent"];
@@ -62,7 +68,7 @@ export default function EngagementTrendChart({ trends }) {
                 }}
               />
               <Legend
-                wrapperStyle={{ fontSize: 12, color: "#334155" }}
+                wrapperStyle={{ fontSize: 12, color: "#cbd5e1" }}
                 formatter={(value) => {
                   if (value === "engagement") return "Incoming Engagement";
                   if (value === "aiReplies") return "AI Replies Sent";

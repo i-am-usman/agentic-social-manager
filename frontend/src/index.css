@@ -12,11 +12,50 @@
   text-align: right;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: #e5edf8;
+  background:
+    radial-gradient(circle at top, rgba(51, 65, 85, 0.78), rgba(30, 41, 59, 0.88) 45%, rgba(15, 23, 42, 0.95) 100%);
+  background-attachment: fixed;
+  color-scheme: dark;
+}
+
+::selection {
+  background: rgba(129, 140, 248, 0.35);
+  color: #fff;
+}
+
 .login-page input:-webkit-autofill,
 .login-page input:-webkit-autofill:hover,
 .login-page input:-webkit-autofill:focus {
   -webkit-text-fill-color: #ffffff;
-  -webkit-box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.22) inset;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.72) inset;
   box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.22) inset;
   transition: background-color 9999s ease-out 0s;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.9);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
 }
