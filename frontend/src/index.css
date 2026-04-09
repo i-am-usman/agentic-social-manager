@@ -87,6 +87,32 @@ html:not(.light-theme) input:-webkit-autofill:focus {
   transition: background-color 9999s ease-out 0s;
 }
 
+/* Dark theme headings - white for visibility */
+html.dark-theme h1,
+html.dark-theme h2,
+html.dark-theme h3,
+html.dark-theme h4,
+html.dark-theme h5,
+html.dark-theme h6,
+html:not(.light-theme) h1,
+html:not(.light-theme) h2,
+html:not(.light-theme) h3,
+html:not(.light-theme) h4,
+html:not(.light-theme) h5,
+html:not(.light-theme) h6 {
+  color: #ffffff !important;
+}
+
+/* Dark theme default text colors */
+html.dark-theme p,
+html.dark-theme span,
+html.dark-theme label,
+html:not(.light-theme) p,
+html:not(.light-theme) span,
+html:not(.light-theme) label {
+  color: #e5edf8;
+}
+
 /* ===== LIGHT THEME ===== */
 html.light-theme {
   color-scheme: light;
@@ -111,6 +137,16 @@ html.light-theme input:-webkit-autofill:focus {
 html.light-theme ::selection {
   background: rgba(129, 140, 248, 0.2);
   color: #1f2937;
+}
+
+/* Light theme headings - dark for visibility */
+html.light-theme h1,
+html.light-theme h2,
+html.light-theme h3,
+html.light-theme h4,
+html.light-theme h5,
+html.light-theme h6 {
+  color: rgb(15 23 42) !important;
 }
 
 html.light-theme ::-webkit-scrollbar-track {
