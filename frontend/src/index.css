@@ -436,6 +436,22 @@ html.light-theme h6 {
   color: rgb(15 23 42) !important;
 }
 
+/* Light theme: Brighter text inside dark cards for better visibility */
+html.light-theme .bg-slate-950 .text-indigo-200,
+html.light-theme .bg-slate-950 .text-slate-300,
+html.light-theme .bg-slate-900 .text-indigo-200,
+html.light-theme .bg-slate-900 .text-slate-300,
+html.light-theme .bg-indigo-500\/10 .text-indigo-200,
+html.light-theme .bg-indigo-500\/10 .text-white {
+  color: #ffffff !important;
+}
+
+/* Light theme: Force bright text colors in profile card */
+html.light-theme [class*="bg-slate-950"] p.text-slate-300,
+html.light-theme [class*="bg-slate-950"] p.text-indigo-200 {
+  color: #ffffff !important;
+}
+
 html.light-theme p,
 html.light-theme span,
 html.light-theme label,
@@ -530,7 +546,13 @@ html.light-theme .text-emerald-300 {
 html.light-theme .text-indigo-200 {
   color: rgb(76 29 149) !important;
 }
-
+/* Light theme: Brighter indigo text INSIDE dark backgrounds */
+html.light-theme .bg-slate-950 .text-indigo-200,
+html.light-theme .bg-slate-900 .text-indigo-200,
+html.light-theme .bg-indigo-500\/10 .text-indigo-200,
+html.light-theme .bg-indigo-500\/10 .text-white {
+  color: #ffffff !important;
+}
 html.light-theme .text-cyan-200 {
   color: rgb(34 211 238) !important;
 }
