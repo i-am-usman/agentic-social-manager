@@ -146,10 +146,12 @@ html.dark-theme .bg-slate-900 [class*="text-"],
 html.dark-theme .bg-slate-950 [class*="text-"],
 html.dark-theme .bg-slate-900\/85 [class*="text-"],
 html.dark-theme .bg-slate-950\/85 [class*="text-"],
+html.dark-theme [class*="bg-gradient"] [class*="text-"],
 html:not(.light-theme) .bg-slate-900 [class*="text-"],
 html:not(.light-theme) .bg-slate-950 [class*="text-"],
 html:not(.light-theme) .bg-slate-900\/85 [class*="text-"],
-html:not(.light-theme) .bg-slate-950\/85 [class*="text-"] {
+html:not(.light-theme) .bg-slate-950\/85 [class*="text-"],
+html:not(.light-theme) [class*="bg-gradient"] [class*="text-"] {
   color: #e5edf8 !important;
 }
 
@@ -274,6 +276,44 @@ html.light-theme .bg-slate-950\/85 [class*="text-"] {
   color: #e5edf8 !important;
 }
 
+/* Light theme: Gradient dark backgrounds must have light text */
+html.light-theme [class*="bg-gradient-to-"][class*="from-slate-900"],
+html.light-theme [class*="bg-gradient-to-"][class*="from-slate-950"],
+html.light-theme [class*="bg-gradient"][class*="slate-900"],
+html.light-theme [class*="bg-gradient"][class*="slate-950"] {
+  color: #ffffff !important;
+}
+
+html.light-theme [class*="bg-gradient-to-"][class*="from-slate-900"] *,
+html.light-theme [class*="bg-gradient-to-"][class*="from-slate-950"] *,
+html.light-theme [class*="bg-gradient"][class*="slate-900"] *,
+html.light-theme [class*="bg-gradient"][class*="slate-950"] * {
+  color: #ffffff !important;
+}
+
+html.light-theme [class*="bg-gradient-to-"][class*="from-slate-900"] [class*="text-"],
+html.light-theme [class*="bg-gradient-to-"][class*="from-slate-950"] [class*="text-"],
+html.light-theme [class*="bg-gradient"][class*="slate-900"] [class*="text-"],
+html.light-theme [class*="bg-gradient"][class*="slate-950"] [class*="text-"] {
+  color: #ffffff !important;
+}
+
+/* Light theme: Specific color overrides inside gradient dark cards */
+html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-indigo-300,
+html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-indigo-300,
+html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-cyan-100,
+html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-cyan-100,
+html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-amber-200,
+html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-amber-200,
+html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-amber-100,
+html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-amber-100,
+html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-blue-100,
+html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-blue-100,
+html.light-theme [class*="bg-gradient"][class*="slate-900"] .text-rose-100,
+html.light-theme [class*="bg-gradient"][class*="slate-950"] .text-rose-100 {
+  color: #ffffff !important;
+}
+
 /* Ensure headings inside dark cards in light theme are white */
 html.light-theme .bg-slate-900 h1,
 html.light-theme .bg-slate-900 h2,
@@ -303,6 +343,27 @@ html.light-theme .bg-slate-950\/85 h6 {
 }
 
 html.light-theme .text-white {
+  color: rgb(15 23 42) !important;
+}
+
+/* Light theme: Fix white background badges/labels - make text visible */
+html.light-theme [class*="bg-white"] {
+  background-color: rgb(226 232 240) !important;
+  color: rgb(15 23 42) !important;
+}
+
+html.light-theme [class*="bg-white"] span,
+html.light-theme [class*="bg-white"] p,
+html.light-theme [class*="bg-white"] label {
+  color: rgb(15 23 42) !important;
+}
+
+/* Light theme: Specific fix for CREATOR WORKSPACE label */
+html.light-theme .rounded-full {
+  background-color: inherit;
+}
+
+html.light-theme .rounded-full[class*="bg"] {
   color: rgb(15 23 42) !important;
 }
 
