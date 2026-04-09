@@ -7,6 +7,13 @@ SECRET_KEY = os.getenv("JWT_SECRET", "mysecretkey")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 1440))
 
+# Password reset configuration
+RESET_TOKEN_EXPIRE_MINUTES = int(os.getenv("RESET_TOKEN_EXPIRE_MINUTES", 15))
+RESET_RATE_LIMIT_WINDOW_MINUTES = int(os.getenv("RESET_RATE_LIMIT_WINDOW_MINUTES", 15))
+RESET_RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RESET_RATE_LIMIT_MAX_REQUESTS", 5))
+# In local development, returning the token helps test the flow without an email provider.
+RESET_TOKEN_DEV_RETURN = os.getenv("RESET_TOKEN_DEV_RETURN", "true").lower() == "true"
+
 GRAPH_API_VERSION = os.getenv("GRAPH_API_VERSION", "v21.0")
 FB_PAGE_ID = os.getenv("FB_PAGE_ID")
 FB_PAGE_ACCESS_TOKEN = os.getenv("FB_PAGE_ACCESS_TOKEN")

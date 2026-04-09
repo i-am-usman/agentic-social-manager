@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   Bot,
@@ -21,6 +22,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
+  const [shake, setShake] = useState(false);
   const [usernameFocused, setUsernameFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
@@ -35,6 +37,49 @@ export default function Register() {
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   const hasStrongPassword = (value) =>
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(value);
+
+  const handleConfirmPasswordChange = (e) => {
+    if (
+      confirmPassword.length >= password.length &&
+      e.target.value.length > confirmPassword.length
+    ) {
+      setShake(true);
+      return;
+    }
+
+    setConfirmPassword(e.target.value);
+  };
+
+  useEffect(() => {
+    if (!shake) return undefined;
+
+    const timer = setTimeout(() => setShake(false), 500);
+    return () => clearTimeout(timer);
+  }, [shake]);
+
+  const getLetterStatus = (letter, index) => {
+    if (!confirmPassword[index]) return "";
+    return confirmPassword[index] === letter
+      ? "bg-emerald-500/25"
+      : "bg-rose-500/25";
+  };
+
+  const passwordsMatch = password.length > 0 && password === confirmPassword;
+
+  const bounceAnimation = {
+    x: shake ? [-10, 10, -10, 10, 0] : 0,
+    transition: { duration: 0.5 },
+  };
+
+  const matchAnimation = {
+    scale: passwordsMatch ? [1, 1.03, 1] : 1,
+    transition: { duration: 0.3 },
+  };
+
+  const borderAnimation = {
+    borderColor: passwordsMatch ? "#10B981" : "",
+    transition: { duration: 0.3 },
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -185,19 +230,48 @@ export default function Register() {
 
         <label className="block space-y-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Confirm Password</span>
-          <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all ${confirmPasswordFocused ? "border-purple-400 bg-slate-50 shadow-[0_0_0_1px_rgba(147,51,234,0.2)] dark:bg-slate-800/80 dark:shadow-[0_0_0_1px_rgba(147,51,234,0.35)]" : "border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900/70"}`}>
-            <Lock size={18} className={confirmPasswordFocused || hasConfirmPassword ? "text-purple-600 dark:text-purple-300" : "text-slate-400"} />
-            <input
-              type="password"
-              placeholder="••••••••"
-              className="w-full appearance-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white dark:autofill:shadow-[0_0_0px_1000px_rgba(15,23,42,0.22)_inset]"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              onFocus={() => setConfirmPasswordFocused(true)}
-              onBlur={() => setConfirmPasswordFocused(false)}
-              required
-            />
-          </div>
+          <motion.div
+            className={`rounded-2xl border bg-white px-4 py-3 dark:border-white/10 dark:bg-slate-900/70 ${confirmPasswordFocused ? "border-purple-400 bg-slate-50 shadow-[0_0_0_1px_rgba(147,51,234,0.2)] dark:bg-slate-800/80 dark:shadow-[0_0_0_1px_rgba(147,51,234,0.35)]" : "border-slate-200"}`}
+            animate={{
+              ...bounceAnimation,
+              ...matchAnimation,
+              ...borderAnimation,
+            }}
+          >
+            <div className="mb-3 flex min-h-4 w-fit overflow-hidden rounded-md">
+              {password.split("").map((letter, index) => (
+                <div key={index} className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white" />
+                  <motion.span
+                    className={`absolute inset-0 transition-all duration-300 ${getLetterStatus(letter, index)}`}
+                    style={{
+                      scaleX: confirmPassword[index] ? 1 : 0,
+                      transformOrigin: "left",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Lock size={18} className={confirmPasswordFocused || hasConfirmPassword ? "text-purple-600 dark:text-purple-300" : "text-slate-400"} />
+              <motion.input
+                type="password"
+                placeholder="••••••••"
+                className="w-full appearance-none bg-transparent text-sm tracking-[0.3em] text-slate-900 placeholder:text-slate-400 placeholder:tracking-normal focus:outline-none dark:text-white dark:autofill:shadow-[0_0_0px_1000px_rgba(15,23,42,0.22)_inset]"
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                onFocus={() => setConfirmPasswordFocused(true)}
+                onBlur={() => setConfirmPasswordFocused(false)}
+                animate={borderAnimation}
+                required
+              />
+            </div>
+          </motion.div>
+
+          {hasConfirmPassword && !passwordsMatch && (
+            <p className="text-xs text-rose-600 dark:text-rose-300">Characters must match the original password in order.</p>
+          )}
         </label>
 
         <button

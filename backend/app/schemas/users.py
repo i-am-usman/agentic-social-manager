@@ -10,6 +10,14 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordConfirm(BaseModel):
+    email: EmailStr
+    reset_token: str = Field(min_length=6, max_length=256)
+    new_password: str = Field(min_length=8, max_length=128)
+
 class UserPublic(BaseModel):
     id: str
     username: str
