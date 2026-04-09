@@ -11,6 +11,7 @@ import Analytics from "./pages/Analytics";
 import ConnectAccounts from "./pages/ConnectAccounts";
 import CommentAnalysis from "./pages/CommentAnalysis";
 import Navbar from "./components/Navbar";
+import { ThemeProvider } from "./context/ThemeContext";
 
 function PublicRoute({ isAuthenticated, children }) {
   if (isAuthenticated) {
@@ -46,17 +47,18 @@ export default function App() {
   };
 
   return (
-    <Router>
-      <div className="min-h-screen bg-transparent text-slate-100">
-        {!authChecked ? (
-          <div className="flex min-h-screen items-center justify-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-400" />
-          </div>
-        ) : (
-          <>
-            {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} onLogout={handleLogout} />}
+    <ThemeProvider>
+      <Router>
+        <div className="min-h-screen bg-transparent text-slate-100">
+          {!authChecked ? (
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-400" />
+            </div>
+          ) : (
+            <>
+              {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} onLogout={handleLogout} />}
 
-            <Routes>
+              <Routes>
               <Route
                 path="/login"
                 element={(
@@ -144,5 +146,6 @@ export default function App() {
         )}
       </div>
     </Router>
+    </ThemeProvider>
   );
 }

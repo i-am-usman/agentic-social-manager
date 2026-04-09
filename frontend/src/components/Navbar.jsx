@@ -11,13 +11,17 @@ import {
   LogOut,
   ChevronDown,
   Menu,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Navbar({ setIsAuthenticated, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     // ✅ Call logout handler from App.jsx
@@ -114,6 +118,17 @@ export default function Navbar({ setIsAuthenticated, onLogout }) {
                 <Settings size={18} className="text-slate-400" />
                 <span className="font-medium">Accounts</span>
               </Link>
+              <hr className="my-2 border-white/10" />
+              <button
+                onClick={() => {
+                  toggleTheme();
+                  setDropdownOpen(false);
+                }}
+                className="flex w-full items-center gap-3 px-4 py-2 text-left font-medium text-slate-200 transition-colors hover:bg-white/5"
+              >
+                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+                <span>{theme === "dark" ? "Light Theme" : "Dark Theme"}</span>
+              </button>
               <hr className="my-2 border-white/10" />
               <button
                 onClick={handleLogout}
