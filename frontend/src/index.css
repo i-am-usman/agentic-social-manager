@@ -113,6 +113,46 @@ html:not(.light-theme) label {
   color: #e5edf8;
 }
 
+/* Dark theme: Text in cards must be light colored */
+html.dark-theme .bg-slate-900 p,
+html.dark-theme .bg-slate-900 span,
+html.dark-theme .bg-slate-900 label,
+html.dark-theme .bg-slate-950 p,
+html.dark-theme .bg-slate-950 span,
+html.dark-theme .bg-slate-950 label,
+html.dark-theme .bg-slate-900\/85 p,
+html.dark-theme .bg-slate-900\/85 span,
+html.dark-theme .bg-slate-900\/85 label,
+html.dark-theme .bg-slate-950\/85 p,
+html.dark-theme .bg-slate-950\/85 span,
+html.dark-theme .bg-slate-950\/85 label,
+html:not(.light-theme) .bg-slate-900 p,
+html:not(.light-theme) .bg-slate-900 span,
+html:not(.light-theme) .bg-slate-900 label,
+html:not(.light-theme) .bg-slate-950 p,
+html:not(.light-theme) .bg-slate-950 span,
+html:not(.light-theme) .bg-slate-950 label,
+html:not(.light-theme) .bg-slate-900\/85 p,
+html:not(.light-theme) .bg-slate-900\/85 span,
+html:not(.light-theme) .bg-slate-900\/85 label,
+html:not(.light-theme) .bg-slate-950\/85 p,
+html:not(.light-theme) .bg-slate-950\/85 span,
+html:not(.light-theme) .bg-slate-950\/85 label {
+  color: #e5edf8 !important;
+}
+
+/* Dark theme: All text in cards must be light colored */
+html.dark-theme .bg-slate-900 [class*="text-"],
+html.dark-theme .bg-slate-950 [class*="text-"],
+html.dark-theme .bg-slate-900\/85 [class*="text-"],
+html.dark-theme .bg-slate-950\/85 [class*="text-"],
+html:not(.light-theme) .bg-slate-900 [class*="text-"],
+html:not(.light-theme) .bg-slate-950 [class*="text-"],
+html:not(.light-theme) .bg-slate-900\/85 [class*="text-"],
+html:not(.light-theme) .bg-slate-950\/85 [class*="text-"] {
+  color: #e5edf8 !important;
+}
+
 /* ===== LIGHT THEME ===== */
 html.light-theme {
   color-scheme: light;
@@ -149,6 +189,50 @@ html.light-theme h6 {
   color: rgb(15 23 42) !important;
 }
 
+/* Light theme: Headings INSIDE dark cards/backgrounds should be white */
+html.light-theme .bg-slate-900 h1,
+html.light-theme .bg-slate-900 h2,
+html.light-theme .bg-slate-900 h3,
+html.light-theme .bg-slate-900 h4,
+html.light-theme .bg-slate-900 h5,
+html.light-theme .bg-slate-900 h6,
+html.light-theme .bg-slate-950 h1,
+html.light-theme .bg-slate-950 h2,
+html.light-theme .bg-slate-950 h3,
+html.light-theme .bg-slate-950 h4,
+html.light-theme .bg-slate-950 h5,
+html.light-theme .bg-slate-950 h6,
+html.light-theme .bg-slate-900\/85 h1,
+html.light-theme .bg-slate-900\/85 h2,
+html.light-theme .bg-slate-900\/85 h3,
+html.light-theme .bg-slate-900\/85 h4,
+html.light-theme .bg-slate-900\/85 h5,
+html.light-theme .bg-slate-900\/85 h6,
+html.light-theme .bg-slate-950\/85 h1,
+html.light-theme .bg-slate-950\/85 h2,
+html.light-theme .bg-slate-950\/85 h3,
+html.light-theme .bg-slate-950\/85 h4,
+html.light-theme .bg-slate-950\/85 h5,
+html.light-theme .bg-slate-950\/85 h6 {
+  color: #ffffff !important;
+}
+
+/* Light theme: Text INSIDE dark cards/backgrounds should be light */
+html.light-theme .bg-slate-900 p,
+html.light-theme .bg-slate-900 span,
+html.light-theme .bg-slate-900 label,
+html.light-theme .bg-slate-950 p,
+html.light-theme .bg-slate-950 span,
+html.light-theme .bg-slate-950 label,
+html.light-theme .bg-slate-900\/85 p,
+html.light-theme .bg-slate-900\/85 span,
+html.light-theme .bg-slate-900\/85 label,
+html.light-theme .bg-slate-950\/85 p,
+html.light-theme .bg-slate-950\/85 span,
+html.light-theme .bg-slate-950\/85 label {
+  color: #e5edf8 !important;
+}
+
 html.light-theme ::-webkit-scrollbar-track {
   background: rgba(243, 244, 246, 0.9);
 }
@@ -175,8 +259,71 @@ html.light-theme {
 }
 
 /* Light theme TEXT COLORS - stronger contrast */
+/* Light theme: Override all text to be light inside dark card backgrounds */
+html.light-theme .bg-slate-900 *,
+html.light-theme .bg-slate-950 *,
+html.light-theme .bg-slate-900\/85 *,
+html.light-theme .bg-slate-950\/85 * {
+  --tw-text-opacity: 1;
+}
+
+html.light-theme .bg-slate-900 [class*="text-"],
+html.light-theme .bg-slate-950 [class*="text-"],
+html.light-theme .bg-slate-900\/85 [class*="text-"],
+html.light-theme .bg-slate-950\/85 [class*="text-"] {
+  color: #e5edf8 !important;
+}
+
+/* Ensure headings inside dark cards in light theme are white */
+html.light-theme .bg-slate-900 h1,
+html.light-theme .bg-slate-900 h2,
+html.light-theme .bg-slate-900 h3,
+html.light-theme .bg-slate-900 h4,
+html.light-theme .bg-slate-900 h5,
+html.light-theme .bg-slate-900 h6,
+html.light-theme .bg-slate-950 h1,
+html.light-theme .bg-slate-950 h2,
+html.light-theme .bg-slate-950 h3,
+html.light-theme .bg-slate-950 h4,
+html.light-theme .bg-slate-950 h5,
+html.light-theme .bg-slate-950 h6,
+html.light-theme .bg-slate-900\/85 h1,
+html.light-theme .bg-slate-900\/85 h2,
+html.light-theme .bg-slate-900\/85 h3,
+html.light-theme .bg-slate-900\/85 h4,
+html.light-theme .bg-slate-900\/85 h5,
+html.light-theme .bg-slate-900\/85 h6,
+html.light-theme .bg-slate-950\/85 h1,
+html.light-theme .bg-slate-950\/85 h2,
+html.light-theme .bg-slate-950\/85 h3,
+html.light-theme .bg-slate-950\/85 h4,
+html.light-theme .bg-slate-950\/85 h5,
+html.light-theme .bg-slate-950\/85 h6 {
+  color: #ffffff !important;
+}
+
 html.light-theme .text-white {
   color: rgb(15 23 42) !important;
+}
+
+/* Light theme: Text colors INSIDE dark cards should be light */
+html.light-theme .bg-slate-900 .text-slate-100,
+html.light-theme .bg-slate-900 .text-slate-200,
+html.light-theme .bg-slate-900 .text-slate-300,
+html.light-theme .bg-slate-900 .text-slate-400,
+html.light-theme .bg-slate-950 .text-slate-100,
+html.light-theme .bg-slate-950 .text-slate-200,
+html.light-theme .bg-slate-950 .text-slate-300,
+html.light-theme .bg-slate-950 .text-slate-400,
+html.light-theme .bg-slate-900\/85 .text-slate-100,
+html.light-theme .bg-slate-900\/85 .text-slate-200,
+html.light-theme .bg-slate-900\/85 .text-slate-300,
+html.light-theme .bg-slate-900\/85 .text-slate-400,
+html.light-theme .bg-slate-950\/85 .text-slate-100,
+html.light-theme .bg-slate-950\/85 .text-slate-200,
+html.light-theme .bg-slate-950\/85 .text-slate-300,
+html.light-theme .bg-slate-950\/85 .text-slate-400 {
+  color: #e5edf8 !important;
 }
 
 html.light-theme .text-slate-100 {
