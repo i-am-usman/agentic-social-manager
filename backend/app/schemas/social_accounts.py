@@ -10,3 +10,8 @@ class ConnectAccountRequest(BaseModel):
     linkedin_user_id: Optional[str] = Field(default=None, min_length=2, max_length=64)
     linkedin_organization_id: Optional[str] = Field(default=None, min_length=2, max_length=64)
     linkedin_connection_type: Optional[str] = Field(default="personal")  # "personal" or "company"
+
+
+class MetaOAuthCallbackRequest(BaseModel):
+    code: str = Field(min_length=5, max_length=2048)
+    state: str = Field(min_length=8, max_length=1024)
