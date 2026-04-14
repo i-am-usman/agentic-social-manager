@@ -1,39 +1,24 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Facebook, Instagram, Linkedin } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { CheckCircle2, Facebook, Instagram, Link, Linkedin, Loader2, Unplug } from "lucide-react";
+import { API_BASE_URL, apiUrl } from "../config/api";
+
+const INITIAL_ACCOUNTS = {
+  facebook: { connected: false },
+  instagram: { connected: false },
+  linkedin_personal: { connected: false },
+  linkedin_company: { connected: false },
+};
 
 export default function ConnectAccounts() {
-  const [accounts, setAccounts] = useState({
-    facebook: { connected: false },
-    instagram: { connected: false },
-    linkedin_personal: { connected: false },
-    linkedin_company: { connected: false },
-  });
-
-  const [fbForm, setFbForm] = useState({ pageId: "", accessToken: "" });
-  const [igForm, setIgForm] = useState({ igUserId: "", accessToken: "" });
-  const [liPersonalForm, setLiPersonalForm] = useState({ linkedinUserId: "", accessToken: "" });
-  const [liCompanyForm, setLiCompanyForm] = useState({
-    linkedinUserId: "",
-    accessToken: "",
-    organizationId: "",
-  });
-
-  const [status, setStatus] = useState({});
-  const [formErrors, setFormErrors] = useState({
-    facebook: "",
-    instagram: "",
-    linkedin_personal: "",
-    linkedin_company: "",
-  });
-  const [loadState, setLoadState] = useState({
-    facebook: false,
-    instagram: false,
-    linkedin_personal: false,
-    linkedin_company: false,
-  });
-  const [pageError, setPageError] = useState("");
-
   const token = localStorage.getItem("token");
+  const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS);
+  const [pageError, setPageError] = useState("");
+  const [status, setStatus] = useState({});
+  const [isMetaRedirecting, setIsMetaRedirecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState({});
+  const [oauthSetupHint, setOauthSetupHint] = useState("");
+
+  const metaConnected = accounts.facebook?.connected || accounts.instagram?.connected;
 
   const toMessage = (detail) => {
     if (!detail) return "Unexpected error.";
@@ -52,411 +37,282 @@ export default function ConnectAccounts() {
     return String(detail);
   };
 
-  const fetchAccounts = useCallback(async () => {
+  const flashMessage = useMemo(() => {
+    const raw = sessionStorage.getItem("accounts_oauth_flash");
+    if (!raw) return null;
     try {
-      const res = await fetch("http://127.0.0.1:8000/accounts/me", {
+      return JSON.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }, []);
+
+  const fetchAccounts = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(apiUrl("/accounts/me"), {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        throw new Error("Unable to fetch account status.");
+      }
       const data = await res.json();
-      setAccounts(
-        data.accounts || {
-          facebook: { connected: false },
-          instagram: { connected: false },
-          linkedin_personal: { connected: false },
-          linkedin_company: { connected: false },
-        }
-      );
-    } catch (err) {
+      setAccounts(data.accounts || INITIAL_ACCOUNTS);
+    } catch (_) {
       setPageError("Failed to fetch connected accounts. Please refresh.");
     }
   }, [token]);
 
   useEffect(() => {
-    if (token) {
-      fetchAccounts();
-    }
-  }, [token, fetchAccounts]);
+    fetchAccounts();
+  }, [fetchAccounts]);
 
-  const connectAccount = async (platform, formData) => {
-    setFormErrors((prev) => ({ ...prev, [platform]: "" }));
-    setPageError("");
+  useEffect(() => {
+    if (!flashMessage) return;
 
-    let payload;
-
-    if (platform === "facebook") {
-      if (!formData.pageId || !formData.accessToken) {
-        setFormErrors((prev) => ({ ...prev, facebook: "Page ID and access token are required." }));
-        return;
-      }
-      payload = { platform, page_id: formData.pageId, access_token: formData.accessToken };
-    } else if (platform === "instagram") {
-      if (!formData.igUserId || !formData.accessToken) {
-        setFormErrors((prev) => ({ ...prev, instagram: "User ID and access token are required." }));
-        return;
-      }
-      payload = { platform, ig_user_id: formData.igUserId, access_token: formData.accessToken };
-    } else if (platform === "linkedin-personal") {
-      if (!formData.linkedinUserId || !formData.accessToken) {
-        setFormErrors((prev) => ({ ...prev, linkedin_personal: "User ID and access token are required." }));
-        return;
-      }
-      payload = {
-        platform,
-        linkedin_user_id: formData.linkedinUserId,
-        access_token: formData.accessToken,
-        linkedin_connection_type: "personal",
-      };
-    } else if (platform === "linkedin-company") {
-      if (!formData.linkedinUserId || !formData.accessToken || !formData.organizationId) {
-        setFormErrors((prev) => ({
-          ...prev,
-          linkedin_company: "User ID, access token, and organization ID are all required.",
-        }));
-        return;
-      }
-      payload = {
-        platform,
-        linkedin_user_id: formData.linkedinUserId,
-        access_token: formData.accessToken,
-        linkedin_organization_id: formData.organizationId,
-        linkedin_connection_type: "company",
-      };
-    }
-
-    setLoadState((prev) => ({ ...prev, [platform]: true }));
+    const kind = flashMessage.type === "error" ? "error" : "success";
     setStatus((prev) => ({
       ...prev,
-      [platform]: { message: "Validating...", type: "info" },
+      meta: { type: kind, message: flashMessage.message || "Connection updated." },
     }));
+    sessionStorage.removeItem("accounts_oauth_flash");
+  }, [flashMessage]);
+
+  const beginMetaOAuth = async () => {
+    if (!token) {
+      setStatus((prev) => ({
+        ...prev,
+        meta: { type: "error", message: "Please sign in again before connecting accounts." },
+      }));
+      return;
+    }
+
+    setPageError("");
+    setOauthSetupHint("");
+    setIsMetaRedirecting(true);
+    setStatus((prev) => ({ ...prev, meta: { type: "info", message: "Preparing Meta secure login..." } }));
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/accounts/connect", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+      const res = await fetch(apiUrl("/accounts/meta/login-url"), {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await res.json();
-      if (res.ok && data.status === "success") {
-        setStatus((prev) => ({
-          ...prev,
-          [platform]: { message: "Connected.", type: "success" },
-        }));
-
-        if (platform === "facebook") {
-          setFbForm({ pageId: "", accessToken: "" });
-        } else if (platform === "instagram") {
-          setIgForm({ igUserId: "", accessToken: "" });
-        } else if (platform === "linkedin-personal") {
-          setLiPersonalForm({ linkedinUserId: "", accessToken: "" });
-        } else if (platform === "linkedin-company") {
-          setLiCompanyForm({ linkedinUserId: "", accessToken: "", organizationId: "" });
+      if (!res.ok || !data?.auth_url) {
+        const message = toMessage(data?.detail || data?.message || "Unable to start Meta login.");
+        if (message.toLowerCase().includes("meta oauth configuration")) {
+          setOauthSetupHint(
+            "Check backend/.env for META_APP_ID and META_APP_SECRET, then ensure Meta App Dashboard uses the ngrok callback URL exactly."
+          );
         }
-
-        fetchAccounts();
-      } else {
-        setStatus((prev) => ({
-          ...prev,
-          [platform]: { message: toMessage(data.detail) || "Failed to connect.", type: "error" },
-        }));
+        throw new Error(message);
       }
+      window.location.href = data.auth_url;
     } catch (err) {
       setStatus((prev) => ({
         ...prev,
-        [platform]: { message: "Failed to connect.", type: "error" },
+        meta: { type: "error", message: err?.message || "Unable to start Meta login." },
       }));
-    } finally {
-      setLoadState((prev) => ({ ...prev, [platform]: false }));
+      setIsMetaRedirecting(false);
     }
   };
 
   const disconnectAccount = async (platform) => {
-    setLoadState((prev) => ({ ...prev, [platform]: true }));
-    setStatus((prev) => ({
-      ...prev,
-      [platform]: { message: "Disconnecting...", type: "info" },
-    }));
+    if (!token) return;
+    setDisconnecting((prev) => ({ ...prev, [platform]: true }));
+    setStatus((prev) => ({ ...prev, [platform]: { type: "info", message: "Disconnecting..." } }));
+
     try {
-      const res = await fetch(`http://127.0.0.1:8000/accounts/${platform}`, {
+      const res = await fetch(apiUrl(`/accounts/${platform}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (res.ok && data.status === "success") {
-        setStatus((prev) => ({
-          ...prev,
-          [platform]: { message: "Disconnected.", type: "success" },
-        }));
-        fetchAccounts();
-      } else {
-        setStatus((prev) => ({
-          ...prev,
-          [platform]: { message: toMessage(data.detail) || "Failed to disconnect.", type: "error" },
-        }));
+      if (!res.ok) {
+        throw new Error(toMessage(data?.detail || "Failed to disconnect."));
       }
+      setStatus((prev) => ({ ...prev, [platform]: { type: "success", message: "Disconnected." } }));
+      await fetchAccounts();
     } catch (err) {
       setStatus((prev) => ({
         ...prev,
-        [platform]: { message: "Failed to disconnect.", type: "error" },
+        [platform]: { type: "error", message: err?.message || "Failed to disconnect." },
       }));
     } finally {
-      setLoadState((prev) => ({ ...prev, [platform]: false }));
+      setDisconnecting((prev) => ({ ...prev, [platform]: false }));
     }
   };
 
-  const StatusMessage = ({ platform }) => {
-    const msg = status[platform];
-    if (!msg) return null;
-    return (
-      <p
-        className={`mt-2 text-xs ${
-          msg.type === "error"
-            ? "text-rose-600 dark:text-rose-300"
-            : msg.type === "success"
-              ? "text-emerald-600 dark:text-emerald-300"
-              : "text-slate-500 dark:text-slate-400"
-        }`}
-      >
-        {msg.message}
-      </p>
-    );
+  const Status = ({ slot }) => {
+    const entry = status[slot];
+    if (!entry) return null;
+    const tone =
+      entry.type === "error"
+        ? "text-rose-600 dark:text-rose-300"
+        : entry.type === "success"
+          ? "text-emerald-600 dark:text-emerald-300"
+          : "text-slate-500 dark:text-slate-400";
+    return <p className={`mt-2 text-xs ${tone}`}>{entry.message}</p>;
   };
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 text-slate-900 sm:p-6 dark:bg-transparent dark:text-slate-100">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div>
+      <div className="mx-auto max-w-5xl space-y-8">
+        <header>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Connect Social Accounts</h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Connect your social media accounts for seamless publishing and analytics.
+            One-click Meta OAuth for Facebook and Instagram, with secure redirect handling.
           </p>
           {pageError && <p className="mt-2 text-sm text-rose-600 dark:text-rose-300">{pageError}</p>}
-        </div>
+        </header>
 
-        {/* Facebook & Instagram Row */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Facebook Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
-            <div className="flex items-center gap-2 mb-2">
-              <Facebook size={20} className="text-blue-600" />
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Facebook Page</h2>
-            </div>
-            <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Page ID and Access Token required.</p>
-
-            <div className="space-y-3">
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                placeholder="Facebook Page ID"
-                value={fbForm.pageId}
-                onChange={(e) => setFbForm((prev) => ({ ...prev, pageId: e.target.value }))}
-              />
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                placeholder="Facebook Page Access Token"
-                type="password"
-                value={fbForm.accessToken}
-                onChange={(e) => setFbForm((prev) => ({ ...prev, accessToken: e.target.value }))}
-              />
-              {formErrors.facebook && <p className="text-xs text-rose-300">{formErrors.facebook}</p>}
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_-36px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-slate-900/80">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:border-indigo-300/30 dark:bg-indigo-500/10 dark:text-indigo-200">
+                <Link size={14} /> Meta OAuth
+              </div>
+              <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Connect Facebook and Instagram
+              </h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Click once to open official Meta login, approve permissions, and automatically link your page assets.
+              </p>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Redirect URI expected: <span className="font-semibold">http://localhost:3000/connect/callback</span>
+              </p>
             </div>
 
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                onClick={() => connectAccount("facebook", fbForm)}
-                className="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(59,130,246,0.22)] transition hover:bg-blue-400 disabled:opacity-60"
-                disabled={loadState.facebook}
-              >
-                {loadState.facebook ? "Saving..." : "Save Facebook"}
-              </button>
-              {accounts.facebook.connected && (
-                <button onClick={() => disconnectAccount("facebook")} className="text-sm text-rose-300">
-                  Disconnect
-                </button>
-              )}
-            </div>
-
-            <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              {accounts.facebook.connected ? `ID: ${accounts.facebook.page_id}` : "Not connected"}
-            </div>
-
-            <StatusMessage platform="facebook" />
+            <button
+              type="button"
+              onClick={beginMetaOAuth}
+              disabled={isMetaRedirecting}
+              className="inline-flex min-w-64 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-20px_rgba(79,70,229,0.75)] transition-all hover:translate-y-[-1px] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isMetaRedirecting ? <Loader2 size={18} className="animate-spin" /> : <Facebook size={18} />}
+              {isMetaRedirecting ? "Opening Meta Login..." : "Connect Facebook and Instagram"}
+            </button>
           </div>
 
-          {/* Instagram Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
-            <div className="flex items-center gap-2 mb-2">
-              <Instagram size={20} className="text-pink-600" />
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Instagram</h2>
-            </div>
-            <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">User ID and Access Token required.</p>
+          <Status slot="meta" />
+          {oauthSetupHint && (
+            <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
+              {oauthSetupHint}
+            </p>
+          )}
+        </section>
 
-            <div className="space-y-3">
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                placeholder="Instagram User ID"
-                value={igForm.igUserId}
-                onChange={(e) => setIgForm((prev) => ({ ...prev, igUserId: e.target.value }))}
-              />
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                placeholder="Instagram Access Token"
-                type="password"
-                value={igForm.accessToken}
-                onChange={(e) => setIgForm((prev) => ({ ...prev, accessToken: e.target.value }))}
-              />
-              {formErrors.instagram && <p className="text-xs text-rose-300">{formErrors.instagram}</p>}
+        <section className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900/70">
+            <div className="mb-2 flex items-center gap-2">
+              <Facebook size={18} className="text-blue-600" />
+              <h3 className="font-semibold text-slate-900 dark:text-white">Facebook</h3>
             </div>
-
-            <div className="mt-4 flex items-center gap-3">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {accounts.facebook?.connected
+                ? `Connected page: ${accounts.facebook?.page_id || "-"}`
+                : "Not connected"}
+            </p>
+            {accounts.facebook?.connected && (
               <button
-                onClick={() => connectAccount("instagram", igForm)}
-                className="rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(236,72,153,0.22)] transition hover:bg-pink-400 disabled:opacity-60"
-                disabled={loadState.instagram}
+                type="button"
+                onClick={() => disconnectAccount("facebook")}
+                disabled={disconnecting.facebook}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-300/40 dark:bg-rose-500/10 dark:text-rose-200"
               >
-                {loadState.instagram ? "Saving..." : "Save Instagram"}
+                {disconnecting.facebook ? <Loader2 size={14} className="animate-spin" /> : <Unplug size={14} />}
+                Disconnect
               </button>
-              {accounts.instagram.connected && (
-                <button onClick={() => disconnectAccount("instagram")} className="text-sm text-rose-300">
-                  Disconnect
-                </button>
-              )}
-            </div>
-
-            <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              {accounts.instagram.connected ? `ID: ${accounts.instagram.ig_user_id}` : "Not connected"}
-            </div>
-
-            <StatusMessage platform="instagram" />
+            )}
+            <Status slot="facebook" />
           </div>
-        </div>
 
-        {/* LinkedIn Section */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">LinkedIn Accounts</h2>
-          <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">
-            Manage your personal profile and company page separately.
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900/70">
+            <div className="mb-2 flex items-center gap-2">
+              <Instagram size={18} className="text-pink-600" />
+              <h3 className="font-semibold text-slate-900 dark:text-white">Instagram</h3>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {accounts.instagram?.connected
+                ? `Connected IG user: ${accounts.instagram?.ig_user_id || "-"}`
+                : "Not connected"}
+            </p>
+            {accounts.instagram?.connected && (
+              <button
+                type="button"
+                onClick={() => disconnectAccount("instagram")}
+                disabled={disconnecting.instagram}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-300/40 dark:bg-rose-500/10 dark:text-rose-200"
+              >
+                {disconnecting.instagram ? <Loader2 size={14} className="animate-spin" /> : <Unplug size={14} />}
+                Disconnect
+              </button>
+            )}
+            <Status slot="instagram" />
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900/70">
+          <h3 className="mb-3 text-lg font-semibold text-slate-900 dark:text-white">LinkedIn</h3>
+          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+            LinkedIn remains on your existing flow. Meta OAuth changes only affect Facebook and Instagram.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* LinkedIn Personal Profile Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
-              <div className="flex items-center gap-2 mb-2">
-                <Linkedin size={20} className="text-blue-700" />
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Personal Profile</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
+              <div className="mb-2 flex items-center gap-2">
+                <Linkedin size={16} className="text-blue-700" />
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">Personal Profile</p>
               </div>
-              <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Post to your personal LinkedIn profile.</p>
-
-              <div className="space-y-3">
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                  placeholder="LinkedIn User ID"
-                  value={liPersonalForm.linkedinUserId}
-                  onChange={(e) => setLiPersonalForm((prev) => ({ ...prev, linkedinUserId: e.target.value }))}
-                />
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                  placeholder="LinkedIn Access Token"
-                  type="password"
-                  value={liPersonalForm.accessToken}
-                  onChange={(e) => setLiPersonalForm((prev) => ({ ...prev, accessToken: e.target.value }))}
-                />
-                {formErrors.linkedin_personal && (
-                  <p className="text-xs text-rose-300">{formErrors.linkedin_personal}</p>
-                )}
-              </div>
-
-              <div className="mt-4 flex items-center gap-3">
-                <button
-                  onClick={() => connectAccount("linkedin-personal", liPersonalForm)}
-                  className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(37,99,235,0.22)] transition hover:bg-blue-500 disabled:opacity-60"
-                  disabled={loadState.linkedin_personal}
-                >
-                  {loadState.linkedin_personal ? "Saving..." : "Save Personal"}
-                </button>
-                {accounts.linkedin_personal.connected && (
-                  <button
-                    onClick={() => disconnectAccount("linkedin-personal")}
-                    className="text-sm text-rose-300"
-                  >
-                    Disconnect
-                  </button>
-                )}
-              </div>
-
-              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {accounts.linkedin_personal.connected
-                  ? `${accounts.linkedin_personal.linkedin_user_id}`
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {accounts.linkedin_personal?.connected
+                  ? `Connected: ${accounts.linkedin_personal?.linkedin_user_id || "LinkedIn user"}`
                   : "Not connected"}
-              </div>
-
-              <StatusMessage platform="linkedin_personal" />
+              </p>
+              {accounts.linkedin_personal?.connected && (
+                <button
+                  type="button"
+                  onClick={() => disconnectAccount("linkedin-personal")}
+                  disabled={disconnecting["linkedin-personal"]}
+                  className="mt-3 text-xs font-semibold text-rose-600 dark:text-rose-300"
+                >
+                  {disconnecting["linkedin-personal"] ? "Disconnecting..." : "Disconnect"}
+                </button>
+              )}
+              <Status slot="linkedin-personal" />
             </div>
 
-            {/* LinkedIn Company Page Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)]">
-              <div className="flex items-center gap-2 mb-2">
-                <Linkedin size={20} className="text-blue-700" />
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Company Page</h3>
+            <div className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
+              <div className="mb-2 flex items-center gap-2">
+                <Linkedin size={16} className="text-blue-700" />
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">Company Page</p>
               </div>
-              <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Post to your company's LinkedIn page.</p>
-
-              <div className="space-y-3">
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                  placeholder="LinkedIn User ID (page admin)"
-                  value={liCompanyForm.linkedinUserId}
-                  onChange={(e) => setLiCompanyForm((prev) => ({ ...prev, linkedinUserId: e.target.value }))}
-                />
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                  placeholder="LinkedIn Access Token"
-                  type="password"
-                  value={liCompanyForm.accessToken}
-                  onChange={(e) => setLiCompanyForm((prev) => ({ ...prev, accessToken: e.target.value }))}
-                />
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-400/40 focus:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
-                  placeholder="Organization ID (required)"
-                  value={liCompanyForm.organizationId}
-                  onChange={(e) => setLiCompanyForm((prev) => ({ ...prev, organizationId: e.target.value }))}
-                />
-                {formErrors.linkedin_company && (
-                  <p className="text-xs text-rose-300">{formErrors.linkedin_company}</p>
-                )}
-              </div>
-
-              <div className="mt-4 flex items-center gap-3">
-                <button
-                  onClick={() => connectAccount("linkedin-company", liCompanyForm)}
-                  className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(37,99,235,0.22)] transition hover:bg-blue-500 disabled:opacity-60"
-                  disabled={loadState.linkedin_company}
-                >
-                  {loadState.linkedin_company ? "Saving..." : "Save Company"}
-                </button>
-                {accounts.linkedin_company.connected && (
-                  <button
-                    onClick={() => disconnectAccount("linkedin-company")}
-                    className="text-sm text-rose-300"
-                  >
-                    Disconnect
-                  </button>
-                )}
-              </div>
-
-              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {accounts.linkedin_company.connected
-                  ? `Org: ${accounts.linkedin_company.organization_id}`
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {accounts.linkedin_company?.connected
+                  ? `Connected: ${accounts.linkedin_company?.organization_id || accounts.linkedin_company?.linkedin_user_id || "Company page"}`
                   : "Not connected"}
-              </div>
-
-              <StatusMessage platform="linkedin_company" />
+              </p>
+              {accounts.linkedin_company?.connected && (
+                <button
+                  type="button"
+                  onClick={() => disconnectAccount("linkedin-company")}
+                  disabled={disconnecting["linkedin-company"]}
+                  className="mt-3 text-xs font-semibold text-rose-600 dark:text-rose-300"
+                >
+                  {disconnecting["linkedin-company"] ? "Disconnecting..." : "Disconnect"}
+                </button>
+              )}
+              <Status slot="linkedin-company" />
             </div>
           </div>
-        </div>
+        </section>
+
+        {metaConnected && (
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-300/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+            <CheckCircle2 size={14} /> Meta account linked successfully
+          </div>
+        )}
+
+        <p className="text-xs text-slate-500 dark:text-slate-400">API base: {API_BASE_URL}</p>
       </div>
     </div>
   );

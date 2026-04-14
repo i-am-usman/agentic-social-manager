@@ -1,5 +1,6 @@
 import React, { useId } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import BorderGlow from "./BorderGlow";
 
 export default function SplitBarChart({ title, rows, gradientStart = "#8b5cf6", gradientEnd = "#4f46e5" }) {
   const gradientId = useId();
@@ -9,7 +10,14 @@ export default function SplitBarChart({ title, rows, gradientStart = "#8b5cf6", 
   }));
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+    <BorderGlow
+      className="rounded-2xl bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur"
+      glowColor="250 80 60"
+      colors={['#4F46E5', '#9333EA', '#6366F1']}
+      borderRadius={16}
+      glowIntensity={0.34}
+      edgeSensitivity={54}
+    >
       <h3 className="mb-4 text-lg font-bold tracking-tight text-white">{title}</h3>
       {data.length === 0 ? (
         <p className="text-sm text-slate-400">No split data available.</p>
@@ -51,6 +59,6 @@ export default function SplitBarChart({ title, rows, gradientStart = "#8b5cf6", 
           </div>
         </>
       )}
-    </div>
+    </BorderGlow>
   );
 }

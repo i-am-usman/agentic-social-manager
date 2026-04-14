@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertTriangle, Radar } from "lucide-react";
+import BorderGlow from "./BorderGlow";
 
 export default function AnomalyAlertPanel({ insight, hottestPost }) {
   const status = insight?.status || "insufficient_data";
@@ -7,20 +8,32 @@ export default function AnomalyAlertPanel({ insight, hottestPost }) {
 
   if (status !== "ready") {
     return (
-      <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+      <BorderGlow
+        className="rounded-2xl bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur"
+        glowColor="250 80 60"
+        colors={['#4F46E5', '#9333EA', '#6366F1']}
+        borderRadius={16}
+        glowIntensity={0.34}
+        edgeSensitivity={52}
+      >
         <h3 className="mb-3 text-lg font-bold tracking-tight text-white">Viral Spike Alert</h3>
         <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-sm text-amber-100">
           {insight?.message || "Insufficient baseline data for anomaly detection."}
         </div>
-      </div>
+      </BorderGlow>
     );
   }
 
   return (
-    <div
+    <BorderGlow
       className={`rounded-2xl border bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur ${
         isSpike ? "border-rose-400/25" : "border-white/10"
       }`}
+      glowColor="250 80 60"
+      colors={['#4F46E5', '#9333EA', '#6366F1']}
+      borderRadius={16}
+      glowIntensity={0.38}
+      edgeSensitivity={52}
     >
       <div className="flex items-center justify-between gap-3 mb-3">
         <h3 className="text-lg font-bold tracking-tight text-white">Viral Spike Alert</h3>
@@ -83,6 +96,6 @@ export default function AnomalyAlertPanel({ insight, hottestPost }) {
           Open hottest post now
         </a>
       )}
-    </div>
+    </BorderGlow>
   );
 }

@@ -9,6 +9,7 @@ import CustomPost from "./pages/CustomPost";
 import Profile from "./pages/Profile";
 import Analytics from "./pages/Analytics";
 import ConnectAccounts from "./pages/ConnectAccounts";
+import ConnectCallback from "./pages/ConnectCallback";
 import CommentAnalysis from "./pages/CommentAnalysis";
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -132,6 +133,7 @@ export default function App() {
                   </ProtectedRoute>
                 )}
               />
+              <Route path="/connect/callback" element={<ConnectCallback />} />
 
               <Route
                 path="/"

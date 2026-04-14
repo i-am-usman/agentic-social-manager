@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import BorderGlow from "./BorderGlow";
 
 export default function EngagementTrendChart({ trends }) {
   const engagementGradientId = useId();
@@ -28,7 +29,12 @@ export default function EngagementTrendChart({ trends }) {
   }));
 
   return (
-    <div className="mb-8 rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+    <BorderGlow
+      className="mb-8 rounded-2xl bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur"
+      glowColor="250 80 60"
+      colors={['#4F46E5', '#9333EA', '#6366F1']}
+      borderRadius={16}
+    >
       <div className="mb-4">
         <h3 className="text-lg font-bold tracking-tight text-white">Engagement vs AI Replies</h3>
         <p className="text-xs text-slate-400">Incoming engagement compared against automation output.</p>
@@ -95,6 +101,6 @@ export default function EngagementTrendChart({ trends }) {
           </ResponsiveContainer>
         </div>
       )}
-    </div>
+    </BorderGlow>
   );
 }

@@ -1,12 +1,20 @@
 import React from "react";
 import { Clock3, Sparkles, TrendingUp } from "lucide-react";
+import BorderGlow from "./BorderGlow";
 
 export default function BestTimeToPostWidget({ insight }) {
   const status = insight?.status || "insufficient_data";
   const topWindows = insight?.top_windows || [];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+    <BorderGlow
+      className="rounded-2xl bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur"
+      glowColor="250 80 60"
+      colors={['#4F46E5', '#9333EA', '#6366F1']}
+      borderRadius={16}
+      glowIntensity={0.34}
+      edgeSensitivity={52}
+    >
       <div className="flex items-center justify-between gap-3 mb-3">
         <h3 className="text-lg font-bold tracking-tight text-white">Best Time to Post</h3>
         <span className="inline-flex items-center gap-1 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-2.5 py-1 text-xs font-semibold text-indigo-200">
@@ -52,6 +60,6 @@ export default function BestTimeToPostWidget({ insight }) {
           </p>
         </>
       )}
-    </div>
+    </BorderGlow>
   );
 }

@@ -1,5 +1,6 @@
 import React from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import BorderGlow from "./BorderGlow";
 
 const COLORS = {
   positive: "#16a34a",
@@ -21,7 +22,14 @@ export default function SentimentDonutChart({ sentiment }) {
   const total = positive + neutral + negative;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur">
+    <BorderGlow
+      className="rounded-2xl bg-slate-900/75 p-5 shadow-[0_18px_40px_-24px_rgba(2,6,23,0.9)] backdrop-blur"
+      glowColor="250 80 60"
+      colors={['#4F46E5', '#9333EA', '#6366F1']}
+      borderRadius={16}
+      glowIntensity={0.34}
+      edgeSensitivity={52}
+    >
       <h3 className="mb-4 text-lg font-bold tracking-tight text-white">Audience Mood</h3>
       {total === 0 ? (
         <p className="text-sm text-slate-400">No sentiment signals yet.</p>
@@ -59,6 +67,6 @@ export default function SentimentDonutChart({ sentiment }) {
           </div>
         </>
       )}
-    </div>
+    </BorderGlow>
   );
 }
