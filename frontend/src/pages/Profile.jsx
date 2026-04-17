@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import ProfileForm from "../components/profile/ProfileForm";
 import { apiUrl } from "../config/api";
+import useSessionStorageState from "../hooks/useSessionStorageState";
 
 export default function Profile() {
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [interests, setInterests] = useState("");
-  const [savedPosts, setSavedPosts] = useState(0);
+  const [name, setName] = useSessionStorageState("profile.name", "");
+  const [bio, setBio] = useSessionStorageState("profile.bio", "");
+  const [interests, setInterests] = useSessionStorageState("profile.interests", "");
+  const [savedPosts, setSavedPosts] = useSessionStorageState("profile.savedPosts", 0);
   const [profileStatus, setProfileStatus] = useState({ loading: false, message: "", type: "info" });
 
-  const [connectedAccounts, setConnectedAccounts] = useState({
+  const [connectedAccounts, setConnectedAccounts] = useSessionStorageState("profile.connectedAccounts", {
     facebook: { connected: false },
     instagram: { connected: false },
   });
 
-  useEffect(() => {
-    const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
       const token = localStorage.getItem("token");
       try {
         const res = await fetch(apiUrl("/profile/me"), {
@@ -32,13 +32,13 @@ export default function Profile() {
       } catch (error) {
         setProfileStatus({ loading: false, message: "Failed to fetch profile.", type: "error" });
       }
-    };
-
-    fetchProfile();
   }, []);
 
   useEffect(() => {
-    const fetchAccounts = async () => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const fetchAccounts = useCallback(async () => {
       const token = localStorage.getItem("token");
       try {
         const res = await fetch(apiUrl("/accounts/me"), {
@@ -57,13 +57,13 @@ export default function Profile() {
       } catch (error) {
         setProfileStatus({ loading: false, message: "Failed to fetch connected accounts.", type: "error" });
       }
-    };
-
-    fetchAccounts();
   }, []);
 
   useEffect(() => {
-    const fetchPostCount = async () => {
+    fetchAccounts();
+  }, [fetchAccounts]);
+
+  const fetchPostCount = useCallback(async () => {
       const token = localStorage.getItem("token");
       try {
         const res = await fetch(apiUrl("/posts/user-posts"), {
@@ -78,10 +78,15 @@ export default function Profile() {
       } catch (error) {
         setSavedPosts(0);
       }
-    };
-
-    fetchPostCount();
   }, []);
+
+  useEffect(() => {
+    fetchPostCount();
+  }, [fetchPostCount]);
+
+  const refreshProfile = async () => {
+    await Promise.all([fetchProfile(), fetchAccounts(), fetchPostCount()]);
+  };
 
   const handleSaveProfile = async () => {
     const token = localStorage.getItem("token");
@@ -136,10 +141,19 @@ export default function Profile() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.22),_transparent_30%),radial-gradient(circle_at_80%_10%,_rgba(45,212,191,0.12),_transparent_24%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.14),_transparent_26%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(2,6,23,1))]" />
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
 
-        <div className="relative">
+        <div className="relative flex items-end justify-between gap-4">
+          <div>
           <p className="creator-workspace-label inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">Creator Workspace</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-white">Profile Command Center</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-300">Manage your profile details and account preferences.</p>
+          </div>
+          <button
+            type="button"
+            onClick={refreshProfile}
+            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+          >
+            Refresh profile
+          </button>
         </div>
       </div>
 

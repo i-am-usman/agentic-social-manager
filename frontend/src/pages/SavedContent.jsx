@@ -1,33 +1,35 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ProfilePostCard from "../components/profile/ProfilePostCard";
 import EditPostModal from "../components/profile/EditPostModal";
 import SchedulePostModal from "../components/profile/SchedulePostModal";
 import DeletePostConfirmModal from "../components/profile/DeletePostConfirmModal";
 import SavedContentTabs from "../components/profile/SavedContentTabs";
 import { apiUrl } from "../config/api";
+import useSessionStorageState from "../hooks/useSessionStorageState";
 
 export default function SavedContent() {
-  const [posts, setPosts] = useState([]);
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [posts, setPosts] = useSessionStorageState("saved-content.posts", []);
+  const [filterStatus, setFilterStatus] = useSessionStorageState("saved-content.filterStatus", "all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [connectedAccounts, setConnectedAccounts] = useState({
+  const [connectedAccounts, setConnectedAccounts] = useSessionStorageState("saved-content.connectedAccounts", {
     facebook: { connected: false },
     instagram: { connected: false },
     linkedin_personal: { connected: false },
     linkedin_company: { connected: false },
   });
-  const [selectedPlatforms, setSelectedPlatforms] = useState({});
-  const [publishStatus, setPublishStatus] = useState({});
-  const [deleteStatus, setDeleteStatus] = useState({});
-  const [scheduleStatus, setScheduleStatus] = useState({});
-  const [scheduleModal, setScheduleModal] = useState({
+  const [selectedPlatforms, setSelectedPlatforms] = useSessionStorageState("saved-content.selectedPlatforms", {});
+  const [publishStatus, setPublishStatus] = useSessionStorageState("saved-content.publishStatus", {});
+  const [deleteStatus, setDeleteStatus] = useSessionStorageState("saved-content.deleteStatus", {});
+  const [scheduleStatus, setScheduleStatus] = useSessionStorageState("saved-content.scheduleStatus", {});
+  const [hasLoadedSavedContent, setHasLoadedSavedContent] = useSessionStorageState("saved-content.hasLoaded", false);
+  const [scheduleModal, setScheduleModal] = useSessionStorageState("saved-content.scheduleModal", {
     open: false,
     postId: "",
     scheduledAt: "",
     platforms: [],
   });
-  const [editModal, setEditModal] = useState({
+  const [editModal, setEditModal] = useSessionStorageState("saved-content.editModal", {
     open: false,
     postId: "",
     caption: "",
@@ -35,8 +37,8 @@ export default function SavedContent() {
     image: "",
     platforms: [],
   });
-  const [editStatus, setEditStatus] = useState({ loading: false, message: "" });
-  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, postId: "" });
+  const [editStatus, setEditStatus] = useSessionStorageState("saved-content.editStatus", { loading: false, message: "" });
+  const [deleteConfirm, setDeleteConfirm] = useSessionStorageState("saved-content.deleteConfirm", { open: false, postId: "" });
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -46,7 +48,7 @@ export default function SavedContent() {
     };
   };
 
-  const fetchConnectedAccounts = async () => {
+  const fetchConnectedAccounts = useCallback(async () => {
     try {
       const response = await fetch(apiUrl("/accounts/me"), {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -66,10 +68,13 @@ export default function SavedContent() {
     } catch (_err) {
       // Keep defaults on failure.
     }
-  };
+  }, []);
 
-  const fetchSavedPosts = async () => {
-    setLoading(true);
+  const fetchSavedPosts = useCallback(async (options = {}) => {
+    const background = Boolean(options.background);
+    if (!background) {
+      setLoading(true);
+    }
     setError("");
 
     try {
@@ -87,6 +92,7 @@ export default function SavedContent() {
 
       const normalizedPosts = Array.isArray(data?.posts) ? data.posts : [];
       setPosts(normalizedPosts);
+      setHasLoadedSavedContent(true);
 
       const platformSelection = {};
       normalizedPosts.forEach((post) => {
@@ -97,14 +103,25 @@ export default function SavedContent() {
       setError("Failed to load saved content.");
       setPosts([]);
     } finally {
-      setLoading(false);
+      if (!background) {
+        setLoading(false);
+      }
     }
-  };
+  }, [setHasLoadedSavedContent]);
 
   useEffect(() => {
-    fetchSavedPosts();
+    if (hasLoadedSavedContent) {
+      setLoading(false);
+      fetchSavedPosts({ background: true });
+    } else {
+      fetchSavedPosts();
+    }
     fetchConnectedAccounts();
-  }, []);
+  }, [fetchSavedPosts, fetchConnectedAccounts, hasLoadedSavedContent]);
+
+  const refreshSavedContent = async () => {
+    await Promise.all([fetchSavedPosts(), fetchConnectedAccounts()]);
+  };
 
   const filteredPosts = useMemo(() => {
     if (filterStatus === "all") {
@@ -447,14 +464,23 @@ export default function SavedContent() {
       <div className="relative mb-6 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 px-6 py-6 text-white shadow-[0_30px_80px_rgba(2,6,23,0.42)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.22),_transparent_30%),radial-gradient(circle_at_80%_10%,_rgba(45,212,191,0.12),_transparent_24%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.14),_transparent_26%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(2,6,23,1))]" />
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
-        <div className="relative">
-          <p className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">
-            Content Library
-          </p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-white">Saved Content</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-300">
-            View and filter all your generated drafts, scheduled items, and published posts.
-          </p>
+        <div className="relative flex items-end justify-between gap-4">
+          <div>
+            <p className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">
+              Content Library
+            </p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight text-white">Saved Content</h1>
+            <p className="mt-2 max-w-2xl text-sm text-slate-300">
+              View and filter all your generated drafts, scheduled items, and published posts.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={refreshSavedContent}
+            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+          >
+            Refresh content
+          </button>
         </div>
       </div>
 

@@ -1,22 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Loader2, Image as ImageIcon, Wand2, Sparkles, X, Upload } from "lucide-react";
 import EditAIGeneratedModal from "../components/EditAIGeneratedModal";
 import ProgressModal from "../components/ProgressModal";
+import useSessionStorageState from "../hooks/useSessionStorageState";
 
 export default function Generate() {
-  const [topic, setTopic] = useState("");
-  const [caption, setCaption] = useState("");
-  const [hashtags, setHashtags] = useState([]);
-  const [imagePrompt, setImagePrompt] = useState("");
-  const [generatedImage, setGeneratedImage] = useState("");
-  const [language, setLanguage] = useState("english");
+  const [topic, setTopic] = useSessionStorageState("generate.topic", "");
+  const [caption, setCaption] = useSessionStorageState("generate.caption", "");
+  const [hashtags, setHashtags] = useSessionStorageState("generate.hashtags", []);
+  const [imagePrompt, setImagePrompt] = useSessionStorageState("generate.imagePrompt", "");
+  const [generatedImage, setGeneratedImage] = useSessionStorageState("generate.generatedImage", "");
+  const [language, setLanguage] = useSessionStorageState("generate.language", "english");
   const [loadingCaption, setLoadingCaption] = useState(false);
   const [loadingHashtags, setLoadingHashtags] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-  const [mediaItems, setMediaItems] = useState([]);  // ✅ New: array of {id, type, file, preview, order}
+  const [scheduledAt, setScheduledAt] = useSessionStorageState("generate.scheduledAt", "");
+  const [selectedPlatforms, setSelectedPlatforms] = useSessionStorageState("generate.selectedPlatforms", []);
+  const [mediaItems, setMediaItems] = useSessionStorageState("generate.mediaItems", []);  // ✅ New: array of {id, type, file, preview, order}
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [posting, setPosting] = useState(false);
   const [connectedAccounts, setConnectedAccounts] = useState({
@@ -26,17 +27,16 @@ export default function Generate() {
     linkedin_company: { connected: false },
   });
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editCaption, setEditCaption] = useState("");
-  const [editHashtags, setEditHashtags] = useState([]);
-  const [analysis, setAnalysis] = useState(null);
+  const [editCaption, setEditCaption] = useSessionStorageState("generate.editCaption", "");
+  const [editHashtags, setEditHashtags] = useSessionStorageState("generate.editHashtags", []);
+  const [analysis, setAnalysis] = useSessionStorageState("generate.analysis", null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
-  const [publishJobId, setPublishJobId] = useState(null);
-  const [showProgress, setShowProgress] = useState(false);
+  const [publishJobId, setPublishJobId] = useSessionStorageState("generate.publishJobId", null);
+  const [showProgress, setShowProgress] = useSessionStorageState("generate.showProgress", false);
 
   const token = localStorage.getItem("token"); // ✅ get JWT
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
       try {
         const res = await fetch("http://127.0.0.1:8000/accounts/me", {
           headers: { Authorization: `Bearer ${token}` },
@@ -53,12 +53,13 @@ export default function Generate() {
       } catch (err) {
         console.warn("Failed to fetch connected accounts");
       }
-    };
+  }, [token]);
 
+  useEffect(() => {
     if (token) {
       fetchAccounts();
     }
-  }, [token]);  // ✅ Removed connectedAccounts to prevent infinite loop
+  }, [token, fetchAccounts]);  // ✅ Removed connectedAccounts to prevent infinite loop
 
   // ✅ Helper: Convert datetime-local string to ISO format
   const toPakistaniTime = (localDateTimeString) => {
@@ -598,9 +599,18 @@ export default function Generate() {
 
   return (
     <div className="max-w-5xl mx-auto p-6 text-slate-900 dark:text-slate-100">
-      <h1 className="mb-8 text-3xl font-bold text-slate-900 dark:text-slate-100">
-        AI Content Generator ✨
-      </h1>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+          AI Content Generator ✨
+        </h1>
+        <button
+          type="button"
+          onClick={fetchAccounts}
+          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+        >
+          Refresh accounts
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         {/* LEFT: Inputs & Actions */}

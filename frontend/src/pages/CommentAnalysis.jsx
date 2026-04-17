@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, MessageCircle, Sparkles } from "lucide-react";
+import useSessionStorageState from "../hooks/useSessionStorageState";
 
 const SENTIMENT_COLORS = {
   positive: "#22c55e",
@@ -155,18 +156,22 @@ function PieSummaryCard({ title, data, total, emptyLabel }) {
 export default function CommentAnalysis() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [posts, setPosts] = useState([]);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [filter, setFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [includeReplies, setIncludeReplies] = useState(false);
+  const [posts, setPosts] = useSessionStorageState("comment-analysis.posts", []);
+  const [selectedPost, setSelectedPost] = useSessionStorageState("comment-analysis.selectedPost", null);
+  const [comments, setComments] = useSessionStorageState("comment-analysis.comments", []);
+  const [filter, setFilter] = useSessionStorageState("comment-analysis.filter", "all");
+  const [searchQuery, setSearchQuery] = useSessionStorageState("comment-analysis.searchQuery", "");
+  const [includeReplies, setIncludeReplies] = useSessionStorageState("comment-analysis.includeReplies", false);
+  const [hasLoadedPosts, setHasLoadedPosts] = useSessionStorageState("comment-analysis.hasLoadedPosts", false);
   const [error, setError] = useState(null);
 
   const token = localStorage.getItem("token");
 
-  const fetchPosts = useCallback(async () => {
-    setLoadingPosts(true);
+  const fetchPosts = useCallback(async (options = {}) => {
+    const background = Boolean(options.background);
+    if (!background) {
+      setLoadingPosts(true);
+    }
     setError(null);
 
     try {
@@ -187,6 +192,7 @@ export default function CommentAnalysis() {
           (post) => post.platform === "facebook" || post.platform === "instagram"
         );
         setPosts(filtered);
+        setHasLoadedPosts(true);
       } else {
         setPosts([]);
         setError(data.detail || "Failed to fetch posts");
@@ -196,15 +202,20 @@ export default function CommentAnalysis() {
       setError("Error fetching posts: " + err.message);
     }
 
-    setLoadingPosts(false);
-  }, [filter, token]);
+    if (!background) {
+      setLoadingPosts(false);
+    }
+  }, [filter, token, setHasLoadedPosts]);
 
-  const fetchComments = async (post, replyFlag = includeReplies) => {
+  const fetchComments = async (post, replyFlag = includeReplies, options = {}) => {
+    const background = Boolean(options.background);
     if (!post?.id || !post?.platform) return;
 
     setSelectedPost(post);
-    setLoadingComments(true);
-    setComments([]);
+    if (!background) {
+      setLoadingComments(true);
+      setComments([]);
+    }
 
     try {
       const replyQuery = replyFlag ? "&include_replies=true" : "";
@@ -227,13 +238,26 @@ export default function CommentAnalysis() {
       setError("Error fetching comments: " + err.message);
     }
 
-    setLoadingComments(false);
+    if (!background) {
+      setLoadingComments(false);
+    }
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    if (hasLoadedPosts) {
+      setLoadingPosts(false);
+      fetchPosts({ background: true });
+    } else {
+      fetchPosts();
+    }
+  }, [fetchPosts, hasLoadedPosts]);
 
+  const refreshCommentAnalysis = async () => {
+    await fetchPosts();
+    if (selectedPost?.id && selectedPost?.platform) {
+      await fetchComments(selectedPost, includeReplies);
+    }
+  };
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown";
     const date = new Date(dateString);
@@ -314,9 +338,18 @@ export default function CommentAnalysis() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-transparent">
       <div className="mx-auto max-w-7xl p-6">
-        <div className="mb-5">
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Comment Analysis</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Select a post first, then inspect the sliding detail panel, chart summary, and comments below.</p>
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Comment Analysis</h1>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Select a post first, then inspect the sliding detail panel, chart summary, and comments below.</p>
+          </div>
+          <button
+            type="button"
+            onClick={refreshCommentAnalysis}
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+          >
+            Refresh comments
+          </button>
         </div>
 
         <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/75">

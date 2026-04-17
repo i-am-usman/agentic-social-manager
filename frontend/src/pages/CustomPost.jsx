@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Loader2, Upload, X, Save } from "lucide-react";
 import ProgressModal from "../components/ProgressModal";
+import useSessionStorageState from "../hooks/useSessionStorageState";
 
 export default function CustomPost() {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [hashtags, setHashtags] = useState("");
-  const [mediaItems, setMediaItems] = useState([]);
+  const [title, setTitle] = useSessionStorageState("custom-post.title", "");
+  const [content, setContent] = useSessionStorageState("custom-post.content", "");
+  const [hashtags, setHashtags] = useSessionStorageState("custom-post.hashtags", "");
+  const [mediaItems, setMediaItems] = useSessionStorageState("custom-post.mediaItems", []);
   const [uploadingMedia, setUploadingMedia] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
+  const [scheduledAt, setScheduledAt] = useSessionStorageState("custom-post.scheduledAt", "");
+  const [selectedPlatforms, setSelectedPlatforms] = useSessionStorageState("custom-post.selectedPlatforms", []);
   const [saving, setSaving] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [publishJobId, setPublishJobId] = useState(null);
-  const [showProgress, setShowProgress] = useState(false);
+  const [publishJobId, setPublishJobId] = useSessionStorageState("custom-post.publishJobId", null);
+  const [showProgress, setShowProgress] = useSessionStorageState("custom-post.showProgress", false);
   const [connectedAccounts, setConnectedAccounts] = useState({
     facebook: { connected: false },
     instagram: { connected: false },
@@ -23,8 +24,7 @@ export default function CustomPost() {
 
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
       try {
         const res = await fetch("http://127.0.0.1:8000/accounts/me", {
           headers: { Authorization: `Bearer ${token}` },
@@ -41,12 +41,13 @@ export default function CustomPost() {
       } catch (err) {
         console.warn("Failed to fetch connected accounts");
       }
-    };
+  }, [token]);
 
+  useEffect(() => {
     if (token) {
       fetchAccounts();
     }
-  }, [token]);  // ✅ Removed connectedAccounts to prevent infinite loop
+  }, [token, fetchAccounts]);  // ✅ Removed connectedAccounts to prevent infinite loop
 
   const toPakistaniTime = (localDateTimeString) => {
     if (!localDateTimeString) return null;
@@ -371,7 +372,16 @@ export default function CustomPost() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 text-slate-900 dark:text-slate-100">
-      <h1 className="mb-8 text-3xl font-bold text-slate-900 dark:text-slate-100">📝 Create Custom Post</h1>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">📝 Create Custom Post</h1>
+        <button
+          type="button"
+          onClick={fetchAccounts}
+          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+        >
+          Refresh accounts
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* LEFT: Content Editor */}

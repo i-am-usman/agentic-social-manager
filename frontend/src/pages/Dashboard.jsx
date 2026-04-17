@@ -6,6 +6,8 @@ import SplitBarChart from "../components/SplitBarChart";
 import BestTimeToPostWidget from "../components/BestTimeToPostWidget";
 import AnomalyAlertPanel from "../components/AnomalyAlertPanel";
 import BorderGlow from "../components/BorderGlow";
+import useSessionStorageState from "../hooks/useSessionStorageState";
+
 import {
   Bot,
   CheckCircle2,
@@ -22,16 +24,22 @@ import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [dashboard, setDashboard] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [dashboard, setDashboard] = useSessionStorageState("dashboard.data", null);
+  const [lastUpdated, setLastUpdated] = useSessionStorageState("dashboard.lastUpdated", "");
+  const [hasLoadedDashboard, setHasLoadedDashboard] = useSessionStorageState("dashboard.hasLoaded", false);
+  const [loading, setLoading] = useState(!hasLoadedDashboard);
   const [refreshing, setRefreshing] = useState(false);
-  const [rangeDays, setRangeDays] = useState(7);
+  const [rangeDays, setRangeDays] = useSessionStorageState("dashboard.rangeDays", 7);
   const [error, setError] = useState("");
-  const [lastUpdated, setLastUpdated] = useState("");
   const [authFlashMessage, setAuthFlashMessage] = useState("");
 
-  const loadDashboard = useCallback(() => {
+  const loadDashboard = useCallback((options = {}) => {
+    const background = Boolean(options.background);
     const token = localStorage.getItem("token");
+
+    if (!background) {
+      setLoading(true);
+    }
 
     return fetch(`http://127.0.0.1:8000/analytics/dashboard?range_days=${rangeDays}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -42,6 +50,7 @@ export default function Dashboard() {
           setDashboard(data);
           setError("");
           setLastUpdated(data?.meta?.generated_at || new Date().toISOString());
+          setHasLoadedDashboard(true);
         } else {
           setError(data.detail || "Unable to load dashboard data.");
         }
@@ -49,19 +58,28 @@ export default function Dashboard() {
       .catch((err) => {
         console.error("Error fetching dashboard:", err);
         setError("Unable to reach backend dashboard endpoint.");
+      })
+      .finally(() => {
+        if (!background) {
+          setLoading(false);
+        }
       });
-  }, [rangeDays]);
+  }, [rangeDays, setDashboard, setHasLoadedDashboard, setLastUpdated]);
 
   useEffect(() => {
-    setLoading(true);
-    loadDashboard().finally(() => setLoading(false));
+    if (hasLoadedDashboard) {
+      setLoading(false);
+      loadDashboard({ background: true });
+    } else {
+      loadDashboard();
+    }
 
     const interval = setInterval(() => {
       setRefreshing(true);
-      loadDashboard().finally(() => setRefreshing(false));
+      loadDashboard({ background: true }).finally(() => setRefreshing(false));
     }, 10000);
     return () => clearInterval(interval);
-  }, [loadDashboard]);
+  }, [hasLoadedDashboard, loadDashboard]);
 
   useEffect(() => {
     const flashMessage = sessionStorage.getItem("auth_flash_message");

@@ -2,26 +2,27 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Loader2, ThumbsUp, MessageCircle, Share2, ExternalLink, Instagram, Facebook, Linkedin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AutoReplySettingsPanel from "../components/AutoReplySettingsPanel";
+import useSessionStorageState from "../hooks/useSessionStorageState";
 
 export default function Analytics() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [posts, setPosts] = useState([]);
-  const [filter, setFilter] = useState("all"); // all, facebook, instagram, linkedin (shows both personal & company)
+  const [posts, setPosts] = useSessionStorageState("analytics.posts", []);
+  const [filter, setFilter] = useSessionStorageState("analytics.filter", "all"); // all, facebook, instagram, linkedin (shows both personal & company)
   const [error, setError] = useState(null);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [comments, setComments] = useState([]);
+  const [selectedPost, setSelectedPost] = useSessionStorageState("analytics.selectedPost", null);
+  const [comments, setComments] = useSessionStorageState("analytics.comments", []);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [replyDrafts, setReplyDrafts] = useState({});
+  const [replyDrafts, setReplyDrafts] = useSessionStorageState("analytics.replyDrafts", {});
   const [replyState, setReplyState] = useState({});
-  const [expandedReplies, setExpandedReplies] = useState({});
-  const [linkedinSettings, setLinkedinSettings] = useState({
+  const [expandedReplies, setExpandedReplies] = useSessionStorageState("analytics.expandedReplies", {});
+  const [linkedinSettings, setLinkedinSettings] = useSessionStorageState("analytics.linkedinSettings", {
     auto_reply_enabled: false,
     reply_mode: "ai",
     reply_tone: "professional",
     reply_delay_minutes: 0
   });
-  const [facebookSettings, setFacebookSettings] = useState({
+  const [facebookSettings, setFacebookSettings] = useSessionStorageState("analytics.facebookSettings", {
     auto_reply_enabled: false,
     reply_mode: "ai",
     reply_tone: "professional",
@@ -31,7 +32,7 @@ export default function Analytics() {
     dm_reply_tone: "professional",
     dm_reply_delay_minutes: 0,
   });
-  const [instagramSettings, setInstagramSettings] = useState({
+  const [instagramSettings, setInstagramSettings] = useSessionStorageState("analytics.instagramSettings", {
     auto_reply_enabled: false,
     reply_mode: "ai",
     reply_tone: "professional",
@@ -42,12 +43,16 @@ export default function Analytics() {
     dm_reply_delay_minutes: 0,
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useSessionStorageState("analytics.searchQuery", "");
+  const [hasLoadedAnalytics, setHasLoadedAnalytics] = useSessionStorageState("analytics.hasLoaded", false);
 
   const token = localStorage.getItem("token");
 
-  const fetchAnalytics = useCallback(async () => {
-    setLoading(true);
+  const fetchAnalytics = useCallback(async (options = {}) => {
+    const background = Boolean(options.background);
+    if (!background) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -89,6 +94,7 @@ export default function Analytics() {
         if (data.errors && data.errors.length > 0) {
           setError(`Warning: ${data.errors.join(", ")}`);
         }
+        setHasLoadedAnalytics(true);
       } else {
         setError(data.detail || "Failed to fetch analytics");
         setPosts([]);
@@ -98,8 +104,10 @@ export default function Analytics() {
       setPosts([]);
     }
 
-    setLoading(false);
-  }, [filter, token]);
+    if (!background) {
+      setLoading(false);
+    }
+  }, [filter, token, setHasLoadedAnalytics]);
 
   const fetchLinkedInSettings = useCallback(async () => {
     try {
@@ -144,7 +152,12 @@ export default function Analytics() {
   }, [token]);
 
   useEffect(() => {
-    fetchAnalytics();
+    if (hasLoadedAnalytics) {
+      setLoading(false);
+      fetchAnalytics({ background: true });
+    } else {
+      fetchAnalytics();
+    }
     if (filter === "linkedin") {
       fetchLinkedInSettings();
     } else if (filter === "facebook") {
@@ -152,7 +165,18 @@ export default function Analytics() {
     } else if (filter === "instagram") {
       fetchInstagramSettings();
     }
-  }, [filter, fetchAnalytics, fetchLinkedInSettings, fetchFacebookSettings, fetchInstagramSettings]);
+  }, [filter, fetchAnalytics, fetchLinkedInSettings, fetchFacebookSettings, fetchInstagramSettings, hasLoadedAnalytics]);
+
+  const refreshAnalytics = async () => {
+    await fetchAnalytics();
+    if (filter === "linkedin") {
+      await fetchLinkedInSettings();
+    } else if (filter === "facebook") {
+      await fetchFacebookSettings();
+    } else if (filter === "instagram") {
+      await fetchInstagramSettings();
+    }
+  };
 
   const updateLinkedInSettings = async (newSettings) => {
     setSettingsLoading(true);
@@ -319,10 +343,6 @@ export default function Analytics() {
 
   const closeCommentsModal = () => {
     setSelectedPost(null);
-    setComments([]);
-    setReplyDrafts({});
-    setReplyState({});
-    setExpandedReplies({});
   };
 
   const toggleReplies = (commentId) => {
@@ -409,14 +429,23 @@ export default function Analytics() {
 
   return (
     <div className="mx-auto max-w-7xl p-6 text-slate-900 dark:text-slate-100">
-      <div className="mb-6 flex items-center justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Social Media Analytics</h1>
-        <button
-          onClick={() => navigate("/comment-analysis")}
-          className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(79,70,229,0.25)] hover:bg-indigo-500"
-        >
-          Open Comment Analysis
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={refreshAnalytics}
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+          >
+            Refresh analytics
+          </button>
+          <button
+            onClick={() => navigate("/comment-analysis")}
+            className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(79,70,229,0.25)] hover:bg-indigo-500"
+          >
+            Open Comment Analysis
+          </button>
+        </div>
       </div>
 
       {/* Filter Tabs */}
