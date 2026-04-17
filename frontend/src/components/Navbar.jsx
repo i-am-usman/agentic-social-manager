@@ -6,6 +6,7 @@ import {
   FileText,
   BarChart3,
   MessageSquare,
+  Bookmark,
   User,
   Settings,
   LogOut,
@@ -80,6 +81,7 @@ export default function Navbar({ setIsAuthenticated, onLogout }) {
           <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-white/10 dark:bg-white/5">
             <NavLink to="/generate" icon={Wand2} label="Create" />
             <NavLink to="/custom-post" icon={FileText} label="Post" />
+            <NavLink to="/saved-content" icon={Bookmark} label="Saved" />
           </div>
         </div>
 

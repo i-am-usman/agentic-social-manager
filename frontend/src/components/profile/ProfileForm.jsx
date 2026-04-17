@@ -18,7 +18,6 @@ export default function ProfileForm({
     <section className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-6 shadow-[0_30px_80px_-45px_rgba(2,6,23,1)] backdrop-blur-xl sm:p-7">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="profile-workspace-label text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">Profile Studio</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-white">Edit Profile</h1>
           <p className="mt-1 text-sm text-slate-300">Tune your identity, voice, and content preferences.</p>
         </div>

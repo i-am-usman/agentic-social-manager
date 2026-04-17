@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Generate from "./pages/Generate";
 import CustomPost from "./pages/CustomPost";
 import Profile from "./pages/Profile";
+import SavedContent from "./pages/SavedContent";
 import Analytics from "./pages/Analytics";
 import ConnectAccounts from "./pages/ConnectAccounts";
 import ConnectCallback from "./pages/ConnectCallback";
@@ -106,6 +107,14 @@ export default function App() {
                 element={(
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
                     <Profile />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/saved-content"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <SavedContent />
                   </ProtectedRoute>
                 )}
               />
