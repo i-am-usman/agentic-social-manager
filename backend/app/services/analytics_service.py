@@ -169,7 +169,7 @@ class AnalyticsService:
         try:
             url = f"https://graph.facebook.com/{self.api_version}/{self.fb_page_id}/posts"
             params = {
-                "fields": "id,message,created_time,full_picture,permalink_url,likes.summary(true),comments.summary(true),shares",
+                "fields": "id,message,created_time,full_picture,permalink_url,reactions.summary(true),reactions.type(LIKE).limit(0).summary(total_count).as(reaction_like),reactions.type(LOVE).limit(0).summary(total_count).as(reaction_love),reactions.type(HAHA).limit(0).summary(total_count).as(reaction_haha),reactions.type(WOW).limit(0).summary(total_count).as(reaction_wow),reactions.type(SAD).limit(0).summary(total_count).as(reaction_sad),reactions.type(ANGRY).limit(0).summary(total_count).as(reaction_angry),comments.summary(true),shares",
                 "limit": limit,
                 "access_token": self.fb_token
             }
@@ -182,6 +182,14 @@ class AnalyticsService:
             
             posts = []
             for post in response.get("data", []):
+                reaction_counts = {
+                    "LIKE": post.get("reaction_like", {}).get("summary", {}).get("total_count", 0),
+                    "LOVE": post.get("reaction_love", {}).get("summary", {}).get("total_count", 0),
+                    "HAHA": post.get("reaction_haha", {}).get("summary", {}).get("total_count", 0),
+                    "WOW": post.get("reaction_wow", {}).get("summary", {}).get("total_count", 0),
+                    "SAD": post.get("reaction_sad", {}).get("summary", {}).get("total_count", 0),
+                    "ANGRY": post.get("reaction_angry", {}).get("summary", {}).get("total_count", 0),
+                }
                 posts.append({
                     "id": post.get("id"),
                     "platform": "facebook",
@@ -189,7 +197,10 @@ class AnalyticsService:
                     "created_time": post.get("created_time"),
                     "image": post.get("full_picture"),
                     "permalink": post.get("permalink_url"),
-                    "likes": post.get("likes", {}).get("summary", {}).get("total_count", 0),
+                    # Keep `likes` for backwards compatibility with existing UI code.
+                    "likes": post.get("reactions", {}).get("summary", {}).get("total_count", 0),
+                    "reactions_total": post.get("reactions", {}).get("summary", {}).get("total_count", 0),
+                    "reaction_counts": reaction_counts,
                     "comments": post.get("comments", {}).get("summary", {}).get("total_count", 0),
                     "shares": post.get("shares", {}).get("count", 0)
                 })
@@ -289,6 +300,66 @@ class AnalyticsService:
             return self._get_instagram_comments(post_id, include_analysis=include_analysis, include_replies=include_replies)
         else:
             return {"status": "error", "detail": "Invalid platform"}
+
+    def get_comment_replies(self, comment_id, platform="facebook"):
+        """Fetch replies for a specific comment on demand."""
+        if platform == "facebook":
+            replies = self._get_facebook_comment_replies(comment_id)
+            return {"status": "success", "replies": replies}
+        if platform == "instagram":
+            replies = self._get_instagram_comment_replies(comment_id)
+            return {"status": "success", "replies": replies}
+        return {"status": "error", "detail": "Invalid platform"}
+
+    def get_post_likes(self, post_id, platform="facebook"):
+        """Fetch people who reacted to a post/media when the platform API supports it."""
+        if platform == "facebook":
+            return self._get_facebook_post_likes(post_id)
+        if platform == "instagram":
+            return {
+                "status": "error",
+                "detail": "Instagram Graph API does not provide a liker identity list for media.",
+            }
+        if platform == "linkedin":
+            return {
+                "status": "error",
+                "detail": "LinkedIn liker identity list is not available in this analytics flow.",
+            }
+        return {"status": "error", "detail": "Invalid platform"}
+
+    def _get_facebook_post_likes(self, post_id):
+        """Fetch Facebook reactions (user + reaction type) for a post."""
+        if not self.fb_token:
+            return {"status": "error", "detail": "Facebook credentials not configured"}
+
+        try:
+            url = f"https://graph.facebook.com/{self.api_version}/{post_id}/reactions"
+            params = {
+                "fields": "id,name,type",
+                "limit": 100,
+                "access_token": self.fb_token,
+            }
+
+            collection = self._fetch_graph_collection(url, params)
+            if collection["status"] != "success":
+                return collection
+
+            likers = []
+            for reaction in collection.get("data", []):
+                likers.append({
+                    "id": reaction.get("id"),
+                    "name": reaction.get("name") or "Facebook User",
+                    "reaction": reaction.get("type") or "LIKE",
+                })
+
+            return {
+                "status": "success",
+                "likers": likers,
+                "total": len(likers),
+            }
+        except Exception as e:
+            logger.error(f"Error fetching Facebook reactions for post {post_id}: {e}", exc_info=True)
+            return {"status": "error", "detail": str(e)}
 
     def _get_facebook_comments(self, post_id, include_analysis: bool = False, include_replies: bool = False):
         """Fetch comments for a Facebook post"""

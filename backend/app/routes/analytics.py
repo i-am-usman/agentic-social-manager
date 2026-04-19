@@ -477,3 +477,47 @@ async def get_post_comments(
     except Exception as e:
         logger.error(f"Error in get_post_comments: {e}", exc_info=True)
         return {"status": "error", "detail": str(e)}
+
+
+@router.get("/comments/{comment_id}/replies")
+async def get_comment_replies(
+    comment_id: str,
+    platform: str = Query("facebook", regex="^(facebook|instagram)$"),
+    user: dict = Depends(get_current_user)
+):
+    """Fetch replies for a specific comment on Facebook or Instagram."""
+    try:
+        fb_creds = get_platform_credentials(user["_id"], "facebook")
+        ig_creds = get_platform_credentials(user["_id"], "instagram")
+        analytics_service = AnalyticsService(
+            fb_page_id=fb_creds.get("page_id") if fb_creds else None,
+            fb_token=fb_creds.get("access_token") if fb_creds else None,
+            ig_user_id=ig_creds.get("ig_user_id") if ig_creds else None,
+            ig_token=ig_creds.get("access_token") if ig_creds else None,
+        )
+        return analytics_service.get_comment_replies(comment_id, platform)
+    except Exception as e:
+        logger.error(f"Error in get_comment_replies: {e}", exc_info=True)
+        return {"status": "error", "detail": str(e)}
+
+
+@router.get("/likes/{post_id}")
+async def get_post_likes(
+    post_id: str,
+    platform: str = Query("facebook", regex="^(facebook|instagram|linkedin)$"),
+    user: dict = Depends(get_current_user)
+):
+    """Fetch users who liked/reacted to a post when supported by the platform API."""
+    try:
+        fb_creds = get_platform_credentials(user["_id"], "facebook")
+        ig_creds = get_platform_credentials(user["_id"], "instagram")
+        analytics_service = AnalyticsService(
+            fb_page_id=fb_creds.get("page_id") if fb_creds else None,
+            fb_token=fb_creds.get("access_token") if fb_creds else None,
+            ig_user_id=ig_creds.get("ig_user_id") if ig_creds else None,
+            ig_token=ig_creds.get("access_token") if ig_creds else None,
+        )
+        return analytics_service.get_post_likes(post_id, platform)
+    except Exception as e:
+        logger.error(f"Error in get_post_likes: {e}", exc_info=True)
+        return {"status": "error", "detail": str(e)}

@@ -19,6 +19,7 @@ import {
   X,
   ShieldCheck,
   Radar,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -226,9 +227,11 @@ export default function Dashboard() {
                   setRefreshing(true);
                   loadDashboard().finally(() => setRefreshing(false));
                 }}
-                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
+                aria-label="Refresh dashboard"
+                title="Refresh dashboard"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
               >
-                Refresh now
+                <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
               </button>
             </div>
           </div>

@@ -6,6 +6,7 @@ import DeletePostConfirmModal from "../components/profile/DeletePostConfirmModal
 import SavedContentTabs from "../components/profile/SavedContentTabs";
 import { apiUrl } from "../config/api";
 import useSessionStorageState from "../hooks/useSessionStorageState";
+import { RefreshCw } from "lucide-react";
 
 export default function SavedContent() {
   const [posts, setPosts] = useSessionStorageState("saved-content.posts", []);
@@ -477,9 +478,11 @@ export default function SavedContent() {
           <button
             type="button"
             onClick={refreshSavedContent}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+            aria-label="Refresh content"
+            title="Refresh content"
+            className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 p-2 text-sm font-semibold text-white transition hover:bg-white/10"
           >
-            Refresh content
+            <RefreshCw size={16} />
           </button>
         </div>
       </div>

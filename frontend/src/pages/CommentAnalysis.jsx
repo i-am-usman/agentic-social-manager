@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, MessageCircle, Sparkles } from "lucide-react";
+import { Loader2, MessageCircle, RefreshCw, Sparkles } from "lucide-react";
 import useSessionStorageState from "../hooks/useSessionStorageState";
 
 const SENTIMENT_COLORS = {
@@ -346,9 +346,11 @@ export default function CommentAnalysis() {
           <button
             type="button"
             onClick={refreshCommentAnalysis}
-            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+            aria-label="Refresh comments"
+            title="Refresh comments"
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
           >
-            Refresh comments
+            <RefreshCw size={16} />
           </button>
         </div>
 

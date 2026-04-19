@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import ProfileForm from "../components/profile/ProfileForm";
 import { apiUrl } from "../config/api";
 import useSessionStorageState from "../hooks/useSessionStorageState";
+import { RefreshCw } from "lucide-react";
 
 export default function Profile() {
   const [name, setName] = useSessionStorageState("profile.name", "");
@@ -150,9 +151,11 @@ export default function Profile() {
           <button
             type="button"
             onClick={refreshProfile}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+            aria-label="Refresh profile"
+            title="Refresh profile"
+            className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 p-2 text-sm font-semibold text-white transition hover:bg-white/10"
           >
-            Refresh profile
+            <RefreshCw size={16} />
           </button>
         </div>
       </div>
