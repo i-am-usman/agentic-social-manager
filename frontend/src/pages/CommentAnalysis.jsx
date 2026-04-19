@@ -1,11 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, MessageCircle, RefreshCw, Sparkles } from "lucide-react";
+import { Facebook, Instagram, Loader2, MessageCircle, RefreshCw, Sparkles, ThumbsUp } from "lucide-react";
 import useSessionStorageState from "../hooks/useSessionStorageState";
 
 const SENTIMENT_COLORS = {
   positive: "#22c55e",
   neutral: "#9ca3af",
   negative: "#ef4444",
+};
+
+const REACTION_COLORS = {
+  LIKE: "#3b82f6",
+  LOVE: "#ef4444",
+  HAHA: "#f59e0b",
+  WOW: "#8b5cf6",
+  SAD: "#06b6d4",
+  ANGRY: "#f97316",
 };
 
 const EMOTION_COLORS = ["#0ea5e9", "#f97316", "#a855f7", "#10b981", "#eab308", "#ec4899"];
@@ -33,9 +42,46 @@ function formatPercent(value, total) {
   return `${Math.round((value / total) * 100)}%`;
 }
 
+function getPlatformFrameClasses(platform) {
+  if (platform === "facebook") {
+    return {
+      outer: "border-blue-500/35 bg-gradient-to-br from-blue-500/15 via-blue-500/10 to-sky-500/15",
+      inner: "border-blue-600/40 bg-slate-950/90",
+      label: "Facebook frame",
+      labelClasses: "bg-blue-600 text-white",
+    };
+  }
+
+  return {
+    outer: "border-fuchsia-500/35 bg-gradient-to-br from-fuchsia-500/15 via-orange-400/10 to-amber-300/15",
+    inner: "border-fuchsia-500/40 bg-slate-950/90",
+    label: "Instagram frame",
+    labelClasses: "bg-gradient-to-r from-fuchsia-500 via-pink-500 to-orange-400 text-white",
+  };
+}
+
+function PlatformLogoBadge({ platform, compact = false }) {
+  const isFacebook = platform === "facebook";
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full border shadow ${
+        isFacebook
+          ? "border-blue-500/60 bg-blue-600 text-white"
+          : "border-fuchsia-500/60 bg-gradient-to-r from-fuchsia-500 via-pink-500 to-orange-400 text-white"
+      } ${compact ? "h-4 w-4" : "h-5 w-5"}`}
+      aria-label={isFacebook ? "Facebook" : "Instagram"}
+      title={isFacebook ? "Facebook" : "Instagram"}
+    >
+      {isFacebook ? <Facebook size={compact ? 10 : 12} /> : <Instagram size={compact ? 10 : 12} />}
+    </span>
+  );
+}
+
 function PieSummaryCard({ title, data, total, emptyLabel }) {
-  const size = 176;
-  const radius = 66;
+  const [hoveredSlice, setHoveredSlice] = useState(null);
+  const size = 154;
+  const radius = 56;
   const center = size / 2;
 
   if (!total) {
@@ -81,22 +127,27 @@ function PieSummaryCard({ title, data, total, emptyLabel }) {
   });
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_45px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_45px_-24px_rgba(2,6,23,0.8)]">
+    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_45px_-24px_rgba(2,6,23,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75 dark:shadow-[0_18px_45px_-24px_rgba(2,6,23,0.8)]">
       <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-cyan-400/10 blur-2xl" />
       <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-fuchsia-400/10 blur-2xl" />
-      <div className="relative">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="relative flex h-full flex-col">
+        <div className="mb-3 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">{title}</h3>
+            <h3 className="text-[13px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">{title}</h3>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Summary for the selected post</p>
           </div>
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300">100%</span>
         </div>
 
-        <div className="flex justify-center">
-          <div className="relative" style={{ width: 320, height: 260 }}>
-            <svg width="320" height="260" viewBox="0 0 320 260" className="overflow-visible">
-              <g transform="translate(72,36)">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="relative" style={{ width: 252, height: 174 }}>
+            {hoveredSlice && (
+              <div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded-full border border-slate-200 bg-slate-950/95 px-3 py-1 text-xs font-semibold text-white shadow-lg dark:border-white/10">
+                <span className="capitalize">{hoveredSlice.name}</span>
+                <span className="ml-2 text-slate-300">{hoveredSlice.percentage}%</span>
+              </div>
+            )}
+            <svg width="252" height="174" viewBox="0 0 252 174" className="overflow-visible">
+              <g transform="translate(49,9)">
                 {slices.map((slice) => (
                   <path
                     key={slice.id}
@@ -105,43 +156,25 @@ function PieSummaryCard({ title, data, total, emptyLabel }) {
                     stroke="rgba(15,23,42,0.55)"
                     strokeWidth="2"
                     className="origin-center transition-transform duration-300 hover:scale-[1.03]"
+                    onMouseEnter={() => setHoveredSlice(slice)}
+                    onMouseLeave={() => setHoveredSlice(null)}
+                    onFocus={() => setHoveredSlice(slice)}
+                    onBlur={() => setHoveredSlice(null)}
+                    tabIndex={0}
+                    role="img"
+                    aria-label={`${slice.name} ${slice.percentage}%`}
                   />
                 ))}
                 <circle cx={center} cy={center} r="30" fill="rgba(2,6,23,0.92)" />
               </g>
 
-              <g transform="translate(72,36)">
-                {slices.map((slice) => (
-                  <g key={`${slice.id}_callout`}>
-                    <circle cx={slice.connector.anchorX} cy={slice.connector.anchorY} r="3.5" fill={slice.color} />
-                    <path
-                      d={`M ${slice.connector.anchorX} ${slice.connector.anchorY} L ${slice.connector.bendX} ${slice.connector.bendY} L ${slice.connector.labelX} ${slice.connector.labelY}`}
-                      stroke={slice.color}
-                      strokeWidth="2"
-                      fill="none"
-                      strokeLinecap="round"
-                    />
-                    <foreignObject
-                      x={slice.connector.side > 0 ? slice.connector.labelX + 4 : slice.connector.labelX - 84}
-                      y={slice.connector.labelY - 16}
-                      width="80"
-                      height="38"
-                    >
-                      <div className="rounded-xl border-2 bg-white/95 px-2 py-1 text-right shadow-sm dark:bg-slate-950/95" style={{ borderColor: slice.color }}>
-                        <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">{slice.name}</p>
-                        <p className="text-lg font-black leading-4 text-slate-900 dark:text-slate-100">{slice.percentage}%</p>
-                      </div>
-                    </foreignObject>
-                  </g>
-                ))}
-              </g>
             </svg>
           </div>
         </div>
 
         <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
           {slices.map((slice) => (
-            <div key={`${slice.id}_legend`} className="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-1.5 dark:bg-white/5">
+            <div key={`${slice.id}_legend`} className="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-1 dark:bg-white/5">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: slice.color }} />
               <span className="capitalize text-slate-700 dark:text-slate-300">{slice.name}</span>
               <span className="ml-auto font-semibold text-slate-500 dark:text-slate-400">{formatPercent(slice.value, total)}</span>
@@ -322,6 +355,24 @@ export default function CommentAnalysis() {
     };
   }, [comments]);
 
+  const reactionSummary = useMemo(() => {
+    const reactionCounts = selectedPost?.reaction_counts || {};
+
+    const reactionData = Object.entries(reactionCounts)
+      .map(([name, value]) => ({
+        name: name.toLowerCase(),
+        value: Number(value) || 0,
+        color: REACTION_COLORS[name] || "#94a3b8",
+      }))
+      .filter((item) => item.value > 0)
+      .sort((a, b) => b.value - a.value);
+
+    return {
+      reactionData,
+      reactionTotal: reactionData.reduce((sum, item) => sum + item.value, 0),
+    };
+  }, [selectedPost]);
+
   const filteredPosts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return posts;
@@ -360,21 +411,25 @@ export default function CommentAnalysis() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Post selector</p>
               <p className="text-sm text-slate-600 dark:text-slate-400">Choose Facebook or Instagram content from the strip below.</p>
             </div>
-            <div className="flex gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-white/10 dark:bg-white/5">
-              {["all", "facebook", "instagram"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setFilter(tab)}
-                  className={`rounded-full px-4 py-2 text-sm capitalize transition ${
-                    filter === tab
-                      ? "bg-slate-900 text-white shadow dark:bg-white dark:text-slate-900"
-                      : "text-slate-600 hover:bg-white/10 dark:text-slate-300 dark:hover:bg-white/10"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+          </div>
+
+          <div className="flex gap-2 border-b border-slate-200 dark:border-white/10">
+            {["all", "facebook", "instagram"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setFilter(tab)}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-semibold capitalize transition ${
+                  filter === tab
+                    ? "border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                    : "text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300"
+                }`}
+              >
+                {tab === "all" && <Sparkles size={18} />}
+                {tab === "facebook" && <Facebook size={18} />}
+                {tab === "instagram" && <Instagram size={18} />}
+                {tab}
+              </button>
+            ))}
           </div>
 
           <div>
@@ -411,14 +466,19 @@ export default function CommentAnalysis() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl border ${isSelected ? "border-white/30 dark:border-white/10" : "border-slate-200 dark:border-white/10"}`}>
-                        {post.image ? (
-                          <img src={post.image} alt="Post preview" className="h-full w-full object-cover" />
-                        ) : (
-                          <div className={`flex h-full items-center justify-center text-[10px] font-semibold ${isSelected ? "bg-white/10 text-white/70 dark:bg-slate-100 dark:text-slate-900" : "bg-slate-100 text-slate-500 dark:bg-slate-800/70 dark:text-slate-300"}`}>
-                            No Image
+                      <div className={`shrink-0 rounded-xl border p-0.5 ${getPlatformFrameClasses(post.platform).outer}`}>
+                        <div className={`relative h-16 w-16 overflow-hidden rounded-[10px] border ${getPlatformFrameClasses(post.platform).inner}`}>
+                          {post.image ? (
+                            <img src={post.image} alt="Post preview" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className={`flex h-full items-center justify-center text-[10px] font-semibold ${isSelected ? "bg-white/10 text-white/70 dark:bg-slate-100 dark:text-slate-900" : "bg-slate-100 text-slate-500 dark:bg-slate-800/70 dark:text-slate-300"}`}>
+                              No Image
+                            </div>
+                          )}
+                          <div className="absolute left-1 top-1">
+                            <PlatformLogoBadge platform={post.platform} compact />
                           </div>
-                        )}
+                        </div>
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -433,6 +493,16 @@ export default function CommentAnalysis() {
                         <p className={`line-clamp-2 text-sm ${isSelected ? "text-white dark:text-slate-900" : "text-slate-700 dark:text-slate-200"}`}>
                           {post.message || post.caption || "No caption"}
                         </p>
+                        <div className={`mt-1 flex items-center gap-3 text-[11px] ${isSelected ? "text-white/80 dark:text-slate-700" : "text-slate-500 dark:text-slate-400"}`}>
+                          <span className="inline-flex items-center gap-1">
+                            <ThumbsUp size={12} />
+                            <span>{post.reactions_total ?? post.likes ?? 0}</span>
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <MessageCircle size={12} />
+                            <span>{post.comments ?? post.comments_count ?? 0}</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </button>
@@ -450,12 +520,17 @@ export default function CommentAnalysis() {
           <div className="p-4 md:p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-4">
-                <div className="h-20 w-20 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
-                  {selectedPost?.image ? (
-                    <img src={selectedPost.image} alt="Selected post preview" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[11px] font-semibold text-slate-500 dark:text-slate-400">No Image</div>
-                  )}
+                <div className={`rounded-2xl border p-1 shadow-lg ${getPlatformFrameClasses(selectedPost?.platform).outer}`}>
+                  <div className={`relative h-20 w-20 overflow-hidden rounded-[14px] border ${getPlatformFrameClasses(selectedPost?.platform).inner}`}>
+                    {selectedPost?.image ? (
+                      <img src={selectedPost.image} alt="Selected post preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[11px] font-semibold text-slate-400 dark:text-slate-200">No Image</div>
+                    )}
+                    <div className="absolute left-1 top-1">
+                      <PlatformLogoBadge platform={selectedPost?.platform} />
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Selected post</p>
@@ -489,8 +564,8 @@ export default function CommentAnalysis() {
           </div>
         )}
 
-        <div className="mx-auto mb-5 flex max-w-5xl justify-center gap-4">
-          <div className="w-full max-w-[420px]">
+        <div className="mx-auto mb-5 grid max-w-6xl grid-cols-1 items-stretch gap-4 lg:grid-cols-3 lg:items-stretch">
+          <div className="w-full">
             <PieSummaryCard
               title="Sentiment Distribution"
               data={commentSummary.sentimentData}
@@ -498,12 +573,20 @@ export default function CommentAnalysis() {
               emptyLabel="Select a post to see sentiment results."
             />
           </div>
-          <div className="w-full max-w-[420px]">
+          <div className="w-full">
             <PieSummaryCard
               title="Top Emotions"
               data={commentSummary.emotionData}
               total={commentSummary.emotionTotal}
               emptyLabel="Select a post to see emotion results."
+            />
+          </div>
+          <div className="w-full">
+            <PieSummaryCard
+              title="Reactions"
+              data={reactionSummary.reactionData}
+              total={reactionSummary.reactionTotal}
+              emptyLabel="Select a Facebook post to see reaction breakdown."
             />
           </div>
         </div>
