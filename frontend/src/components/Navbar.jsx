@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   Sparkles,
   LayoutDashboard,
+  Bot,
   Wand2,
   FileText,
   BarChart3,
@@ -75,6 +76,7 @@ export default function Navbar({ setIsAuthenticated, onLogout }) {
           <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-white/10 dark:bg-white/5">
             <NavLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
             <NavLink to="/analytics" icon={BarChart3} label="Analytics" />
+            <NavLink to="/automation" icon={Bot} label="Automation" />
             <NavLink to="/comment-analysis" icon={MessageSquare} label="Comments" />
           </div>
 

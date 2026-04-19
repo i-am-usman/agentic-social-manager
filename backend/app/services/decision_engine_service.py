@@ -416,11 +416,17 @@ class DecisionEngineService:
         platform = event.get("platform")
         event_id = str(event.get("_id"))
         event_type = event.get("event_type")
+        context = event.get("channel_context", {})
+        object_id = context.get("object_id")
 
         action_type = "dm_reply" if event_type == "dm_received" else "comment_reply"
         reply_mode = reply_mode_override or settings.get("reply_mode", "template")
 
-        idempotency_key = md5(f"action:{user_id}:{platform}:{event_id}".encode()).hexdigest()
+        # Use source object id when available so the same comment/message cannot create duplicate actions.
+        key_target = object_id or event_id
+        idempotency_key = md5(
+            f"action:{user_id}:{platform}:{action_type}:{key_target}".encode()
+        ).hexdigest()
 
         existing = automation_actions_collection.find_one({
             "user_id": user_id,
@@ -452,9 +458,14 @@ class DecisionEngineService:
         platform = event.get("platform")
         event_id = str(event.get("_id"))
         event_type = event.get("event_type")
+        context = event.get("channel_context", {})
+        object_id = context.get("object_id")
 
         action_type = "dm_reply" if event_type == "dm_received" else "comment_reply"
-        idempotency_key = md5(f"skip:{user_id}:{platform}:{event_id}".encode()).hexdigest()
+        key_target = object_id or event_id
+        idempotency_key = md5(
+            f"skip:{user_id}:{platform}:{action_type}:{key_target}".encode()
+        ).hexdigest()
 
         existing = automation_actions_collection.find_one({
             "user_id": user_id,

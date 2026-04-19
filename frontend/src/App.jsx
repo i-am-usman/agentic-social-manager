@@ -9,6 +9,7 @@ import CustomPost from "./pages/CustomPost";
 import Profile from "./pages/Profile";
 import SavedContent from "./pages/SavedContent";
 import Analytics from "./pages/Analytics";
+import Automation from "./pages/Automation";
 import ConnectAccounts from "./pages/ConnectAccounts";
 import ConnectCallback from "./pages/ConnectCallback";
 import CommentAnalysis from "./pages/CommentAnalysis";
@@ -123,6 +124,14 @@ export default function App() {
                 element={(
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
                     <Analytics />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/automation"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Automation />
                   </ProtectedRoute>
                 )}
               />
