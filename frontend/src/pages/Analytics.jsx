@@ -374,6 +374,14 @@ export default function Analytics() {
     return REACTION_EMOJI[(type || "LIKE").toUpperCase()] || "👍";
   };
 
+  const getReactionSummaryFromPost = (post) => {
+    const counts = post?.reaction_counts || {};
+    return Object.entries(counts)
+      .filter(([, count]) => Number(count) > 0)
+      .sort((a, b) => Number(b[1]) - Number(a[1]))
+      .map(([type, count]) => ({ type, count: Number(count) }));
+  };
+
   const buildSearchableText = (post) => {
     const content = `${post?.message || ""} ${post?.caption || ""}`;
     const hashtagList = Array.isArray(post?.hashtags) ? post.hashtags.join(" ") : "";
@@ -798,7 +806,29 @@ export default function Analytics() {
                   {likesError}
                 </p>
               ) : likesUsers.length === 0 ? (
-                <p className="py-8 text-center text-slate-500 dark:text-slate-400">No reactions found</p>
+                (() => {
+                  const fallbackSummary = getReactionSummaryFromPost(selectedLikesPost);
+                  if (fallbackSummary.length > 0) {
+                    return (
+                      <div className="space-y-3">
+                        <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
+                          This platform did not return individual reactor identities. Showing reaction totals instead.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {fallbackSummary.map((item) => (
+                            <span
+                              key={item.type}
+                              className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                            >
+                              {getReactionEmoji(item.type)} {item.type}: {item.count}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return <p className="py-8 text-center text-slate-500 dark:text-slate-400">No reactions found</p>;
+                })()
               ) : (
                 <div>
                   <div className="mb-3 flex flex-wrap gap-2">
