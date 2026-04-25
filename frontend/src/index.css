@@ -125,3 +125,16 @@ html:not(.light-theme) ::-webkit-scrollbar-thumb:hover {
 html.light-theme .creator-workspace-label {
   color: rgb(15 23 42);
 }
+
+/* Force all native dropdown controls to use a dark palette across pages. */
+select {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+select option,
+select optgroup {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}

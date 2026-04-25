@@ -26,6 +26,7 @@ db = client[DB_NAME]
 
 users_collection = db["users"]
 posts_collection = db["posts"]
+feedback_collection = db["feedback"]
 
 # Automation collections
 automation_settings_collection = db["automation_settings"]
@@ -36,6 +37,15 @@ poll_cursor_state_collection = db["poll_cursor_state"]
 
 def init_automation_indexes():
     """Initialize indexes for automation collections - call on app startup"""
+    feedback_collection.create_index(
+        [("created_by_user_id", 1), ("created_at", -1)]
+    )
+    feedback_collection.create_index(
+        [("feature_key", 1), ("created_at", -1)]
+    )
+    feedback_collection.create_index(
+        [("rating", 1)]
+    )
     
     # automation_settings: user + platform should be unique
     automation_settings_collection.create_index(

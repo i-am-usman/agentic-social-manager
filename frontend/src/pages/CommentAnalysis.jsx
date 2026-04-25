@@ -6,6 +6,7 @@ const SENTIMENT_COLORS = {
   positive: "#22c55e",
   neutral: "#9ca3af",
   negative: "#ef4444",
+  uncertain: "#f59e0b",
 };
 
 const REACTION_COLORS = {
@@ -306,13 +307,14 @@ export default function CommentAnalysis() {
   const sentimentStyle = (sentiment) => {
     if (sentiment === "positive") return "bg-emerald-500/10 border-emerald-400/20 text-emerald-800 dark:text-emerald-100";
     if (sentiment === "negative") return "bg-rose-500/10 border-rose-400/20 text-rose-800 dark:text-rose-100";
+    if (sentiment === "uncertain") return "bg-amber-500/10 border-amber-400/30 text-amber-900 dark:text-amber-100";
     return "bg-slate-500/10 border-slate-400/20 text-slate-700 dark:text-slate-200";
   };
 
   const commentSummary = useMemo(() => {
     const analyzedComments = collectAnalyzedComments(comments);
 
-    const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+    const sentimentCounts = { positive: 0, neutral: 0, negative: 0, uncertain: 0 };
     const emotionScores = {};
 
     for (const comment of analyzedComments) {
@@ -335,6 +337,7 @@ export default function CommentAnalysis() {
       { name: "positive", value: sentimentCounts.positive, color: SENTIMENT_COLORS.positive },
       { name: "neutral", value: sentimentCounts.neutral, color: SENTIMENT_COLORS.neutral },
       { name: "negative", value: sentimentCounts.negative, color: SENTIMENT_COLORS.negative },
+      { name: "uncertain", value: sentimentCounts.uncertain, color: SENTIMENT_COLORS.uncertain },
     ].filter((item) => item.value > 0);
 
     const emotionData = Object.entries(emotionScores)

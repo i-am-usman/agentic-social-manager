@@ -51,6 +51,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 BYTEZ_API_KEY = os.getenv("BYTEZ_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD = float(os.getenv("COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD", "0.65"))
 
 # Image hosting for Instagram (requires public URLs)
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")

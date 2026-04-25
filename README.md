@@ -6,6 +6,7 @@ Agentic Social Manager is a full-stack AI application that helps creators, marke
 
 ✅ AI-generated captions, hashtags, and images  
 ✅ Save posts as drafts, schedule, or publish  
+✅ Feature feedback hub (submit + browse + filter)  
 ✅ Per-user dashboard with live stats (Total, Drafts, Scheduled, Published)  
 ✅ JWT-based authentication & protected routes  
 ✅ Clean and responsive React UI  
@@ -105,6 +106,7 @@ JWT_SECRET=your_jwt_secret_key
 GEMINI_API_KEY=your_gemini_api_key_here
 BYTEZ_API_KEY=your_bytez_api_key_here
 BYTEZ_MODEL=stabilityai/stable-diffusion-xl-base-1.0
+COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD=0.65
 ```
 
 > ⚠️ Never commit API keys or secrets to GitHub.
@@ -150,6 +152,12 @@ Frontend runs at: `http://localhost:5173`
 - `POST /content/image` → Generate image
 - `POST /content/save` → Save generated content
 - `GET /content/stats` → Get per-user post stats
+
+### Feedback
+- `GET /feedback/features` → Available feature categories
+- `POST /feedback` → Submit feedback for a feature
+- `GET /feedback` → List feedback with paging and filters
+- `GET /feedback/summary` → Aggregate feedback counts and average ratings
 
 ---
 

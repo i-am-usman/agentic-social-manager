@@ -289,14 +289,16 @@ export default function Generate() {
   // 📌 3 — Generate Image
   // -------------------------------
   const handleGenerateImage = async () => {
-    if (!imagePrompt.trim()) return alert("Please enter an image prompt!");
+    if (!imagePrompt.trim() && !topic.trim()) {
+      return alert("Please enter a topic or image prompt!");
+    }
     setLoadingImage(true);
 
     try {
       const res = await fetch("http://127.0.0.1:8000/content/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: imagePrompt }),
+        body: JSON.stringify({ topic: imagePrompt.trim() || topic.trim() }),
       });
       const data = await res.json();
       setGeneratedImage(data.image);

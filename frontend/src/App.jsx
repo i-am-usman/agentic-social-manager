@@ -13,6 +13,7 @@ import Automation from "./pages/Automation";
 import ConnectAccounts from "./pages/ConnectAccounts";
 import ConnectCallback from "./pages/ConnectCallback";
 import CommentAnalysis from "./pages/CommentAnalysis";
+import Feedback from "./pages/Feedback";
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -148,6 +149,14 @@ export default function App() {
                 element={(
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
                     <ConnectAccounts />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/feedback"
+                element={(
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Feedback />
                   </ProtectedRoute>
                 )}
               />

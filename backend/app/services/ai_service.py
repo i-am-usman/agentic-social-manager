@@ -300,14 +300,16 @@ class AIService:
             return {"results": [], "model": model_name}
 
         prompt = (
-            "You are a sentiment and emotion analysis engine for social media comments. "
+            "You are a high-precision sentiment and emotion analysis engine for social media comments. "
+            "Prioritize correctness over coverage. If sentiment is ambiguous, use neutral with confidence <= 0.35. "
             f"Analyze every comment in the input array and return ONLY valid JSON with this exact schema: "
             '{"results":[{"id":"comment-id","sentiment":"positive|neutral|negative","confidence":0.0,"emotions":[{"name":"joy","score":0.0}],"summary":"short explanation"}]}. '
-            "Rules: return one result for every input comment id, preserve the ids exactly, use at most 4 emotions per comment, keep confidence and emotion scores between 0 and 1, and no markdown. "
-            "Language rules: comments may be English, Urdu (Arabic script), Roman Urdu, or mixed language. Auto-detect each comment language and analyze accordingly. "
-            "Always keep sentiment labels in English (positive|neutral|negative) and emotion names in English (joy, anger, sadness, fear, surprise, disgust, love, etc). "
-            "If a comment is empty, mark it neutral with confidence 0 and an empty emotions array.\n\n"
-            f"Language: {language}\n"
+            "Rules: return one result for every input comment id, preserve ids exactly, at most 4 emotions per comment, scores between 0 and 1, no markdown, no extra keys. "
+            "Language handling: comments may be English, Urdu script, Roman Urdu, or mixed. Detect language per comment before sentiment decision. "
+            "Use context cues for Urdu/Roman Urdu words like 'wah', 'shabash', 'bkwas', 'fazool', and sarcasm markers; avoid overconfident labels when meaning is uncertain. "
+            "Keep sentiment labels and emotion names in English. "
+            "If comment text is empty, return neutral with confidence 0 and empty emotions.\n\n"
+            f"Language hint: {language}\n"
             f"Comments JSON:\n{json.dumps(structured_comments, ensure_ascii=False)}"
         )
 

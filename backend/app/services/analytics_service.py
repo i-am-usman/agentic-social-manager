@@ -12,6 +12,10 @@ COMMENT_ANALYSIS_CACHE_LIMIT = 1000
 COMMENT_ANALYSIS_MAX_BATCH_CHARS = 12000
 COMMENT_ANALYSIS_MAX_BATCH_ITEMS = 30
 COMMENT_ANALYSIS_PROMPT_VERSION = "v2-multilingual-urdu"
+COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD = max(
+    0.0,
+    min(1.0, float(getattr(config, "COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD", 0.65))),
+)
 
 
 class AnalyticsService:
@@ -52,8 +56,44 @@ class AnalyticsService:
     def _cache_key_for_comment(self, comment: dict) -> str:
         comment_id = str(comment.get("id") or "")
         message = str(comment.get("message") or "")
-        raw_key = f"{COMMENT_ANALYSIS_PROMPT_VERSION}:{comment_id}:{message}".encode("utf-8")
+        platform = str(comment.get("platform") or "")
+        post_id = str(comment.get("post_id") or "")
+        raw_key = (
+            f"{COMMENT_ANALYSIS_PROMPT_VERSION}:{platform}:{post_id}:{comment_id}:{message}"
+        ).encode("utf-8")
         return hashlib.sha256(raw_key).hexdigest()
+
+    def _apply_precision_gate(self, analysis: dict, allow_empty_text_neutral: bool = False) -> dict:
+        payload = dict(analysis or {})
+        confidence = float(payload.get("confidence") or 0.0)
+        sentiment = str(payload.get("sentiment") or "neutral").lower()
+        summary = str(payload.get("summary") or "").strip()
+
+        if allow_empty_text_neutral:
+            payload["definitive"] = False
+            payload["sentiment"] = "neutral"
+            payload["summary"] = summary or "No text provided for analysis."
+            payload["confidence_threshold"] = COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD
+            return payload
+
+        if confidence < COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD:
+            payload["sentiment"] = "uncertain"
+            payload["definitive"] = False
+            payload["summary"] = summary or "Low-confidence analysis."
+            payload["summary"] = f"{payload['summary']} Marked uncertain for precision-first reporting."
+            payload["confidence_threshold"] = COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD
+            return payload
+
+        if sentiment not in {"positive", "neutral", "negative"}:
+            payload["sentiment"] = "uncertain"
+            payload["definitive"] = False
+            payload["summary"] = "Invalid sentiment label returned by model. Marked uncertain."
+            payload["confidence_threshold"] = COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD
+            return payload
+
+        payload["definitive"] = True
+        payload["confidence_threshold"] = COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD
+        return payload
 
     def _get_cached_analysis(self, comment: dict):
         cache_key = self._cache_key_for_comment(comment)
@@ -131,14 +171,19 @@ class AnalyticsService:
                         "summary": "No text provided for analysis.",
                         "model": self.groq_model,
                     }
+                    analysis = self._apply_precision_gate(analysis, allow_empty_text_neutral=True)
                 else:
                     analysis = {
-                        "sentiment": "neutral",
+                        "sentiment": "uncertain",
                         "confidence": 0.0,
                         "emotions": [],
-                        "summary": "Groq analysis unavailable for this comment.",
+                        "summary": "Groq analysis unavailable for this comment. Marked uncertain for precision-first reporting.",
                         "model": self.groq_model,
+                        "definitive": False,
+                        "confidence_threshold": COMMENT_ANALYSIS_CONFIDENCE_THRESHOLD,
                     }
+            else:
+                analysis = self._apply_precision_gate(analysis)
 
             comment["analysis"] = analysis
             self._store_cached_analysis(comment, analysis)
@@ -384,6 +429,8 @@ class AnalyticsService:
                 replies = self._get_facebook_comment_replies(comment.get("id")) if include_replies else []
                 comments.append({
                     "id": comment.get("id"),
+                    "post_id": post_id,
+                    "platform": "facebook",
                     "author": author_name,
                     "message": comment.get("message", ""),
                     "created_time": comment.get("created_time"),
@@ -421,6 +468,8 @@ class AnalyticsService:
                 replies = self._get_instagram_comment_replies(comment.get("id")) if include_replies else []
                 comments.append({
                     "id": comment.get("id"),
+                    "post_id": media_id,
+                    "platform": "instagram",
                     "author": comment.get("username", "Unknown"),
                     "message": comment.get("text", ""),
                     "created_time": comment.get("timestamp"),
@@ -460,6 +509,8 @@ class AnalyticsService:
                 author_name = author_info.get("name") or author_info.get("id") or "Facebook User"
                 replies.append({
                     "id": reply.get("id"),
+                    "post_id": comment_id,
+                    "platform": "facebook",
                     "author": author_name,
                     "message": reply.get("message", ""),
                     "created_time": reply.get("created_time"),
@@ -496,6 +547,8 @@ class AnalyticsService:
             for reply in collection.get("data", []):
                 replies.append({
                     "id": reply.get("id"),
+                    "post_id": comment_id,
+                    "platform": "instagram",
                     "author": reply.get("username", "Unknown"),
                     "message": reply.get("text", ""),
                     "created_time": reply.get("timestamp"),
