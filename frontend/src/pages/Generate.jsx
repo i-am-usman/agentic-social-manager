@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Image as ImageIcon, Wand2, Sparkles, X, Upload } from "lucide-react";
 import EditAIGeneratedModal from "../components/EditAIGeneratedModal";
 import ProgressModal from "../components/ProgressModal";
@@ -34,8 +34,63 @@ export default function Generate() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [publishJobId, setPublishJobId] = useSessionStorageState("generate.publishJobId", null);
   const [showProgress, setShowProgress] = useSessionStorageState("generate.showProgress", false);
+  const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
+  const generationControllersRef = useRef({
+    caption: null,
+    hashtags: null,
+    image: null,
+    all: null,
+  });
 
   const token = localStorage.getItem("token"); // ✅ get JWT
+  const isGenerating = loadingCaption || loadingHashtags || loadingImage || loadingAll;
+
+  const setGenerationController = (key, controller) => {
+    generationControllersRef.current[key] = controller;
+  };
+
+  const clearGenerationController = (key) => {
+    generationControllersRef.current[key] = null;
+  };
+
+  const isAbortError = (err) => err?.name === "AbortError";
+
+  const showToast = useCallback((message, tone = "info") => {
+    setToast({ message, tone });
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 2200);
+  }, []);
+
+  const stopGeneration = () => {
+    if (!isGenerating) {
+      return;
+    }
+
+    Object.values(generationControllersRef.current).forEach((controller) => {
+      if (controller) {
+        controller.abort();
+      }
+    });
+    setLoadingCaption(false);
+    setLoadingHashtags(false);
+    setLoadingImage(false);
+    setLoadingAll(false);
+    showToast("Generation stopped.", "warning");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   const fetchAccounts = useCallback(async () => {
       try {
@@ -78,6 +133,79 @@ export default function Generate() {
       return text.split(marker)[0].trim();
     }
     return text;
+  };
+
+  const promptTokens = (value) => {
+    const stopWords = new Set([
+      "the", "a", "an", "and", "or", "of", "for", "to", "in", "on", "at", "with", "by",
+      "is", "are", "be", "this", "that", "it", "my", "your", "our", "from", "as", "about",
+      "create", "make", "generate", "image", "caption", "post",
+    ]);
+
+    return (value || "")
+      .toLowerCase()
+      .match(/[a-z0-9]+/g)?.filter((token) => !stopWords.has(token)) || [];
+  };
+
+  const looksLikeGibberish = (token) => {
+    if (!token) return true;
+    const lowered = token.toLowerCase();
+
+    if (/(.)\1{3,}/.test(lowered)) {
+      return true;
+    }
+
+    if (lowered.length >= 5) {
+      const uniqueRatio = new Set(lowered).size / lowered.length;
+      const hasVowel = /[aeiou]/.test(lowered);
+      if (uniqueRatio < 0.35) {
+        return true;
+      }
+      if (!hasVowel && uniqueRatio < 0.5) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const validatePromptQuality = (value) => {
+    const text = (value || "").trim();
+    if (text.length < 12) {
+      return "Prompt is too short. Add a clear subject and context.";
+    }
+
+    const tokens = promptTokens(text);
+    if (tokens.length < 3) {
+      return "Prompt needs at least 3 meaningful words.";
+    }
+
+    if (new Set(tokens).size < 2) {
+      return "Prompt is too repetitive. Add more detail.";
+    }
+
+    const gibberishCount = tokens.filter((token) => looksLikeGibberish(token)).length;
+    if (gibberishCount >= Math.max(2, Math.ceil(tokens.length / 2))) {
+      return "Prompt looks invalid or gibberish. Use clear words describing a real idea.";
+    }
+
+    return null;
+  };
+
+  const validatePromptAlignment = (topicValue, imagePromptValue) => {
+    const topicText = (topicValue || "").trim();
+    const imageText = (imagePromptValue || "").trim();
+    if (!topicText || !imageText) {
+      return null;
+    }
+
+    const topicSet = new Set(promptTokens(topicText));
+    const imageSet = new Set(promptTokens(imageText));
+    const hasOverlap = [...topicSet].some((token) => imageSet.has(token));
+    if (!hasOverlap) {
+      return "Image prompt should align with topic so caption and image describe the same idea.";
+    }
+    return null;
   };
 
   // ✅ Helper: File size validation
@@ -235,13 +363,18 @@ export default function Generate() {
   // -------------------------------
   const handleGenerateCaption = async () => {
     if (!topic.trim()) return alert("Please enter a topic!");
+    const promptError = validatePromptQuality(topic);
+    if (promptError) return alert(promptError);
     setLoadingCaption(true);
+    const controller = new AbortController();
+    setGenerationController("caption", controller);
 
     try {
       const res = await fetch(apiUrl("/content/caption"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, language }),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (data.status === "success" && data.caption) {
@@ -252,10 +385,14 @@ export default function Generate() {
         alert(data.detail || "Failed to generate caption");
       }
     } catch (err) {
+      if (isAbortError(err)) {
+        return;
+      }
       alert("Error generating caption: " + err.message);
+    } finally {
+      clearGenerationController("caption");
+      setLoadingCaption(false);
     }
-
-    setLoadingCaption(false);
   };
 
   // -------------------------------
@@ -263,13 +400,18 @@ export default function Generate() {
   // -------------------------------
   const handleGenerateHashtags = async () => {
     if (!topic.trim()) return alert("Please enter a topic!");
+    const promptError = validatePromptQuality(topic);
+    if (promptError) return alert(promptError);
     setLoadingHashtags(true);
+    const controller = new AbortController();
+    setGenerationController("hashtags", controller);
 
     try {
       const res = await fetch(apiUrl("/content/hashtags"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, count: 6 }),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (data.status === "success" && Array.isArray(data.hashtags)) {
@@ -279,11 +421,15 @@ export default function Generate() {
         setHashtags([]);
       }
     } catch (err) {
+      if (isAbortError(err)) {
+        return;
+      }
       alert("Error generating hashtags: " + err.message);
       setHashtags([]);
+    } finally {
+      clearGenerationController("hashtags");
+      setLoadingHashtags(false);
     }
-
-    setLoadingHashtags(false);
   };
 
   // -------------------------------
@@ -293,21 +439,33 @@ export default function Generate() {
     if (!imagePrompt.trim() && !topic.trim()) {
       return alert("Please enter a topic or image prompt!");
     }
+    const selectedPrompt = imagePrompt.trim() || topic.trim();
+    const promptError = validatePromptQuality(selectedPrompt);
+    if (promptError) return alert(promptError);
+    const alignmentError = validatePromptAlignment(topic, imagePrompt);
+    if (alignmentError) return alert(alignmentError);
     setLoadingImage(true);
+    const controller = new AbortController();
+    setGenerationController("image", controller);
 
     try {
       const res = await fetch(apiUrl("/content/image"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: imagePrompt.trim() || topic.trim() }),
+        signal: controller.signal,
       });
       const data = await res.json();
       setGeneratedImage(data.image);
     } catch (err) {
+      if (isAbortError(err)) {
+        return;
+      }
       alert("Error generating image!");
+    } finally {
+      clearGenerationController("image");
+      setLoadingImage(false);
     }
-
-    setLoadingImage(false);
   };
 
   // -------------------------------
@@ -315,13 +473,20 @@ export default function Generate() {
   // -------------------------------
   const handleGenerateAll = async () => {
     if (!topic.trim()) return alert("Please enter a topic!");
+    const promptError = validatePromptQuality(topic);
+    if (promptError) return alert(promptError);
+    const alignmentError = validatePromptAlignment(topic, imagePrompt);
+    if (alignmentError) return alert(alignmentError);
     setLoadingAll(true);
+    const controller = new AbortController();
+    setGenerationController("all", controller);
 
     try {
       const res = await fetch(apiUrl("/content/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, language }),
+        signal: controller.signal,
       });
       const data = await res.json();
 
@@ -350,10 +515,14 @@ export default function Generate() {
         alert(data.detail || "Failed to generate content");
       }
     } catch (err) {
+      if (isAbortError(err)) {
+        return;
+      }
       alert("Error generating full content: " + err.message);
+    } finally {
+      clearGenerationController("all");
+      setLoadingAll(false);
     }
-
-    setLoadingAll(false);
   };
 
   // -------------------------------
@@ -857,6 +1026,15 @@ export default function Generate() {
               {loadingAll ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />}
               {loadingAll ? "Generating..." : "Generate All"}
             </button>
+
+            <button
+              onClick={stopGeneration}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+              disabled={!isGenerating}
+            >
+              <X size={18} />
+              Stop
+            </button>
           </div>
 
           {/* BUTTONS */}
@@ -1021,6 +1199,20 @@ export default function Generate() {
           onComplete={handleProgressComplete}
           onClose={handleProgressClose}
         />
+      )}
+
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50">
+          <div
+            className={`rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg backdrop-blur ${
+              toast.tone === "warning"
+                ? "border-amber-300/40 bg-amber-500/15 text-amber-100"
+                : "border-indigo-300/30 bg-indigo-500/15 text-indigo-100"
+            }`}
+          >
+            {toast.message}
+          </div>
+        </div>
       )}
     </div>
   );

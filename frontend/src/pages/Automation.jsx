@@ -229,7 +229,7 @@ export default function Automation() {
           <span className="ml-3 text-slate-600 dark:text-slate-400">Loading automation settings...</span>
         </div>
       ) : (
-        <>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <AutoReplySettingsPanel
             platform="facebook"
             settings={facebookSettings}
@@ -257,7 +257,7 @@ export default function Automation() {
             onUpdateDMDelay={(delay) => updateInstagramSettings({ dm_reply_delay_minutes: delay })}
             isLoading={settingsLoading}
           />
-        </>
+        </div>
       )}
     </div>
   );

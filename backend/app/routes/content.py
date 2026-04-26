@@ -8,6 +8,7 @@ from app.models import GeneratedContent
 from app.services.dependencies import get_current_user
 from app.services.image_service import ImageService
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/content", tags=["Content"])
@@ -39,6 +40,66 @@ class ImageRequest(BaseModel):
 class SentimentRequest(BaseModel):
     text: str
     language: str = "english"
+
+
+_COMMON_PROMPT_STOPWORDS = {
+    "the", "a", "an", "and", "or", "of", "for", "to", "in", "on", "at", "with", "by",
+    "is", "are", "be", "this", "that", "it", "my", "your", "our", "from", "as", "about",
+    "create", "make", "generate", "image", "caption", "post",
+}
+
+
+def _looks_like_gibberish(token: str) -> bool:
+    if not token:
+        return True
+
+    lowered = token.lower()
+    if re.search(r"(.)\1{3,}", lowered):
+        return True
+
+    if len(lowered) >= 5:
+        unique_ratio = len(set(lowered)) / len(lowered)
+        has_vowel = bool(re.search(r"[aeiou]", lowered))
+        if unique_ratio < 0.35:
+            return True
+        if not has_vowel and unique_ratio < 0.5:
+            return True
+
+    return False
+
+
+def _tokenize_prompt(value: str) -> list[str]:
+    tokens = re.findall(r"[a-zA-Z0-9]+", value.lower())
+    return [token for token in tokens if token and token not in _COMMON_PROMPT_STOPWORDS]
+
+
+def _validate_prompt_quality(prompt: str):
+    value = (prompt or "").strip()
+    if len(value) < 12:
+        raise HTTPException(
+            status_code=400,
+            detail="Prompt is too short. Describe a clear subject and context for both caption and image.",
+        )
+
+    tokens = _tokenize_prompt(value)
+    if len(tokens) < 3:
+        raise HTTPException(
+            status_code=400,
+            detail="Prompt needs at least 3 meaningful words so caption and image generation make sense.",
+        )
+
+    if len(set(tokens)) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="Prompt is too repetitive. Add more specific context.",
+        )
+
+    gibberish_count = sum(1 for token in tokens if _looks_like_gibberish(token))
+    if gibberish_count >= max(2, (len(tokens) + 1) // 2):
+        raise HTTPException(
+            status_code=400,
+            detail="Prompt looks invalid or gibberish. Use clear words describing a real idea for caption and image.",
+        )
 
 
 
@@ -136,6 +197,7 @@ def save_content(content: GeneratedContent, user: dict = Depends(get_current_use
 async def generate_content(request: ContentRequest):
     """Generate complete social media content (caption + hashtags + image)"""
     try:
+        _validate_prompt_quality(request.topic)
         content = AIService.generate_full_content(request.topic, request.language)
         return {"status": "success", "data": content}
     except Exception as e:
@@ -146,6 +208,7 @@ async def generate_content(request: ContentRequest):
 async def generate_caption(request: CaptionRequest):
     """Generate only caption"""
     try:
+        _validate_prompt_quality(request.topic)
         caption = AIService.generate_caption(request.topic, request.language)
         return {"status": "success", "caption": caption}
     except Exception as e:
@@ -156,6 +219,7 @@ async def generate_caption(request: CaptionRequest):
 async def generate_hashtags(request: HashtagRequest):
     """Generate only hashtags"""
     try:
+        _validate_prompt_quality(request.topic)
         hashtags = AIService.generate_hashtags(request.topic, request.count)
         return {"status": "success", "hashtags": hashtags}
     except Exception as e:
@@ -166,6 +230,7 @@ async def generate_hashtags(request: HashtagRequest):
 async def generate_image(request: ImageRequest):
     """Generate or fetch only image"""
     try:
+        _validate_prompt_quality(request.topic)
         image = AIService.generate_image(request.topic)
         return {"status": "success", "image": image}
     except Exception as e:
