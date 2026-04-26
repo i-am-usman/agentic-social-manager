@@ -78,5 +78,5 @@ pytz==2024.1
 # --- Media Hosting ---
 cloudinary==1.36.0
 python-multipart==0.0.22
-Pillow==10.2.0  # Image processing and validation
+Pillow==11.2.1  # Image processing and validation
 
