@@ -14,6 +14,9 @@ import ConnectAccounts from "./pages/ConnectAccounts";
 import ConnectCallback from "./pages/ConnectCallback";
 import CommentAnalysis from "./pages/CommentAnalysis";
 import Feedback from "./pages/Feedback";
+import AdminLogin from "./pages/AdminLogin";
+import AdminRegister from "./pages/AdminRegister";
+import AdminFeedback from "./pages/AdminFeedback";
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -33,13 +36,19 @@ function ProtectedRoute({ isAuthenticated, children }) {
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const isAdminPath = window.location.pathname.startsWith("/admin");
 
   // ✅ Check token on app load
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       setIsAuthenticated(true);
+    }
+    const adminToken = localStorage.getItem("adminToken");
+    if (adminToken) {
+      setIsAdminAuthenticated(true);
     }
     setAuthChecked(true);
   }, []);
@@ -48,6 +57,12 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setIsAuthenticated(false);
+  };
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminRole");
+    setIsAdminAuthenticated(false);
   };
 
   return (
@@ -60,7 +75,7 @@ export default function App() {
             </div>
           ) : (
             <>
-              {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} onLogout={handleLogout} />}
+              {isAuthenticated && !isAdminPath && <Navbar setIsAuthenticated={setIsAuthenticated} onLogout={handleLogout} />}
 
               <Routes>
               <Route
@@ -161,6 +176,27 @@ export default function App() {
                 )}
               />
               <Route path="/connect/callback" element={<ConnectCallback />} />
+
+              <Route
+                path="/admin/login"
+                element={(
+                  isAdminAuthenticated ? <Navigate to="/admin/feedback" replace /> : <AdminLogin setIsAdminAuthenticated={setIsAdminAuthenticated} />
+                )}
+              />
+              <Route
+                path="/admin/register"
+                element={<AdminRegister />}
+              />
+              <Route
+                path="/admin/feedback"
+                element={(
+                  isAdminAuthenticated ? (
+                    <AdminFeedback onLogout={handleAdminLogout} />
+                  ) : (
+                    <Navigate to="/admin/login" replace />
+                  )
+                )}
+              />
 
               <Route
                 path="/"

@@ -3,6 +3,7 @@ import { Loader2, Image as ImageIcon, Wand2, Sparkles, X, Upload } from "lucide-
 import EditAIGeneratedModal from "../components/EditAIGeneratedModal";
 import ProgressModal from "../components/ProgressModal";
 import useSessionStorageState from "../hooks/useSessionStorageState";
+import { apiUrl } from "../config/api";
 
 export default function Generate() {
   const [topic, setTopic] = useSessionStorageState("generate.topic", "");
@@ -38,7 +39,7 @@ export default function Generate() {
 
   const fetchAccounts = useCallback(async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/accounts/me", {
+        const res = await fetch(apiUrl("/accounts/me"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -201,7 +202,7 @@ export default function Generate() {
 
     setLoadingAnalysis(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/content/analyze", {
+      const res = await fetch(apiUrl("/content/analyze"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: value, language }),
@@ -237,7 +238,7 @@ export default function Generate() {
     setLoadingCaption(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/content/caption", {
+      const res = await fetch(apiUrl("/content/caption"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, language }),
@@ -265,7 +266,7 @@ export default function Generate() {
     setLoadingHashtags(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/content/hashtags", {
+      const res = await fetch(apiUrl("/content/hashtags"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, count: 6 }),
@@ -295,7 +296,7 @@ export default function Generate() {
     setLoadingImage(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/content/image", {
+      const res = await fetch(apiUrl("/content/image"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: imagePrompt.trim() || topic.trim() }),
@@ -317,7 +318,7 @@ export default function Generate() {
     setLoadingAll(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/content/generate", {
+      const res = await fetch(apiUrl("/content/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, language }),
@@ -402,7 +403,7 @@ export default function Generate() {
         });
       }
 
-      const res = await fetch("http://127.0.0.1:8000/content/save", {
+      const res = await fetch(apiUrl("/content/save"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -500,9 +501,7 @@ export default function Generate() {
         });
       }
 
-      const saveRes = await fetch(
-        "http://127.0.0.1:8000/content/save",
-        {
+      const saveRes = await fetch(apiUrl("/content/save"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -529,9 +528,7 @@ export default function Generate() {
       const postId = saveData.id;
 
       // Step 2: Start publishing job
-      const publishRes = await fetch(
-        "http://127.0.0.1:8000/posts/publish",
-        {
+      const publishRes = await fetch(apiUrl("/posts/publish"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

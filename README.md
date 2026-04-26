@@ -159,6 +159,12 @@ Frontend runs at: `http://localhost:5173`
 - `GET /feedback` → List feedback with paging and filters
 - `GET /feedback/summary` → Aggregate feedback counts and average ratings
 
+### Admin
+- `ADMIN_REGISTRATION_SECRET` in `backend/.env` enables invite-only admin registration
+- Frontend route: `/admin/register`
+- `GET /admin/feedback` → Admin-only feedback console data
+- Frontend route: `/admin/login` and `/admin/feedback`
+
 ---
 
 ## 📊 Dashboard Stats
@@ -188,16 +194,18 @@ npm test
 
 ## 🚀 Deployment
 
-**Backend**
-- Render
-- Railway
-- Docker
-- AWS Lambda + API Gateway
+### Vercel Frontend
 
-**Frontend**
-- Netlify
-- Vercel
-- GitHub Pages (static)
+1. Set the Vercel project root directory to `frontend`.
+2. Add `REACT_APP_API_BASE_URL` in Vercel and point it at your deployed backend.
+3. Deploy with the existing `npm run build` script; the output directory is `build`.
+4. The included Vercel rewrite keeps client-side routes like `/dashboard` and `/connect/callback` working on refresh.
+
+### Backend Hosting
+
+This FastAPI backend is not a good fit for Vercel serverless because it starts a scheduler on startup. Deploy it separately on Render, Railway, Docker, or another always-on host, then point the Vercel frontend at that backend with `REACT_APP_API_BASE_URL`.
+
+For OAuth, set `META_REDIRECT_URI` on the backend to `https://<your-vercel-domain>/connect/callback`, and set `LINKEDIN_REDIRECT_URI` to the backend callback URL on your chosen host.
 
 ---
 

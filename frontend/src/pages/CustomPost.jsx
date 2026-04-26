@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Loader2, Upload, X, Save } from "lucide-react";
 import ProgressModal from "../components/ProgressModal";
 import useSessionStorageState from "../hooks/useSessionStorageState";
+import { apiUrl } from "../config/api";
 
 export default function CustomPost() {
   const [title, setTitle] = useSessionStorageState("custom-post.title", "");
@@ -26,7 +27,7 @@ export default function CustomPost() {
 
   const fetchAccounts = useCallback(async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/accounts/me", {
+        const res = await fetch(apiUrl("/accounts/me"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -199,7 +200,7 @@ export default function CustomPost() {
         order: item.order,
       }));
 
-      const res = await fetch("http://127.0.0.1:8000/content/save", {
+      const res = await fetch(apiUrl("/content/save"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -270,9 +271,7 @@ export default function CustomPost() {
         order: item.order,
       }));
 
-      const saveRes = await fetch(
-        "http://127.0.0.1:8000/content/save",
-        {
+      const saveRes = await fetch(apiUrl("/content/save"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -302,9 +301,7 @@ export default function CustomPost() {
       const postId = saveData.id;
 
       // Step 2: Start publishing job
-      const publishRes = await fetch(
-        "http://127.0.0.1:8000/posts/publish",
-        {
+      const publishRes = await fetch(apiUrl("/posts/publish"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

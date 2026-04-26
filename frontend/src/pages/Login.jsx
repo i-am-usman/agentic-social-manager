@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { ArrowRight, Bot, KeyRound, Loader2, Lock, Mail, Moon, ShieldCheck, Sparkles, Sun } from "lucide-react";
 import AuthShell from "../components/AuthShell";
 import { useTheme } from "../context/ThemeContext";
+import { apiUrl } from "../config/api";
 
 export default function Login({ setIsAuthenticated }) {
   const passwordInputRef = useRef(null);
@@ -80,7 +81,7 @@ export default function Login({ setIsAuthenticated }) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/auth/login", {
+      const res = await fetch(apiUrl("/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -92,7 +93,7 @@ export default function Login({ setIsAuthenticated }) {
         setIsAuthenticated(true);
 
         try {
-          const statsRes = await fetch("http://127.0.0.1:8000/posts/stats", {
+          const statsRes = await fetch(apiUrl("/posts/stats"), {
             headers: { Authorization: `Bearer ${data.access_token}` },
           });
           const statsData = await statsRes.json();
@@ -136,7 +137,7 @@ export default function Login({ setIsAuthenticated }) {
 
     setResetLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
+      const res = await fetch(apiUrl("/auth/forgot-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: resetEmail }),
@@ -189,7 +190,7 @@ export default function Login({ setIsAuthenticated }) {
 
     setResetLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/auth/reset-password/confirm", {
+      const res = await fetch(apiUrl("/auth/reset-password/confirm"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -258,12 +259,20 @@ export default function Login({ setIsAuthenticated }) {
         </button>
       )}
       footer={(
-        <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
-          Dont have an account?{" "}
-          <Link to="/register" className="font-semibold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200">
-            Register
-          </Link>
-        </p>
+        <div className="mt-6 space-y-2 text-center text-sm text-slate-600 dark:text-slate-300">
+          <p>
+            Dont have an account?{" "}
+            <Link to="/register" className="font-semibold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200">
+              Register
+            </Link>
+          </p>
+          <p>
+            Admin access?{" "}
+            <Link to="/admin/login" className="font-semibold text-slate-900 transition-colors hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300">
+              Open admin panel
+            </Link>
+          </p>
+        </div>
       )}
     >
       <form onSubmit={handleLogin} className="space-y-4">

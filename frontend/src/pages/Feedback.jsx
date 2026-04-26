@@ -18,6 +18,28 @@ const DEFAULT_FEATURES = [
 export default function Feedback() {
   const token = localStorage.getItem("token");
 
+  const formatApiError = useCallback((detail, fallback = "Request failed.") => {
+    if (Array.isArray(detail)) {
+      return detail
+        .map((item) => {
+          const path = Array.isArray(item?.loc) ? item.loc.slice(1).join(".") : "";
+          const message = item?.msg || "Invalid input";
+          return path ? `${path}: ${message}` : message;
+        })
+        .join(" ");
+    }
+
+    if (typeof detail === "string") {
+      return detail;
+    }
+
+    if (detail && typeof detail === "object") {
+      return detail.msg || detail.message || fallback;
+    }
+
+    return fallback;
+  }, []);
+
   const [featureOptions, setFeatureOptions] = useState(DEFAULT_FEATURES);
   const [featureKey, setFeatureKey] = useState("dashboard");
   const [featureCustom, setFeatureCustom] = useState("");
@@ -65,6 +87,33 @@ export default function Feedback() {
     setLoadingList(true);
     setFeedbackNotice(null);
 
+    const parsedMin = filterMinRating === "" ? null : Number(filterMinRating);
+    const parsedMax = filterMaxRating === "" ? null : Number(filterMaxRating);
+
+    if (parsedMin !== null && (!Number.isFinite(parsedMin) || parsedMin < 1 || parsedMin > 5)) {
+      setItems([]);
+      setSummary(null);
+      setFeedbackNotice({ type: "error", text: "Min rating must be between 1 and 5." });
+      setLoadingList(false);
+      return;
+    }
+
+    if (parsedMax !== null && (!Number.isFinite(parsedMax) || parsedMax < 1 || parsedMax > 5)) {
+      setItems([]);
+      setSummary(null);
+      setFeedbackNotice({ type: "error", text: "Max rating must be between 1 and 5." });
+      setLoadingList(false);
+      return;
+    }
+
+    if (parsedMin !== null && parsedMax !== null && parsedMin > parsedMax) {
+      setItems([]);
+      setSummary(null);
+      setFeedbackNotice({ type: "error", text: "Min rating cannot be greater than max rating." });
+      setLoadingList(false);
+      return;
+    }
+
     const params = new URLSearchParams();
     params.set("page", String(nextPage));
     params.set("limit", String(limit));
@@ -95,7 +144,10 @@ export default function Feedback() {
         setItems(listData.data?.items || []);
       } else {
         setItems([]);
-        setFeedbackNotice({ type: "error", text: listData.detail || "Failed to load feedback." });
+        setFeedbackNotice({
+          type: "error",
+          text: formatApiError(listData?.detail, "Failed to load feedback."),
+        });
       }
 
       if (summaryRes.ok && summaryData.status === "success") {
@@ -110,7 +162,7 @@ export default function Feedback() {
     }
 
     setLoadingList(false);
-  }, [filterFeature, filterMaxRating, filterMinRating, limit, token]);
+  }, [filterFeature, filterMaxRating, filterMinRating, formatApiError, limit, token]);
 
   useEffect(() => {
     loadFeatures();
@@ -151,7 +203,10 @@ export default function Feedback() {
 
       const data = await res.json();
       if (!res.ok || data.status !== "success") {
-        setFeedbackNotice({ type: "error", text: data.detail || "Unable to submit feedback." });
+        setFeedbackNotice({
+          type: "error",
+          text: formatApiError(data?.detail, "Unable to submit feedback."),
+        });
       } else {
         setFeedbackNotice({ type: "success", text: "Feedback submitted. Thank you!" });
         setFeedbackText("");

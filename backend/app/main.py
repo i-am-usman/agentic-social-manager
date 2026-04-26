@@ -13,6 +13,7 @@ from app.routes.linkedin_analytics import router as linkedin_analytics_router
 from app.routes.facebook_analytics import router as facebook_analytics_router
 from app.routes.instagram_analytics import router as instagram_analytics_router
 from app.routes.feedback import router as feedback_router
+from app.routes.admin import router as admin_router
 from app.services.scheduler import start_scheduler, shutdown_scheduler
 from app.services.database import init_automation_indexes
 
@@ -54,6 +55,7 @@ app.include_router(linkedin_analytics_router)
 app.include_router(facebook_analytics_router)
 app.include_router(instagram_analytics_router)
 app.include_router(feedback_router)
+app.include_router(admin_router)
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import { apiUrl } from '../config/api';
 
 const ProgressModal = ({ jobId, onComplete, onClose }) => {
   const [jobStatus, setJobStatus] = useState(null);
@@ -24,7 +25,7 @@ const ProgressModal = ({ jobId, onComplete, onClose }) => {
       try {
         const controller = new AbortController();
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8000/posts/status/${jobId}`, {
+        const response = await fetch(apiUrl(`/posts/status/${jobId}`), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

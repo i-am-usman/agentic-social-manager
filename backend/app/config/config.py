@@ -17,6 +17,9 @@ RESET_RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RESET_RATE_LIMIT_MAX_REQUESTS", 5
 # In local development, returning the token helps test the flow without an email provider.
 RESET_TOKEN_DEV_RETURN = os.getenv("RESET_TOKEN_DEV_RETURN", "true").lower() == "true"
 
+# Admin bootstrap / registration gate
+ADMIN_REGISTRATION_SECRET = os.getenv("ADMIN_REGISTRATION_SECRET")
+
 GRAPH_API_VERSION = os.getenv("GRAPH_API_VERSION", "v21.0")
 
 # Meta OAuth configuration

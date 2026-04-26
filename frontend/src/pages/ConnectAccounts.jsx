@@ -47,6 +47,8 @@ export default function ConnectAccounts() {
     }
   }, []);
 
+  const redirectUri = `${window.location.origin}/connect/callback`;
+
   const fetchAccounts = useCallback(async () => {
     if (!token) return;
     try {
@@ -101,7 +103,7 @@ export default function ConnectAccounts() {
         const message = toMessage(data?.detail || data?.message || "Unable to start Meta login.");
         if (message.toLowerCase().includes("meta oauth configuration")) {
           setOauthSetupHint(
-            "Check backend/.env for META_APP_ID and META_APP_SECRET, then ensure Meta App Dashboard uses the ngrok callback URL exactly."
+            "Check backend/.env for META_APP_ID and META_APP_SECRET, then ensure Meta App Dashboard uses the deployed callback URL exactly."
           );
         }
         throw new Error(message);
@@ -178,7 +180,7 @@ export default function ConnectAccounts() {
                 Click once to open official Meta login, approve permissions, and automatically link your page assets.
               </p>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                Redirect URI expected: <span className="font-semibold">http://localhost:3000/connect/callback</span>
+                Redirect URI expected: <span className="font-semibold">{redirectUri}</span>
               </p>
             </div>
 

@@ -30,3 +30,10 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired or invalid")
+
+
+def get_current_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    user = get_current_user(credentials)
+    if str(user.get("role") or "user").lower() != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return user

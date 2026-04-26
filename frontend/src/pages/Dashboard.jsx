@@ -7,6 +7,7 @@ import BestTimeToPostWidget from "../components/BestTimeToPostWidget";
 import AnomalyAlertPanel from "../components/AnomalyAlertPanel";
 import BorderGlow from "../components/BorderGlow";
 import useSessionStorageState from "../hooks/useSessionStorageState";
+import { apiUrl } from "../config/api";
 
 import {
   Bot,
@@ -42,7 +43,7 @@ export default function Dashboard() {
       setLoading(true);
     }
 
-    return fetch(`http://127.0.0.1:8000/analytics/dashboard?range_days=${rangeDays}`, {
+    return fetch(apiUrl(`/analytics/dashboard?range_days=${rangeDays}`), {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

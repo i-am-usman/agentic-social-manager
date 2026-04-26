@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Loader2, ThumbsUp, MessageCircle, Share2, ExternalLink, Instagram, Facebook, Linkedin, RefreshCw } from "lucide-react";
 import useSessionStorageState from "../hooks/useSessionStorageState";
+import { apiUrl } from "../config/api";
 
 const REACTION_EMOJI = {
   LIKE: "👍",
@@ -42,13 +43,13 @@ export default function Analytics() {
     setError(null);
 
     try {
-      let endpoint = "http://127.0.0.1:8000/analytics/all";
+      let endpoint = apiUrl("/analytics/all");
       if (filter === "facebook") {
-        endpoint = "http://127.0.0.1:8000/analytics/facebook";
+        endpoint = apiUrl("/analytics/facebook");
       } else if (filter === "instagram") {
-        endpoint = "http://127.0.0.1:8000/analytics/instagram";
+        endpoint = apiUrl("/analytics/instagram");
       } else if (filter === "linkedin") {
-        endpoint = "http://127.0.0.1:8000/analytics/linkedin/posts";
+        endpoint = apiUrl("/analytics/linkedin/posts");
       }
 
       const res = await fetch(endpoint, {
@@ -112,7 +113,7 @@ export default function Analytics() {
     setLoadingComments(true);
     try {
       const res = await fetch(
-        `http://127.0.0.1:8000/analytics/comments/${postId}?platform=${platform}`,
+        apiUrl(`/analytics/comments/${postId}?platform=${platform}`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -150,7 +151,7 @@ export default function Analytics() {
     setLikesError("");
     try {
       const res = await fetch(
-        `http://127.0.0.1:8000/analytics/likes/${postId}?platform=${platform}`,
+        apiUrl(`/analytics/likes/${postId}?platform=${platform}`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -194,7 +195,7 @@ export default function Analytics() {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:8000/analytics/comments/${commentId}/replies?platform=${selectedPost.platform}`,
+        apiUrl(`/analytics/comments/${commentId}/replies?platform=${selectedPost.platform}`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -309,7 +310,7 @@ export default function Analytics() {
       });
 
       const res = await fetch(
-        `http://127.0.0.1:8000/analytics/comments/${commentId}/reply?${params.toString()}`,
+        apiUrl(`/analytics/comments/${commentId}/reply?${params.toString()}`),
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

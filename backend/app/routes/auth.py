@@ -74,6 +74,7 @@ def register_user(user: UserRegister):
         "email": normalized_email,
         "username": user.username,
         "password": hashed_pw,
+        "role": "user",
         "created_at": datetime.utcnow()
     })
     return {"message": "User registered successfully"}
@@ -94,7 +95,7 @@ def login_user(user: UserLogin):
 
     #  Use MongoDB _id in token
     token = create_jwt_token(str(existing["_id"]))
-    return {"access_token": token, "token_type": "bearer"}
+    return {"access_token": token, "token_type": "bearer", "role": existing.get("role", "user")}
 
 @router.post("/forgot-password")
 def request_password_reset(payload: ForgotPasswordRequest, request: Request):

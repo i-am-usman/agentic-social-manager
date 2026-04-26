@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Facebook, Instagram, Loader2, MessageCircle, RefreshCw, Sparkles, ThumbsUp } from "lucide-react";
 import useSessionStorageState from "../hooks/useSessionStorageState";
+import { apiUrl } from "../config/api";
 
 const SENTIMENT_COLORS = {
   positive: "#22c55e",
@@ -209,11 +210,11 @@ export default function CommentAnalysis() {
     setError(null);
 
     try {
-      let endpoint = "http://127.0.0.1:8000/analytics/all";
+      let endpoint = apiUrl("/analytics/all");
       if (filter === "facebook") {
-        endpoint = "http://127.0.0.1:8000/analytics/facebook";
+        endpoint = apiUrl("/analytics/facebook");
       } else if (filter === "instagram") {
-        endpoint = "http://127.0.0.1:8000/analytics/instagram";
+        endpoint = apiUrl("/analytics/instagram");
       }
 
       const res = await fetch(endpoint, {
@@ -254,7 +255,7 @@ export default function CommentAnalysis() {
     try {
       const replyQuery = replyFlag ? "&include_replies=true" : "";
       const res = await fetch(
-        `http://127.0.0.1:8000/analytics/comments/${post.id}?platform=${post.platform}&include_analysis=true${replyQuery}`,
+        apiUrl(`/analytics/comments/${post.id}?platform=${post.platform}&include_analysis=true${replyQuery}`),
         {
           headers: { Authorization: `Bearer ${token}` },
         }
