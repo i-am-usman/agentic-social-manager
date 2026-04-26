@@ -69,7 +69,7 @@ export default function SavedContent() {
     } catch (_err) {
       // Keep defaults on failure.
     }
-  }, []);
+  }, [setConnectedAccounts]);
 
   const fetchSavedPosts = useCallback(async (options = {}) => {
     const background = Boolean(options.background);
@@ -108,7 +108,7 @@ export default function SavedContent() {
         setLoading(false);
       }
     }
-  }, [setHasLoadedSavedContent]);
+  }, [setHasLoadedSavedContent, setPosts, setSelectedPlatforms]);
 
   useEffect(() => {
     if (hasLoadedSavedContent) {

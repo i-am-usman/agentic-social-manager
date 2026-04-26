@@ -94,7 +94,7 @@ export default function Analytics() {
     if (!background) {
       setLoading(false);
     }
-  }, [filter, token, setHasLoadedAnalytics]);
+  }, [filter, token, setHasLoadedAnalytics, setPosts]);
 
   useEffect(() => {
     if (hasLoadedAnalytics) {
@@ -182,7 +182,7 @@ export default function Analytics() {
     setLikesError("");
   };
 
-  const fetchCommentReplies = async (commentId) => {
+  const fetchCommentReplies = useCallback(async (commentId) => {
     if (!selectedPost) return;
 
     setComments((prev) =>
@@ -244,7 +244,7 @@ export default function Analytics() {
         )
       );
     }
-  };
+  }, [selectedPost, token, setComments]);
 
   const toggleReplies = async (commentId) => {
     const isExpanded = Boolean(expandedReplies[commentId]);
@@ -291,7 +291,7 @@ export default function Analytics() {
     return () => {
       cancelled = true;
     };
-  }, [prefetchRepliesEnabled, selectedPost, comments]);
+  }, [prefetchRepliesEnabled, selectedPost, comments, fetchCommentReplies]);
 
   const handleReply = async (commentId) => {
     if (!selectedPost) return;

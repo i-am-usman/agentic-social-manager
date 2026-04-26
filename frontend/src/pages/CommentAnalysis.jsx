@@ -240,7 +240,7 @@ export default function CommentAnalysis() {
     if (!background) {
       setLoadingPosts(false);
     }
-  }, [filter, token, setHasLoadedPosts]);
+  }, [filter, token, setHasLoadedPosts, setPosts]);
 
   const fetchComments = async (post, replyFlag = includeReplies, options = {}) => {
     const background = Boolean(options.background);

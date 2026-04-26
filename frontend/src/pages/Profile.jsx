@@ -33,7 +33,7 @@ export default function Profile() {
       } catch (error) {
         setProfileStatus({ loading: false, message: "Failed to fetch profile.", type: "error" });
       }
-  }, []);
+  }, [setName, setBio, setInterests]);
 
   useEffect(() => {
     fetchProfile();
@@ -58,7 +58,7 @@ export default function Profile() {
       } catch (error) {
         setProfileStatus({ loading: false, message: "Failed to fetch connected accounts.", type: "error" });
       }
-  }, []);
+  }, [setConnectedAccounts]);
 
   useEffect(() => {
     fetchAccounts();
@@ -79,7 +79,7 @@ export default function Profile() {
       } catch (error) {
         setSavedPosts(0);
       }
-  }, []);
+  }, [setSavedPosts]);
 
   useEffect(() => {
     fetchPostCount();
