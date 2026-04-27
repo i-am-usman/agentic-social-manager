@@ -8,7 +8,8 @@ from app.services.database import db
 logger = logging.getLogger(__name__)
 
 # Configure Gemini
-genai.configure(api_key=GEMINI_API_KEY)
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # MongoDB collections
 linkedin_settings_collection = db["linkedin_settings"]

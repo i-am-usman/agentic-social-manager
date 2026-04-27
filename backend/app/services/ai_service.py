@@ -20,8 +20,20 @@ logger = logging.getLogger(__name__)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 BYTEZ_API_KEY = os.getenv("BYTEZ_API_KEY")
 BYTEZ_MODEL = os.getenv("BYTEZ_MODEL", "stabilityai/stable-diffusion-xl-base-1.0")
+_gemini_client = None
 
-gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+
+def _get_gemini_client():
+    global _gemini_client
+
+    if _gemini_client is not None:
+        return _gemini_client
+
+    if not GEMINI_API_KEY:
+        raise RuntimeError("GEMINI_API_KEY is not configured")
+
+    _gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+    return _gemini_client
 
 
 class AIService:
@@ -105,6 +117,7 @@ class AIService:
     @staticmethod
     def generate_caption(topic: str, language: str = "english") -> str:
         try:
+            gemini_client = _get_gemini_client()
             prompt = (
                 f"Generate a short, engaging, emoji-rich social media caption "
                 f"for the topic '{topic}' in {language}. Keep it under 25 words."
@@ -123,6 +136,7 @@ class AIService:
     @staticmethod
     def generate_hashtags(topic: str, count: int = 6) -> list:
         try:
+            gemini_client = _get_gemini_client()
             prompt = (
                 f"Generate {count} highly relevant social media hashtags for '{topic}'. "
                 f"Return only hashtags separated by commas."
@@ -217,6 +231,7 @@ class AIService:
             }
 
         try:
+            gemini_client = _get_gemini_client()
             prompt = (
                 "You are a sentiment and emotion analysis engine for social media text. "
                 f"Analyze the following {language} text and return ONLY valid JSON with this exact schema: "
